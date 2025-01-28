@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "default": "notesbot-be271"
+  },
+  "targets": {
+    "notesbot-be271": {
+      "hosting": {
+        "app": [
+          "notesbot-be271"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
