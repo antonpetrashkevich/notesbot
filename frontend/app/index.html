@@ -5,41 +5,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='red'/></svg>">
-    <title>Notes App</title>
+    <title>XPL</title>
 </head>
 
 <body>
     <script type="module">
-        import { appState, widgets, pageWidget, colors, lightTheme, darkTheme, applyTheme, updatePage, goTo, initializeApp, resolveInitialPath, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { loadingPage, notFoundPage, generalErrorPage } from './notesbot.js';
+        import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { loginPage, loginEmailNotFoundPage, setupPage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut } from "firebase/auth";
+        import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged, signOut } from "firebase/auth";
         // import { getAnalytics } from "firebase/analytics";
 
 
-        // async function pathController(segments, params) {
-        //     if (segments.length === 1 && segments[0] === 'editprofile') {
-        //         updatePage(editProfilePage());
-        //     }
-        //     else if (segments.length === 1 && (segments[0] === 'addeducation' || segments[0] === 'addcertificate')) {
-        //         updatePage(addEducationPage());
-        //     }
-        //     else if (segments.length === 1 && segments[0] === 'addproject') {
-        //         updatePage(addProjectPage());
-        //     }
-        //     else if (segments.length === 1 && segments[0] === 'visitors' && (appState.plan.tier === 'basic' || appState.plan.tier === 'pro')) {
-        //         updatePage(visitorsPage());
-        //     }
-        //     else if (segments.length === 1 && segments[0] === 'coverletter' && (appState.plan.tier === 'basic' || appState.plan.tier === 'pro')) {
-        //         updatePage(coverLetterPage());
-        //     }
-        //     else if (segments.length === 1 && segments[0] === 'aiadvice' && (appState.plan.tier === 'basic' || appState.plan.tier === 'pro')) {
-        //         updatePage(aiAdvicePage());
-        //     }
-        //     else {
-        //         updatePage(profilePage());
-        //     }
-        // }
+        async function pathController(segments, params) {
+            if (!appState.user) {
+                if (isSignInWithEmailLink(appState.firebase.auth, window.location.href)) {
+                    let email = window.localStorage.getItem('loginemail');
+                    if (!email) {
+                        updatePage(loginEmailNotFoundPage())
+                    } else {
+                        signInWithEmailLink(appState.firebase.auth, email, window.location.href)
+                            .catch((error) => {
+                                updatePage(generalErrorPage());
+                            });
+                    }
+                } else {
+                    updatePage(loginPage());
+                }
+            }
+            else if (segments.length === 1 && segments[0] === 'newfolder') {
+                updatePage(newFolderPage());
+            }
+            else if (segments.length === 1 && segments[0] === 'newnote') {
+                updatePage(newNotePage());
+            }
+            else if (segments.length === 1 && segments[0] === 'note') {
+                appState.session.noteId = params.nid;
+                updatePage(notePage());
+            }
+            else if (segments.length === 1 && segments[0] === 'paragraph') {
+                appState.session.noteId = params.nid;
+                appState.session.paragraphId = params.pid;
+                updatePage(paragraphPage());
+            } else {
+                updatePage(homePage());
+            }
+        }
 
 
         const firebaseConfig = {
@@ -54,43 +65,25 @@
         appState.firebase = {};
         appState.firebase.app = initializeFirebase(firebaseConfig);
         appState.firebase.auth = getAuth(appState.firebase.app);
+        appState.firebase.sendSignInLinkToEmail = sendSignInLinkToEmail;
         // appState.firebase.analytics = getAnalytics(appState.firebase.app);
-        appState.firebase.GoogleAuthProvider = GoogleAuthProvider;
-        appState.firebase.signInWithRedirect = signInWithRedirect;
-        appState.firebase.signInWithPopup = signInWithPopup;
         appState.firebase.signOut = signOut;
-        // initializeApp({ pathController });
-        // window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        //     if (e.matches) {
-        //         applyTheme(darkTheme);
-        //     } else {
-        //         applyTheme(lightTheme);
-        //     }
-        // });
-        // appState.session = {};
-        // updatePage(loadingPage());
-        // onAuthStateChanged(appState.firebase.auth, (user) => {
-        //     if (user) {
-        //         httpsCallable(appState.firebase.functions, 'init_call')({})
-        //             .then((result) => {
-        //                 appState.profile = result.data.profile;
-        //                 appState.plan = result.data.plan;
-        //                 appState.visitors = result.data.visitors;
-        //                 if (appState.profile) {
-        //                     resolveInitialPath();
-        //                 } else {
-        //                     updatePage(setupPage());
-        //                 }
-        //             })
-        //             .catch((error) => {
-        //                 console.error(error);
-        //                 updatePage(generalErrorPage());
-        //             });
-        //     } else {
-        //         appState.profile = null;
-        //         updatePage(loginPage());
-        //     }
-        // });
+        appState.session = {};
+        startApp({ name: 'XPL', pathController });
+        onAuthStateChanged(appState.firebase.auth, (user) => {
+            if (user) {
+                appState.user = user;
+                appState.e2eKey = localStorage.getItem('e2ekey');
+                if (appState.e2eKey) {
+                    updatePage(homePage());
+                } else {
+                    updatePage(setupPage());
+                }
+            } else {
+                appState.user = null;
+                updatePage(loginPage());
+            }
+        });
     </script>
 </body>
 
