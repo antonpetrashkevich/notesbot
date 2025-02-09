@@ -62,6 +62,36 @@ export const styles = {
 
 export function loginPage() {
     return {
+        widget: row(() => ({
+            width: '100%',
+            height: '100%',
+            justifyContent: 'center',
+            children: [
+                button({
+                    alignSelf: 'center',
+                    gap: '0.5rem',
+                    hoverColor: colors.gray[100],
+                    click: function (event) {
+                        if (import.meta.env.DEV) {
+                            appState.firebase.signInWithPopup(appState.firebase.auth, new appState.firebase.GoogleAuthProvider());
+                        } else {
+                            appState.firebase.signInWithRedirect(appState.firebase.auth, new appState.firebase.GoogleAuthProvider());
+                        }
+                    },
+                    children: [
+                        svg({ height: '1.25rem', alignSelf: 'center', svg: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>' }),
+                        text({ alignSelf: 'center', text: 'Login with Google' })
+                    ]
+                })
+            ]
+        })),
+        meta: { title: `Login | ${appName}`, description: 'Login page.' }
+    };
+}
+
+
+export function setupPage() {
+    return {
         widget: row({
             width: '100%',
             height: '100%',
@@ -70,44 +100,46 @@ export function loginPage() {
             gap: '1rem',
             children: [
                 input({
-                    id: 'email-input',
+                    id: 'e2ekey-input',
                     width: '16rem',
                     attributes: {
-                        placeholder: 'Email'
+                        placeholder: 'Key phrase'
                     }
                 }),
                 button({
                     ...styles.actionButton,
-                    text: 'Send link',
+                    text: 'Set',
                     click: function (event) {
-                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(widgets['email-input'].value)) {
-                            alert('Invalid email');
-                        } else {
-                            appState.sendSignInLinkToEmail(appState.auth, email, {
-                                // url: 'https://notesbot-be271.web.app/auth-complete',
-                                url: 'http://localhost:5173/auth-complete',
-                                handleCodeInApp: true,
-                                // linkDomain: 'notesbot-be271.web.app'
-                            })
-                                .then(() => {
-                                    window.localStorage.setItem('loginemail', widgets['email-input'].value);
-                                    updatePage(linkSentPage());
-                                })
-                                .catch((error) => {
-                                    updatePage(generalErrorPage());
-                                });
-                            updatePage(loadingPage());
-                        }
+
                     }
                 })
             ]
         }),
-        meta: { title: `Login | ${appName}`, description: '' }
+        meta: { title: `Setup | ${appName}`, description: 'Setup pgae.' }
     };
 }
 
 
-export function linkSentPage() {
+export function homePage() {
+    return {
+        widget: row({
+            width: '100%',
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '1rem',
+            children: [
+                text({
+                    text: 'Home page'
+                })
+            ]
+        }),
+        meta: { title: `Home | ${appName}`, description: 'Home page.' }
+    };
+}
+
+
+export function newFolderPage() {
     return {
         widget: row({
             width: '100%',
@@ -121,11 +153,12 @@ export function linkSentPage() {
                 })
             ]
         }),
+        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
     };
 }
 
 
-export function loginEmailNotFoundPage() {
+export function newNotePage() {
     return {
         widget: row({
             width: '100%',
@@ -135,66 +168,10 @@ export function loginEmailNotFoundPage() {
             gap: '1rem',
             children: [
                 text({
-                    text: 'Login link must be opened from the same device that requested it.'
+                    text: 'Link sent. Check your email.'
                 })
             ]
         }),
-        meta: { title: `Login | Email not found | ${appName}`, description: '' }
-    };
-}
-
-
-export function setupPage() {
-    return {
-        widget: column(() => ({
-            width: '100%',
-            height: '100%',
-            children: [
-                text({ margin: '25vh 1rem', alignSelf: 'center', text: 'Something went wrong. Try reloading the page.' }),
-            ]
-        })),
-        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
-    };
-}
-
-
-export function homePage() {
-    return {
-        widget: column(() => ({
-            width: '100%',
-            height: '100%',
-            children: [
-                text({ margin: '25vh 1rem', alignSelf: 'center', text: 'Something went wrong. Try reloading the page.' }),
-            ]
-        })),
-        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
-    };
-}
-
-
-export function newFolderPage() {
-    return {
-        widget: column(() => ({
-            width: '100%',
-            height: '100%',
-            children: [
-                text({ margin: '25vh 1rem', alignSelf: 'center', text: 'Something went wrong. Try reloading the page.' }),
-            ]
-        })),
-        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
-    };
-}
-
-
-export function newNotePage() {
-    return {
-        widget: column(() => ({
-            width: '100%',
-            height: '100%',
-            children: [
-                text({ margin: '25vh 1rem', alignSelf: 'center', text: 'Something went wrong. Try reloading the page.' }),
-            ]
-        })),
         meta: { title: `Error | ${appName}`, description: 'Server fault.' }
     };
 }
@@ -202,13 +179,18 @@ export function newNotePage() {
 
 export function notePage() {
     return {
-        widget: column(() => ({
+        widget: row({
             width: '100%',
             height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '1rem',
             children: [
-                text({ margin: '25vh 1rem', alignSelf: 'center', text: 'Something went wrong. Try reloading the page.' }),
+                text({
+                    text: 'Link sent. Check your email.'
+                })
             ]
-        })),
+        }),
         meta: { title: `Error | ${appName}`, description: 'Server fault.' }
     };
 }
@@ -216,13 +198,18 @@ export function notePage() {
 
 export function paragraphPage() {
     return {
-        widget: column(() => ({
+        widget: row({
             width: '100%',
             height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '1rem',
             children: [
-                text({ margin: '25vh 1rem', alignSelf: 'center', text: 'Something went wrong. Try reloading the page.' }),
+                text({
+                    text: 'Link sent. Check your email.'
+                })
             ]
-        })),
+        }),
         meta: { title: `Error | ${appName}`, description: 'Server fault.' }
     };
 }

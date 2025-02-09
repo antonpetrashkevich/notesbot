@@ -11,27 +11,16 @@
 <body>
     <script type="module">
         import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { loginPage, loginEmailNotFoundPage, setupPage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
+        import { loginPage, setupPage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
-        import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged, signOut } from "firebase/auth";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut } from "firebase/auth";
         // import { getAnalytics } from "firebase/analytics";
 
 
         async function pathController(segments, params) {
             if (!appState.user) {
-                if (isSignInWithEmailLink(appState.firebase.auth, window.location.href)) {
-                    let email = window.localStorage.getItem('loginemail');
-                    if (!email) {
-                        updatePage(loginEmailNotFoundPage())
-                    } else {
-                        signInWithEmailLink(appState.firebase.auth, email, window.location.href)
-                            .catch((error) => {
-                                updatePage(generalErrorPage());
-                            });
-                    }
-                } else {
-                    updatePage(loginPage());
-                }
+                appState.session.initialPath = { segments, params };
+                updatePage(loadingPage());
             }
             else if (segments.length === 1 && segments[0] === 'newfolder') {
                 updatePage(newFolderPage());
@@ -65,9 +54,11 @@
         appState.firebase = {};
         appState.firebase.app = initializeFirebase(firebaseConfig);
         appState.firebase.auth = getAuth(appState.firebase.app);
-        appState.firebase.sendSignInLinkToEmail = sendSignInLinkToEmail;
-        // appState.firebase.analytics = getAnalytics(appState.firebase.app);
+        appState.firebase.GoogleAuthProvider = GoogleAuthProvider;
+        appState.firebase.signInWithRedirect = signInWithRedirect;
+        appState.firebase.signInWithPopup = signInWithPopup;
         appState.firebase.signOut = signOut;
+        // appState.firebase.analytics = getAnalytics(appState.firebase.app);
         appState.session = {};
         startApp({ name: 'XPL', pathController });
         onAuthStateChanged(appState.firebase.auth, (user) => {
