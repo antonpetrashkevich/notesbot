@@ -11,9 +11,10 @@
 <body>
     <script type="module">
         import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { loginPage, setupPage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
+        import { toBase64, fromBase64, generateKey, encrypt, decrypt, loginPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut } from "firebase/auth";
+        import { getFirestore, collection, doc, serverTimestamp, runTransaction, getDoc, getDocs, getDocFromCache, addDoc, setDoc, updateDoc } from "firebase/firestore";
         // import { getAnalytics } from "firebase/analytics";
 
 
@@ -58,20 +59,42 @@
         appState.firebase.signInWithRedirect = signInWithRedirect;
         appState.firebase.signInWithPopup = signInWithPopup;
         appState.firebase.signOut = signOut;
+        appState.firebase.firestore = getFirestore(appState.firebase.app);
         // appState.firebase.analytics = getAnalytics(appState.firebase.app);
+        appState.textEncoder = new TextEncoder();
+        appState.textDecoder = new TextDecoder();
         appState.session = {};
         startApp({ name: 'XPL', pathController });
-        onAuthStateChanged(appState.firebase.auth, (user) => {
+        onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {
-                appState.user = user;
-                appState.e2eKey = localStorage.getItem('e2ekey');
-                if (appState.e2eKey) {
-                    updatePage(homePage());
-                } else {
-                    updatePage(setupPage());
+                let docData;
+                try {
+                    appState.user = user;
+                    const docSnap = await getDoc(doc(appState.firebase.firestore, "users", user.uid));
+                    if (docSnap.exists()) {
+                        docData = docSnap.data();
+                        const keyphrase = window.localStorage.getItem('keyphrase');
+                        if (keyphrase) {
+                            const key = await generateKey(keyphrase, docData.salt);
+                            await decrypt(key, docData.keytest);
+                            updatePage(homePage());
+                        } else {
+                            updatePage(keyphrasePage(docData.salt, docData.keytest));
+                        }
+                    } else {
+                        updatePage(setupPage());
+                    }
+                } catch (error) {
+                    if (error instanceof DOMException && error.name === "OperationError") {
+                        updatePage(keyphrasePage(docData.salt, docData.keytest));
+                    } else {
+                        console.error(error);
+                        updatePage(generalErrorPage());
+                    }
                 }
             } else {
                 appState.user = null;
+                appState.key = null;
                 updatePage(loginPage());
             }
         });
