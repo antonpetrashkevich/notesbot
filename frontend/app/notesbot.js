@@ -129,7 +129,7 @@ export function setupPage() {
     return {
         widget: base({
             justifyContent: 'center',
-            gap:'2rem',
+            gap: '2rem',
             children: [
                 column({
                     gap: '1rem',
@@ -142,15 +142,15 @@ export function setupPage() {
                 column({
                     width: '100%',
                     justifyContent: 'center',
-                    gap: '1rem',
                     children: [
                         text({ fontWeight: 600, text: 'Your keyphrase' }),
-                        hint(() => ({ id: 'keyphrase-hint', errorText: 'Required' }), true),
-                        input({ id: 'keyphrase-input', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
-                        text({ fontWeight: 600, text: 'Repeat keyphrase' }),
-                        hint(() => ({ id: 'keyphrase-repeat-hint', errorText: 'Invalid' }), true),
-                        input({ id: 'keyphrase-repeat-input', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
+                        hint(() => ({ marginTop: '0.5rem', id: 'keyphrase-hint', errorText: 'Required' }), true),
+                        input({ id: 'keyphrase-input', marginTop: '0.5rem', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
+                        text({ marginTop: '1rem', fontWeight: 600, text: 'Repeat keyphrase' }),
+                        hint(() => ({ id: 'keyphrase-repeat-hint', marginTop: '0.5rem', errorText: 'Invalid' }), true),
+                        input({ id: 'keyphrase-repeat-input', marginTop: '0.5rem', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
                         row({
+                            marginTop: '1rem',
                             width: '100%',
                             justifyContent: 'end',
                             gap: '1rem',
