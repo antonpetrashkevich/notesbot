@@ -13,7 +13,7 @@
         import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
         import { toBase64, fromBase64, generateKey, encrypt, decrypt, loginPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut } from "firebase/auth";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { getFirestore, collection, doc, serverTimestamp, runTransaction, getDoc, getDocs, getDocFromCache, addDoc, setDoc, updateDoc } from "firebase/firestore";
         // import { getAnalytics } from "firebase/analytics";
 
@@ -55,10 +55,6 @@
         appState.firebase = {};
         appState.firebase.app = initializeFirebase(firebaseConfig);
         appState.firebase.auth = getAuth(appState.firebase.app);
-        appState.firebase.GoogleAuthProvider = GoogleAuthProvider;
-        appState.firebase.signInWithRedirect = signInWithRedirect;
-        appState.firebase.signInWithPopup = signInWithPopup;
-        appState.firebase.signOut = signOut;
         appState.firebase.firestore = getFirestore(appState.firebase.app);
         // appState.firebase.analytics = getAnalytics(appState.firebase.app);
         appState.textEncoder = new TextEncoder();
@@ -95,6 +91,7 @@
             } else {
                 appState.user = null;
                 appState.key = null;
+                window.localStorage.removeItem('keyphrase');
                 updatePage(loginPage());
             }
         });
