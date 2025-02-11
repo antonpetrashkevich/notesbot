@@ -129,76 +129,88 @@ export function setupPage() {
     return {
         widget: base({
             justifyContent: 'center',
-            gap: '1rem',
+            gap:'2rem',
             children: [
-                text({ text: '🔐 Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.' }),
-                text({ text: '✍️ Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.' }),
-                text({ text: '🕵️ Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.' }),
-                text({ marginTop: '3rem', fontWeight: 600, text: 'Your keyphrase' }),
-                hint(() => ({ id: 'keyphrase-hint', errorText: 'Required' }), true),
-                input({ id: 'keyphrase-input', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
-                text({ fontWeight: 600, text: 'Repeat keyphrase' }),
-                hint(() => ({ id: 'keyphrase-repeat-hint', errorText: 'Invalid' }), true),
-                input({ id: 'keyphrase-repeat-input', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
-                row({
-                    width: '100%',
-                    justifyContent: 'end',
+                column({
                     gap: '1rem',
                     children: [
-                        button({
-                            ...styles.actionSecondaryButton,
-                            click: function (event) {
-                                signOut(appState.firebase.auth);
-                            },
-                            text: 'Cancel'
-                        }),
-                        button({
-                            ...styles.actionButton,
-                            click: async function (event) {
-                                widgets['keyphrase-hint'].update(true);
-                                widgets['keyphrase-repeat-hint'].update(true);
-                                if (!widgets['keyphrase-input'].domElement.value) {
-                                    widgets['keyphrase-hint'].update(false);
-                                    window.scrollTo(0, 0);
-                                    return;
-                                }
-                                if (!widgets['keyphrase-repeat-input'].domElement.value || widgets['keyphrase-input'].domElement.value != widgets['keyphrase-repeat-input'].domElement.value) {
-                                    widgets['keyphrase-repeat-hint'].update(false);
-                                    window.scrollTo(0, 0);
-                                    return;
-                                }
-                                updatePage(loadingPage());
-                                try {
-                                    const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
-                                    const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
-                                    const keytest = await encrypt(key, appState.textEncoder.encode('XPL'));
-                                    const userDocRef = doc(appState.firebase.firestore, 'users', appState.user.uid);
-                                    const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
-                                        const userDoc = await transaction.get(userDocRef);
-                                        if (userDoc.exists()) {
-                                            throw "User already exists";
-                                        }
-                                        transaction.set(userDocRef, {
-                                            registerTimestamp: serverTimestamp(),
-                                            salt,
-                                            keytest
-                                        });
-                                        return true;
-                                    });
-                                    appState.key = key;
-                                    window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                    updatePage(homePage());
-                                } catch (error) {
-                                    console.error(error);
-                                    updatePage(generalErrorPage());
-                                }
-                            },
+                        text({ text: '🔐 Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.' }),
+                        text({ text: '✍️ Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.' }),
+                        text({ text: '🕵️ Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.' }),
+                    ]
+                }),
+                column({
+                    width: '100%',
+                    justifyContent: 'center',
+                    gap: '1rem',
+                    children: [
+                        text({ fontWeight: 600, text: 'Your keyphrase' }),
+                        hint(() => ({ id: 'keyphrase-hint', errorText: 'Required' }), true),
+                        input({ id: 'keyphrase-input', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
+                        text({ fontWeight: 600, text: 'Repeat keyphrase' }),
+                        hint(() => ({ id: 'keyphrase-repeat-hint', errorText: 'Invalid' }), true),
+                        input({ id: 'keyphrase-repeat-input', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
+                        row({
+                            width: '100%',
+                            justifyContent: 'end',
+                            gap: '1rem',
                             children: [
-                                text({ text: 'Save' })
+                                button({
+                                    ...styles.actionSecondaryButton,
+                                    click: function (event) {
+                                        signOut(appState.firebase.auth);
+                                    },
+                                    text: 'Cancel'
+                                }),
+                                button({
+                                    ...styles.actionButton,
+                                    click: async function (event) {
+                                        widgets['keyphrase-hint'].update(true);
+                                        widgets['keyphrase-repeat-hint'].update(true);
+                                        if (!widgets['keyphrase-input'].domElement.value) {
+                                            widgets['keyphrase-hint'].update(false);
+                                            window.scrollTo(0, 0);
+                                            return;
+                                        }
+                                        if (!widgets['keyphrase-repeat-input'].domElement.value || widgets['keyphrase-input'].domElement.value != widgets['keyphrase-repeat-input'].domElement.value) {
+                                            widgets['keyphrase-repeat-hint'].update(false);
+                                            window.scrollTo(0, 0);
+                                            return;
+                                        }
+                                        updatePage(loadingPage());
+                                        try {
+                                            const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
+                                            const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
+                                            const keytest = await encrypt(key, appState.textEncoder.encode('XPL'));
+                                            const userDocRef = doc(appState.firebase.firestore, 'users', appState.user.uid);
+                                            const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
+                                                const userDoc = await transaction.get(userDocRef);
+                                                if (userDoc.exists()) {
+                                                    throw "User already exists";
+                                                }
+                                                transaction.set(userDocRef, {
+                                                    registerTimestamp: serverTimestamp(),
+                                                    salt,
+                                                    keytest
+                                                });
+                                                return true;
+                                            });
+                                            appState.key = key;
+                                            window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                            updatePage(homePage());
+                                        } catch (error) {
+                                            console.error(error);
+                                            updatePage(generalErrorPage());
+                                        }
+                                    },
+                                    children: [
+                                        text({ text: 'Save' })
+                                    ]
+                                })
                             ]
                         })
                     ]
-                })
+                }),
             ]
         }),
         meta: { title: `Setup | ${appName}`, description: 'Setup page.' }
