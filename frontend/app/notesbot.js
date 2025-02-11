@@ -17,14 +17,14 @@ export const styles = {
         backgroundColor: colors.gray[100],
     },
     actionButton: {
-        padding: '0.65rem',
+        padding: '0.75rem',
         justifyContent: 'center',
         backgroundColor: colors.blue[600],
         hoverColor: colors.blue[700],
         color: 'white',
     },
     actionSecondaryButton: {
-        padding: '0.65rem',
+        padding: '0.75rem',
         justifyContent: 'center',
         backgroundColor: 'inherit',
         hoverColor: colors.gray[100],
@@ -96,6 +96,24 @@ export async function decrypt(key, ivdata) {
         key,
         fromBase64(ivdata.data)
     );
+}
+
+
+export async function fetchDecryptNotebook() {
+    const notebookDocSnap = await getDoc(doc(appState.firebase.firestore, "notebooks", appState.user.uid));
+    if (notebookDocSnap.exists()) {
+        const notebookDocData = notebookDocSnap.data();
+        appState.key = await generateKey(window.localStorage.getItem('keyphrase'), notebookDocData.salt);
+        appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.notes)));
+        appState.tags = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.tags)));
+        appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.folders)));
+        appState.paragraphs = {};
+        (await getDocs(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'))).forEach(async (paragraphDocSnap) => {
+            appState.paragraphs[paragraphDocSnap.id] = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, paragraphDocSnap.data())));
+        });
+    } else {
+        throw 'notebook-doesnt-exist';
+    }
 }
 
 
@@ -181,22 +199,28 @@ export function setupPage() {
                                         try {
                                             const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
                                             const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
-                                            const keytest = await encrypt(key, appState.textEncoder.encode('XPL'));
-                                            const userDocRef = doc(appState.firebase.firestore, 'users', appState.user.uid);
+                                            const notes = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
+                                            const tags = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
+                                            const folders = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
+                                            const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
                                             const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
-                                                const userDoc = await transaction.get(userDocRef);
-                                                if (userDoc.exists()) {
+                                                const notebookDoc = await transaction.get(notebookDocRef);
+                                                if (notebookDoc.exists()) {
                                                     throw "User already exists";
                                                 }
-                                                transaction.set(userDocRef, {
-                                                    registerTimestamp: serverTimestamp(),
+                                                transaction.set(notebookDocRef, {
                                                     salt,
-                                                    keytest
+                                                    notes,
+                                                    tags,
+                                                    folders
                                                 });
                                                 return true;
                                             });
                                             appState.key = key;
                                             window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                            appState.notes = {};
+                                            appState.tags = {};
+                                            appState.folders = {};
                                             updatePage(homePage());
                                         } catch (error) {
                                             console.error(error);
@@ -218,7 +242,7 @@ export function setupPage() {
 }
 
 
-export function keyphrasePage(salt, keytest) {
+export function keyphrasePage(notesDocData) {
     return {
         widget: base({
             justifyContent: 'center',
@@ -254,18 +278,16 @@ export function keyphrasePage(salt, keytest) {
                                     return;
                                 }
                                 try {
-                                    const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
-                                    await decrypt(key, keytest);
-                                    appState.key = key;
+                                    updatePage(loadingPage());
                                     window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                    await fetchDecryptNotebook(notesDocData);
                                     updatePage(homePage());
                                 } catch (error) {
                                     if (error instanceof DOMException && error.name === "OperationError") {
+                                        updatePage(keyphrasePage());
                                         widgets['keyphrase-hint'].update(false);
-                                        window.scrollTo(0, 0);
                                     } else {
-                                        console.error(error);
-                                        updatePage(generalErrorPage());
+                                        throw error;
                                     }
                                 }
                             },
