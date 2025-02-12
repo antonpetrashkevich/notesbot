@@ -11,7 +11,7 @@
 <body>
     <script type="module">
         import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { toBase64, fromBase64, generateKey, encrypt, decrypt, fetchNotebook, fetchParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
+        import { toBase64, fromBase64, generateKey, encrypt, decrypt, initIDB, dropIDB, getParagraphFromIDB, getParagraphsByNoteIdFromIDB, getParagraphsByTagFromIDB, putParagraphToIDB, removeParagraphFromIDB, fetchNotebook, fetchParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, collection, doc, query, where, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocs, getDocsFromCache, getDocsFromServer, addDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -65,6 +65,7 @@
 
         startApp({ name: 'XPL', pathController });
         updatePage(loadingPage());
+        await initIDB();
         if (window.localStorage.getItem('uid') && window.localStorage.getItem('keyphrase')) {
             try {
                 await fetchNotebook(window.localStorage.getItem('uid'), window.localStorage.getItem('keyphrase'), getDocFromCache);
@@ -99,15 +100,22 @@
                     }
                 }
             } else {
-                appState.key = null;
-                appState.notes = null;
-                appState.tags = null;
-                appState.folders = null;
-                appState.paragraphs = null;
-                appState.initialized = null;
-                window.localStorage.removeItem('uid');
-                window.localStorage.removeItem('keyphrase');
-                updatePage(loginPage());
+                try {
+                    updatePage(loadingPage());
+                    appState.key = null;
+                    appState.notes = null;
+                    appState.tags = null;
+                    appState.folders = null;
+                    appState.paragraphs = null;
+                    appState.initialized = null;
+                    window.localStorage.removeItem('uid');
+                    window.localStorage.removeItem('keyphrase');
+                    await dropIDB();
+                    updatePage(loginPage());
+                } catch (e) {
+                    console.error(e);
+                    updatePage(generalErrorPage());
+                }
             }
         });
     </script>

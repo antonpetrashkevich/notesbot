@@ -99,6 +99,110 @@ export async function decrypt(key, ivdata) {
 }
 
 
+export async function initIDB() {
+    return new Promise((resolve, reject) => {
+        const request = window.indexedDB.open('xpl', 1);
+        request.onupgradeneeded = (event) => {
+            let db = event.target.result;
+            if (!db.objectStoreNames.contains('paragraphs')) {
+                const store = db.createObjectStore('paragraphs', { keyPath: 'id' });
+                store.createIndex('noteId', 'noteId', { unique: false });
+                store.createIndex('timestamp', 'timestamp', { unique: false });
+                store.createIndex('tag', 'tags', { multiEntry: true });
+            }
+        };
+        request.onsuccess = (event) => {
+            resolve(event.target.result);
+        };
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+        request.onblocked = () => {
+            reject('IndexedDB blocked. Close other tabs using the database?');
+        };
+    });
+}
+export async function dropIDB() {
+    return new Promise((resolve, reject) => {
+        const request = window.indexedDB.deleteDatabase('xpl');
+        request.onsuccess = () => {
+            resolve();
+        };
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+        request.onblocked = () => {
+            reject('IndexedDB blocked. Close other tabs using the database?');
+        };
+    });
+}
+export async function getParagraphFromIDB(id) {
+    return new Promise((resolve, reject) => {
+        const tx = appState.idb.transaction('paragraphs', 'readonly');
+        const store = tx.objectStore('paragraphs');
+        const request = store.get(id);
+        request.onsuccess = (event) => {
+            resolve(event.target.result);
+        };
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+export async function getParagraphsByNoteIdFromIDB(noteId) {
+    return new Promise((resolve, reject) => {
+        const tx = appState.idb.transaction('paragraphs', 'readonly');
+        const store = tx.objectStore('paragraphs');
+        const request = store.index('noteId').getAll(noteId);
+        request.onsuccess = (event) => {
+            resolve(event.target.result);
+        };
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+export async function getParagraphsByTagFromIDB(tag) {
+    return new Promise((resolve, reject) => {
+        const tx = appState.idb.transaction('paragraphs', 'readonly');
+        const store = tx.objectStore('paragraphs');
+        const request = store.index('tag').getAll(tag);
+        request.onsuccess = (event) => {
+            resolve(event.target.result);
+        };
+        request.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+export async function putParagraphToIDB(paragraph) {
+    return new Promise((resolve, reject) => {
+        const tx = appState.idb.transaction('paragraphs', 'readwrite');
+        const store = tx.objectStore('paragraphs');
+        store.put(paragraph);
+        tx.oncomplete = () => {
+            resolve(true);
+        };
+        tx.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+export async function removeParagraphFromIDB(id) {
+    return new Promise((resolve, reject) => {
+        const tx = appState.idb.transaction('paragraphs', 'readwrite');
+        const store = tx.objectStore('paragraphs');
+        store.delete(id);
+        tx.oncomplete = () => {
+            resolve(true);
+        };
+        tx.onerror = (event) => {
+            reject(event.target.error);
+        };
+    });
+}
+
+
 export async function fetchNotebook(uid, keyphrase, method = getDoc) {
     const notebookDocSnap = await method(doc(appState.firebase.firestore, "notebooks", uid));
     if (notebookDocSnap.exists()) {
@@ -164,10 +268,11 @@ export function setupTutorialPage() {
                     ]
                 }),
                 row({
-                    alignSelf: 'end',
+                    width: '100%',
                     gap: '1rem',
                     children: [
                         button({
+                            flexGrow: 1,
                             ...styles.actionSecondaryButton,
                             click: function (event) {
                                 signOut(appState.firebase.auth);
@@ -175,7 +280,7 @@ export function setupTutorialPage() {
                             text: 'Log out'
                         }),
                         button({
-                            alignSelf: 'end',
+                            flexGrow: 1,
                             ...styles.actionButton,
                             click: function (event) {
                                 updatePage(setupPage());
@@ -210,10 +315,10 @@ export function setupPage() {
                 }),
                 row({
                     width: '100%',
-                    justifyContent: 'end',
                     gap: '1rem',
                     children: [
                         button({
+                            flexGrow: 1,
                             ...styles.actionSecondaryButton,
                             click: function (event) {
                                 updatePage(setupTutorialPage());
@@ -221,6 +326,7 @@ export function setupPage() {
                             text: 'Back'
                         }),
                         button({
+                            flexGrow: 1,
                             ...styles.actionButton,
                             click: async function (event) {
                                 widgets['keyphrase-hint'].update(true);
@@ -298,10 +404,10 @@ export function keyphrasePage(notesDocData) {
                 }),
                 row({
                     width: '100%',
-                    justifyContent: 'end',
                     gap: '1rem',
                     children: [
                         button({
+                            flexGrow: 1,
                             ...styles.actionSecondaryButton,
                             click: function (event) {
                                 signOut(appState.firebase.auth);
@@ -309,6 +415,7 @@ export function keyphrasePage(notesDocData) {
                             text: 'Log out'
                         }),
                         button({
+                            flexGrow: 1,
                             ...styles.actionButton,
                             click: async function (event) {
                                 if (!widgets['keyphrase-input'].domElement.value) {
