@@ -11,17 +11,16 @@
 <body>
     <script type="module">
         import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { toBase64, fromBase64, generateKey, encrypt, decrypt, fetchDecryptNotebook, loginPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
+        import { toBase64, fromBase64, generateKey, encrypt, decrypt, fetchNotebook, fetchParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, collection, doc, query, where, serverTimestamp, runTransaction, getDoc, getDocs, getDocFromCache, getDocsFromCache, addDoc, setDoc, updateDoc } from "firebase/firestore";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, collection, doc, query, where, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocs, getDocsFromCache, getDocsFromServer, addDoc, setDoc, updateDoc } from "firebase/firestore";
         // import { getAnalytics } from "firebase/analytics";
 
 
-        async function pathController(segments, params) {
-            if (!appState.user) {
-                appState.session.initialPath = { segments, params };
-                updatePage(loadingPage());
+        function pathController(segments, params) {
+            if (!appState.initialized) {
+                return;
             }
             else if (segments.length === 1 && segments[0] === 'newfolder') {
                 updatePage(newFolderPage());
@@ -30,12 +29,12 @@
                 updatePage(newNotePage());
             }
             else if (segments.length === 1 && segments[0] === 'note') {
-                appState.session.noteId = params.nid;
+                appState.noteId = params.nid;
                 updatePage(notePage());
             }
             else if (segments.length === 1 && segments[0] === 'paragraph') {
-                appState.session.noteId = params.nid;
-                appState.session.paragraphId = params.pid;
+                appState.noteId = params.nid;
+                appState.paragraphId = params.pid;
                 updatePage(paragraphPage());
             } else {
                 updatePage(homePage());
@@ -62,39 +61,51 @@
         // appState.firebase.analytics = getAnalytics(appState.firebase.app);
         appState.textEncoder = new TextEncoder();
         appState.textDecoder = new TextDecoder();
-        appState.session = {};
+
+
         startApp({ name: 'XPL', pathController });
+        updatePage(loadingPage());
+        if (window.localStorage.getItem('uid') && window.localStorage.getItem('keyphrase')) {
+            try {
+                await fetchNotebook(window.localStorage.getItem('uid'), window.localStorage.getItem('keyphrase'), getDocFromCache);
+                await fetchParagraphs(window.localStorage.getItem('uid'), getDocsFromCache);
+                appState.initialized = true;
+                updatePage(homePage());
+            } catch (error) {
+            }
+        }
         onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {
-                try {
-                    appState.user = user;
-                    const notebookDocSnap = await getDoc(doc(appState.firebase.firestore, "notebooks", appState.user.uid));
-                    if (notebookDocSnap.exists()) {
-                        if (window.localStorage.getItem('keyphrase')) {
-                            await fetchDecryptNotebook();
-                            updatePage(homePage());
-                        } else {
+                if (!appState.initialized || user.uid !== window.localStorage.getItem('uid')) {
+                    window.localStorage.setItem('uid', user.uid);
+                    try {
+                        await fetchNotebook(window.localStorage.getItem('uid'), window.localStorage.getItem('keyphrase'));
+                        await fetchParagraphs(window.localStorage.getItem('uid'));
+                        appState.initialized = true;
+                        updatePage(homePage());
+                    } catch (error) {
+                        if (error === 'notebook-doesnt-exist') {
+                            updatePage(setupTutorialPage());
+                        }
+                        else if (error === 'keyphrase-doesnt-exist') {
                             updatePage(keyphrasePage());
                         }
-                    }
-                    else {
-                        updatePage(setupPage());
-                    }
-                } catch (error) {
-                    if (error instanceof DOMException && error.name === "OperationError") {
-                        updatePage(keyphrasePage());
-                    } else {
-                        console.error(error);
-                        updatePage(generalErrorPage());
+                        else if (error instanceof DOMException && error.name === "OperationError") {
+                            updatePage(keyphrasePage());
+                        } else {
+                            console.error(error);
+                            updatePage(generalErrorPage());
+                        }
                     }
                 }
             } else {
-                appState.user = null;
                 appState.key = null;
                 appState.notes = null;
                 appState.tags = null;
                 appState.folders = null;
                 appState.paragraphs = null;
+                appState.initialized = null;
+                window.localStorage.removeItem('uid');
                 window.localStorage.removeItem('keyphrase');
                 updatePage(loginPage());
             }

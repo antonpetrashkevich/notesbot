@@ -1,6 +1,6 @@
 import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { collection, doc, serverTimestamp, runTransaction, getDoc, getDocs, getDocFromCache, addDoc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, addDoc, setDoc, updateDoc } from "firebase/firestore";
 
 
 export const styles = {
@@ -99,21 +99,26 @@ export async function decrypt(key, ivdata) {
 }
 
 
-export async function fetchDecryptNotebook() {
-    const notebookDocSnap = await getDoc(doc(appState.firebase.firestore, "notebooks", appState.user.uid));
+export async function fetchNotebook(uid, keyphrase, method = getDoc) {
+    const notebookDocSnap = await method(doc(appState.firebase.firestore, "notebooks", uid));
     if (notebookDocSnap.exists()) {
         const notebookDocData = notebookDocSnap.data();
-        appState.key = await generateKey(window.localStorage.getItem('keyphrase'), notebookDocData.salt);
+        if (!keyphrase) {
+            throw 'keyphrase-doesnt-exist';
+        }
+        appState.key = await generateKey(keyphrase, notebookDocData.salt);
         appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.notes)));
         appState.tags = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.tags)));
         appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.folders)));
-        appState.paragraphs = {};
-        (await getDocs(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'))).forEach(async (paragraphDocSnap) => {
-            appState.paragraphs[paragraphDocSnap.id] = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, paragraphDocSnap.data())));
-        });
     } else {
         throw 'notebook-doesnt-exist';
     }
+}
+export async function fetchParagraphs(uid, method = getDocs) {
+    appState.paragraphs = {};
+    (await method(collection(appState.firebase.firestore, 'notebooks', uid, 'paragraphs'))).forEach(async (paragraphDocSnap) => {
+        appState.paragraphs[paragraphDocSnap.id] = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, paragraphDocSnap.data())));
+    });
 }
 
 
@@ -143,12 +148,13 @@ export function loginPage() {
 }
 
 
-export function setupPage() {
+export function setupTutorialPage() {
     return {
         widget: base({
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             gap: '2rem',
             children: [
+                text({ fontSize: '2rem', fontWeight: 600, text: 'Keyphrase' }),
                 column({
                     gap: '1rem',
                     children: [
@@ -157,9 +163,42 @@ export function setupPage() {
                         text({ text: '🕵️ Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.' }),
                     ]
                 }),
+                row({
+                    alignSelf: 'end',
+                    gap: '1rem',
+                    children: [
+                        button({
+                            ...styles.actionSecondaryButton,
+                            click: function (event) {
+                                signOut(appState.firebase.auth);
+                            },
+                            text: 'Log out'
+                        }),
+                        button({
+                            alignSelf: 'end',
+                            ...styles.actionButton,
+                            click: function (event) {
+                                updatePage(setupPage());
+                            },
+                            text: 'Next'
+                        })
+                    ]
+                })
+            ]
+        }),
+        meta: { title: `Setup | ${appName}`, description: 'Setup page.' }
+    };
+}
+
+
+export function setupPage() {
+    return {
+        widget: base({
+            justifyContent: 'space-between',
+            children: [
+                text({ fontSize: '2rem', fontWeight: 600, text: 'Keyphrase' }),
                 column({
                     width: '100%',
-                    justifyContent: 'center',
                     children: [
                         text({ fontWeight: 600, text: 'Your keyphrase' }),
                         hint(() => ({ marginTop: '0.5rem', id: 'keyphrase-hint', errorText: 'Required' }), true),
@@ -167,74 +206,74 @@ export function setupPage() {
                         text({ marginTop: '1rem', fontWeight: 600, text: 'Repeat keyphrase' }),
                         hint(() => ({ id: 'keyphrase-repeat-hint', marginTop: '0.5rem', errorText: 'Invalid' }), true),
                         input({ id: 'keyphrase-repeat-input', marginTop: '0.5rem', width: '100%', attributes: { type: 'password', maxlength: '64' } }),
-                        row({
-                            marginTop: '1rem',
-                            width: '100%',
-                            justifyContent: 'end',
-                            gap: '1rem',
+                    ]
+                }),
+                row({
+                    width: '100%',
+                    justifyContent: 'end',
+                    gap: '1rem',
+                    children: [
+                        button({
+                            ...styles.actionSecondaryButton,
+                            click: function (event) {
+                                updatePage(setupTutorialPage());
+                            },
+                            text: 'Back'
+                        }),
+                        button({
+                            ...styles.actionButton,
+                            click: async function (event) {
+                                widgets['keyphrase-hint'].update(true);
+                                widgets['keyphrase-repeat-hint'].update(true);
+                                if (!widgets['keyphrase-input'].domElement.value) {
+                                    widgets['keyphrase-hint'].update(false);
+                                    window.scrollTo(0, 0);
+                                    return;
+                                }
+                                if (!widgets['keyphrase-repeat-input'].domElement.value || widgets['keyphrase-input'].domElement.value != widgets['keyphrase-repeat-input'].domElement.value) {
+                                    widgets['keyphrase-repeat-hint'].update(false);
+                                    window.scrollTo(0, 0);
+                                    return;
+                                }
+                                updatePage(loadingPage());
+                                try {
+                                    const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
+                                    const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
+                                    const notes = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
+                                    const tags = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
+                                    const folders = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
+                                    const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', window.localStorage.getItem('uid'));
+                                    const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
+                                        const notebookDoc = await transaction.get(notebookDocRef);
+                                        if (notebookDoc.exists()) {
+                                            throw "User already exists";
+                                        }
+                                        transaction.set(notebookDocRef, {
+                                            salt,
+                                            notes,
+                                            tags,
+                                            folders
+                                        });
+                                        return true;
+                                    });
+                                    appState.key = key;
+                                    window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                    appState.notes = {};
+                                    appState.tags = {};
+                                    appState.folders = {};
+                                    appState.initialized = true;
+                                    updatePage(homePage());
+                                } catch (error) {
+                                    console.error(error);
+                                    updatePage(generalErrorPage());
+                                }
+                            },
                             children: [
-                                button({
-                                    ...styles.actionSecondaryButton,
-                                    click: function (event) {
-                                        signOut(appState.firebase.auth);
-                                    },
-                                    text: 'Cancel'
-                                }),
-                                button({
-                                    ...styles.actionButton,
-                                    click: async function (event) {
-                                        widgets['keyphrase-hint'].update(true);
-                                        widgets['keyphrase-repeat-hint'].update(true);
-                                        if (!widgets['keyphrase-input'].domElement.value) {
-                                            widgets['keyphrase-hint'].update(false);
-                                            window.scrollTo(0, 0);
-                                            return;
-                                        }
-                                        if (!widgets['keyphrase-repeat-input'].domElement.value || widgets['keyphrase-input'].domElement.value != widgets['keyphrase-repeat-input'].domElement.value) {
-                                            widgets['keyphrase-repeat-hint'].update(false);
-                                            window.scrollTo(0, 0);
-                                            return;
-                                        }
-                                        updatePage(loadingPage());
-                                        try {
-                                            const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
-                                            const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
-                                            const notes = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
-                                            const tags = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
-                                            const folders = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
-                                            const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
-                                            const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
-                                                const notebookDoc = await transaction.get(notebookDocRef);
-                                                if (notebookDoc.exists()) {
-                                                    throw "User already exists";
-                                                }
-                                                transaction.set(notebookDocRef, {
-                                                    salt,
-                                                    notes,
-                                                    tags,
-                                                    folders
-                                                });
-                                                return true;
-                                            });
-                                            appState.key = key;
-                                            window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                            appState.notes = {};
-                                            appState.tags = {};
-                                            appState.folders = {};
-                                            updatePage(homePage());
-                                        } catch (error) {
-                                            console.error(error);
-                                            updatePage(generalErrorPage());
-                                        }
-                                    },
-                                    children: [
-                                        text({ text: 'Save' })
-                                    ]
-                                })
+                                text({ text: 'Save' })
                             ]
                         })
                     ]
-                }),
+                })
             ]
         }),
         meta: { title: `Setup | ${appName}`, description: 'Setup page.' }
@@ -245,9 +284,9 @@ export function setupPage() {
 export function keyphrasePage(notesDocData) {
     return {
         widget: base({
-            justifyContent: 'center',
-            gap: '1rem',
+            justifyContent: 'space-between',
             children: [
+                text({ fontSize: '2rem', fontWeight: 600, text: 'Keyphrase' }),
                 column({
                     width: '100%',
                     justifyContent: 'center',
@@ -267,7 +306,7 @@ export function keyphrasePage(notesDocData) {
                             click: function (event) {
                                 signOut(appState.firebase.auth);
                             },
-                            text: 'Cancel'
+                            text: 'Log out'
                         }),
                         button({
                             ...styles.actionButton,
@@ -280,7 +319,9 @@ export function keyphrasePage(notesDocData) {
                                 try {
                                     updatePage(loadingPage());
                                     window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                    await fetchDecryptNotebook(notesDocData);
+                                    await fetchNotebook(window.localStorage.getItem('uid'), window.localStorage.getItem('keyphrase'));
+                                    await fetchParagraphs(window.localStorage.getItem('uid'));
+                                    appState.initialized = true;
                                     updatePage(homePage());
                                 } catch (error) {
                                     if (error instanceof DOMException && error.name === "OperationError") {
