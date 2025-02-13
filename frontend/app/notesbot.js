@@ -1,6 +1,6 @@
 import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { collection, doc, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, addDoc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, query, where, orderBy, limit, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc } from "firebase/firestore";
 
 
 export const styles = {
@@ -203,21 +203,72 @@ export async function removeParagraphFromIDB(id) {
 }
 
 
-export async function fetchNotebook(uid, keyphrase, method = getDoc) {
-    const notebookDocSnap = await method(doc(appState.firebase.firestore, "notebooks", uid));
-    if (notebookDocSnap.exists()) {
-        const notebookDocData = notebookDocSnap.data();
-        if (!keyphrase) {
-            throw 'keyphrase-doesnt-exist';
-        }
-        appState.key = await generateKey(keyphrase, notebookDocData.salt);
-        appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.notes)));
-        appState.tags = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.tags)));
-        appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.folders)));
-    } else {
-        throw 'notebook-doesnt-exist';
-    }
+function listenNotebook() {
+    appState.stopListenNotebook = onSnapshot(doc(appState.firebase.firestore, 'notebooks', appState.user.uid),
+        async (docSnap) => {
+            if (!docSnap.exists()) {
+                updatePage(setupTutorialPage());
+            } else if (!window.localStorage.getItem('keyphrase')) {
+                updatePage(keyphrasePage());
+            } else {
+                try {
+                    const docData = docSnap.data();
+                    appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt);
+                    appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.notes)));
+                    appState.tags = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.tags)));
+                    appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.folders)));
+                    if (!appState.initialized) {
+                        appState.initialized = true;
+                        updatePage(homePage());
+                    } else {
+                        widgets['folders-list']?.update();
+                        widgets['notes-list']?.update();
+                    }
+                } catch (error) {
+                    if (error instanceof DOMException && error.name === "OperationError") {
+                        updatePage(keyphrasePage());
+                    } else {
+                        updatePage(generalErrorPage());
+                    }
+                }
+            }
+        },
+        (error) => {
+            console.error(error);
+            updatePage(generalErrorPage());
+        });
 }
+function listenParagraphs(noteId) {
+    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', noteId), orderBy('timestamp', 'desc'), limit(32)),
+        async (querySnapshot) => {
+            appState.paragraphs = [];
+            for (const docSnap of querySnapshot.docs) {
+                const docData = docSnap.data();
+                appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, ...JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.content))) });
+            }
+            widgets['paragraphs-list']?.update();
+        },
+        (error) => {
+            console.error(error);
+            updatePage(generalErrorPage());
+        }
+    );
+}
+// export async function fetchNotebook(uid, keyphrase, method = getDoc) {
+//     const notebookDocSnap = await method(doc(appState.firebase.firestore, "notebooks", uid));
+//     if (notebookDocSnap.exists()) {
+//         const notebookDocData = notebookDocSnap.data();
+//         if (!keyphrase) {
+//             throw 'keyphrase-doesnt-exist';
+//         }
+//         appState.key = await generateKey(keyphrase, notebookDocData.salt);
+//         appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.notes)));
+//         appState.tags = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.tags)));
+//         appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.folders)));
+//     } else {
+//         throw 'notebook-doesnt-exist';
+//     }
+// }
 export async function fetchParagraphs(uid, method = getDocs) {
     appState.paragraphs = {};
     (await method(collection(appState.firebase.firestore, 'notebooks', uid, 'paragraphs'))).forEach(async (paragraphDocSnap) => {
@@ -343,12 +394,13 @@ export function setupPage() {
                                 }
                                 updatePage(loadingPage());
                                 try {
+                                    window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
                                     const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
                                     const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
                                     const notes = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
                                     const tags = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
                                     const folders = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
-                                    const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', window.localStorage.getItem('uid'));
+                                    const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
                                     const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
                                         const notebookDoc = await transaction.get(notebookDocRef);
                                         if (notebookDoc.exists()) {
@@ -362,13 +414,6 @@ export function setupPage() {
                                         });
                                         return true;
                                     });
-                                    appState.key = key;
-                                    window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                    appState.notes = {};
-                                    appState.tags = {};
-                                    appState.folders = {};
-                                    appState.initialized = true;
-                                    updatePage(homePage());
                                 } catch (error) {
                                     console.error(error);
                                     updatePage(generalErrorPage());
@@ -426,16 +471,14 @@ export function keyphrasePage(notesDocData) {
                                 try {
                                     updatePage(loadingPage());
                                     window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                    await fetchNotebook(window.localStorage.getItem('uid'), window.localStorage.getItem('keyphrase'));
-                                    await fetchParagraphs(window.localStorage.getItem('uid'));
-                                    appState.initialized = true;
-                                    updatePage(homePage());
+                                    appState.stopListenNotebook();
+                                    listenNotebook();
                                 } catch (error) {
                                     if (error instanceof DOMException && error.name === "OperationError") {
                                         updatePage(keyphrasePage());
                                         widgets['keyphrase-hint'].update(false);
                                     } else {
-                                        throw error;
+                                        updatePage(generalErrorPage());
                                     }
                                 }
                             },

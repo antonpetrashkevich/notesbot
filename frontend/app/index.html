@@ -10,12 +10,33 @@
 
 <body>
     <script type="module">
-        import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { toBase64, fromBase64, generateKey, encrypt, decrypt, initIDB, dropIDB, getParagraphFromIDB, getParagraphsByNoteIdFromIDB, getParagraphsByTagFromIDB, putParagraphToIDB, removeParagraphFromIDB, fetchNotebook, fetchParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
+        import { appState, updatePage, goTo, startApp, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { initIDB, dropIDB, listenNotebook, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, collection, doc, query, where, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocs, getDocsFromCache, getDocsFromServer, addDoc, setDoc, updateDoc } from "firebase/firestore";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
         // import { getAnalytics } from "firebase/analytics";
+
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
+            authDomain: "notesbot-be271.firebaseapp.com",
+            projectId: "notesbot-be271",
+            storageBucket: "notesbot-be271.firebasestorage.app",
+            messagingSenderId: "408712122661",
+            appId: "1:408712122661:web:30fa210ad4a3dc73ec4acc",
+            measurementId: "G-85D3XP1ZM8"
+        };
+        appState.firebase = {};
+        appState.firebase.app = initializeFirebase(firebaseConfig);
+        appState.firebase.auth = getAuth(appState.firebase.app);
+        appState.firebase.firestore = initializeFirestore(appState.firebase.app, {
+            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+            cacheSize: CACHE_SIZE_UNLIMITED
+        });
+        // appState.firebase.analytics = getAnalytics(appState.firebase.app);
+        appState.textEncoder = new TextEncoder();
+        appState.textDecoder = new TextDecoder();
 
 
         function pathController(segments, params) {
@@ -42,63 +63,13 @@
         }
 
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
-            authDomain: "notesbot-be271.firebaseapp.com",
-            projectId: "notesbot-be271",
-            storageBucket: "notesbot-be271.firebasestorage.app",
-            messagingSenderId: "408712122661",
-            appId: "1:408712122661:web:30fa210ad4a3dc73ec4acc",
-            measurementId: "G-85D3XP1ZM8"
-        };
-        appState.firebase = {};
-        appState.firebase.app = initializeFirebase(firebaseConfig);
-        appState.firebase.auth = getAuth(appState.firebase.app);
-        appState.firebase.firestore = initializeFirestore(appState.firebase.app, {
-            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-            cacheSize: CACHE_SIZE_UNLIMITED
-        });
-        // appState.firebase.analytics = getAnalytics(appState.firebase.app);
-        appState.textEncoder = new TextEncoder();
-        appState.textDecoder = new TextDecoder();
-
-
         startApp({ name: 'XPL', pathController });
         updatePage(loadingPage());
         await initIDB();
-        if (window.localStorage.getItem('uid') && window.localStorage.getItem('keyphrase')) {
-            try {
-                await fetchNotebook(window.localStorage.getItem('uid'), window.localStorage.getItem('keyphrase'), getDocFromCache);
-                await fetchParagraphs(window.localStorage.getItem('uid'), getDocsFromCache);
-                appState.initialized = true;
-                updatePage(homePage());
-            } catch (error) {
-            }
-        }
         onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {
-                if (!appState.initialized || user.uid !== window.localStorage.getItem('uid')) {
-                    window.localStorage.setItem('uid', user.uid);
-                    try {
-                        await fetchNotebook(window.localStorage.getItem('uid'), window.localStorage.getItem('keyphrase'));
-                        await fetchParagraphs(window.localStorage.getItem('uid'));
-                        appState.initialized = true;
-                        updatePage(homePage());
-                    } catch (error) {
-                        if (error === 'notebook-doesnt-exist') {
-                            updatePage(setupTutorialPage());
-                        }
-                        else if (error === 'keyphrase-doesnt-exist') {
-                            updatePage(keyphrasePage());
-                        }
-                        else if (error instanceof DOMException && error.name === "OperationError") {
-                            updatePage(keyphrasePage());
-                        } else {
-                            console.error(error);
-                            updatePage(generalErrorPage());
-                        }
-                    }
-                }
+                appState.user = user;
+                listenNotebook();
             } else {
                 try {
                     updatePage(loadingPage());
@@ -106,9 +77,8 @@
                     appState.notes = null;
                     appState.tags = null;
                     appState.folders = null;
-                    appState.paragraphs = null;
                     appState.initialized = null;
-                    window.localStorage.removeItem('uid');
+                    appState.stopListenNotebook?.();
                     window.localStorage.removeItem('keyphrase');
                     await dropIDB();
                     updatePage(loginPage());
