@@ -11,7 +11,7 @@
 <body>
     <script type="module">
         import { appState, updatePage, goTo, startApp, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { initIDB, dropIDB, listenNotebook, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
+        import { listenNotebook, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
@@ -65,7 +65,6 @@
 
         startApp({ name: 'XPL', pathController });
         updatePage(loadingPage());
-        await initIDB();
         onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {
                 appState.user = user;
@@ -80,7 +79,6 @@
                     appState.initialized = null;
                     appState.stopListenNotebook?.();
                     window.localStorage.removeItem('keyphrase');
-                    await dropIDB();
                     updatePage(loginPage());
                 } catch (e) {
                     console.error(e);
