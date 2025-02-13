@@ -99,7 +99,7 @@ export async function decrypt(key, ivdata) {
 }
 
 
-function listenNotebook() {
+export function listenNotebook() {
     appState.stopListenNotebook = onSnapshot(doc(appState.firebase.firestore, 'notebooks', appState.user.uid),
         async (docSnap) => {
             if (!docSnap.exists()) {
@@ -111,7 +111,6 @@ function listenNotebook() {
                     const docData = docSnap.data();
                     appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt);
                     appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.notes)));
-                    appState.tags = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.tags)));
                     appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.folders)));
                     if (!appState.initialized) {
                         appState.initialized = true;
@@ -135,7 +134,7 @@ function listenNotebook() {
         });
 }
 function listenParagraphs(noteId) {
-    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', noteId), orderBy('timestamp', 'desc'), limit(32)),
+    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteIds', 'array-contains', noteId), orderBy('timestamp', 'desc'), limit(32)),
         async (querySnapshot) => {
             appState.paragraphs = [];
             for (const docSnap of querySnapshot.docs) {
@@ -149,27 +148,6 @@ function listenParagraphs(noteId) {
             updatePage(generalErrorPage());
         }
     );
-}
-// export async function fetchNotebook(uid, keyphrase, method = getDoc) {
-//     const notebookDocSnap = await method(doc(appState.firebase.firestore, "notebooks", uid));
-//     if (notebookDocSnap.exists()) {
-//         const notebookDocData = notebookDocSnap.data();
-//         if (!keyphrase) {
-//             throw 'keyphrase-doesnt-exist';
-//         }
-//         appState.key = await generateKey(keyphrase, notebookDocData.salt);
-//         appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.notes)));
-//         appState.tags = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.tags)));
-//         appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, notebookDocData.folders)));
-//     } else {
-//         throw 'notebook-doesnt-exist';
-//     }
-// }
-export async function fetchParagraphs(uid, method = getDocs) {
-    appState.paragraphs = {};
-    (await method(collection(appState.firebase.firestore, 'notebooks', uid, 'paragraphs'))).forEach(async (paragraphDocSnap) => {
-        appState.paragraphs[paragraphDocSnap.id] = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, paragraphDocSnap.data())));
-    });
 }
 
 
@@ -294,7 +272,6 @@ export function setupPage() {
                                     const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
                                     const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
                                     const notes = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
-                                    const tags = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
                                     const folders = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
                                     const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
                                     const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
@@ -305,7 +282,6 @@ export function setupPage() {
                                         transaction.set(notebookDocRef, {
                                             salt,
                                             notes,
-                                            tags,
                                             folders
                                         });
                                         return true;
