@@ -51,6 +51,8 @@
                 appState.noteId = params.id;
                 updatePage(notePage());
             } else {
+                appState.folderId = undefined;
+                appState.noteId = undefined;
                 updatePage(folderPage());
             }
         }
@@ -61,6 +63,7 @@
         onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {
                 appState.user = user;
+                appState.folderId = 'root';
                 listenNotebook();
             } else {
                 try {

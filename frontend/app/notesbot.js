@@ -16,6 +16,37 @@ export const styles = {
         borderRadius: '0.5rem',
         backgroundColor: colors.gray[100],
     },
+    menu: {
+
+    },
+    floatingButton: {
+        position: 'fixed',
+        bottom: '1rem',
+        right: '1rem',
+        zIndex: 10,
+        padding: 0,
+        borderRadius: '2rem',
+        backgroundColor: colors.red[500],
+        hoverColor: colors.red[600],
+    },
+    floatingButtonIcon: {
+        width: '4rem',
+        height: '4rem',
+        fill: 'white',
+    },
+    menuButton: {
+        width: '100%',
+        justifyContent: 'center',
+        hoverColor: colors.gray[100],
+        fontWeight: 600,
+    },
+    dangeMenuButton: {
+        width: '100%',
+        justifyContent: 'center',
+        hoverColor: colors.red[100],
+        fontWeight: 600,
+        color: colors.red[600],
+    },
     actionButton: {
         padding: '0.75rem',
         justifyContent: 'center',
@@ -30,6 +61,8 @@ export const styles = {
         hoverColor: colors.gray[100],
     },
     dangerButton: {
+        padding: '0.75rem',
+        justifyContent: 'center',
         backgroundColor: colors.red[600],
         hoverColor: colors.red[700],
         color: 'white',
@@ -37,7 +70,7 @@ export const styles = {
 }
 
 
-export async function generateKey(keyphrase, salt) {
+async function generateKey(keyphrase, salt) {
     const keyMaterial = await window.crypto.subtle.importKey(
         'raw',
         appState.textEncoder.encode(keyphrase),
@@ -58,7 +91,7 @@ export async function generateKey(keyphrase, salt) {
         ['encrypt', 'decrypt']
     );
 }
-export async function encrypt(key, data) {
+async function encrypt(key, data) {
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const encryptedData = await window.crypto.subtle.encrypt(
         {
@@ -70,7 +103,7 @@ export async function encrypt(key, data) {
     );
     return { iv: Bytes.fromUint8Array(iv), data: Bytes.fromUint8Array(new Uint8Array(encryptedData)) };
 }
-export async function decrypt(key, iv, data) {
+async function decrypt(key, iv, data) {
     return await window.crypto.subtle.decrypt(
         {
             name: "AES-GCM",
@@ -79,6 +112,21 @@ export async function decrypt(key, iv, data) {
         key,
         data
     );
+}
+
+
+function generateTreeId() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    while (true) {
+        let result = '';
+        const charactersLength = characters.length;
+        for (let i = 0; i < 8; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        if (!appState.tree.hasOwnProperty(result)) {
+            return result;
+        }
+    }
 }
 
 
@@ -98,9 +146,10 @@ export function listenNotebook() {
                         appState.initialized = true;
                         updatePage(folderPage());
                     } else {
-                        widgets['tree-list']?.update();
+                        widgets['folder']?.update();
                     }
                 } catch (error) {
+                    console.error(error);
                     if (error instanceof DOMException && error.name === "OperationError") {
                         updatePage(keyphrasePage());
                     } else {
@@ -122,7 +171,7 @@ function listenParagraphs(noteId) {
                 const docData = docSnap.data();
                 appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, ...JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.content.iv.toUint8Array(), docData.content.data.toUint8Array()))) });
             }
-            widgets['paragraphs-list']?.update();
+            widgets['note']?.update();
         },
         (error) => {
             console.error(error);
@@ -252,7 +301,7 @@ export function setupPage() {
                                     window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
                                     const salt = window.crypto.getRandomValues(new Uint8Array(16));
                                     const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
-                                    const tree = await encrypt(key, appState.textEncoder.encode(JSON.stringify({ root: { name: 'root', type: 'folder', parents: [], children: [] } })));
+                                    const tree = await encrypt(key, appState.textEncoder.encode(JSON.stringify({ root: { name: 'Home', type: 'folder', parents: [], children: [] } })));
                                     const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
                                     const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
                                         const notebookDoc = await transaction.get(notebookDocRef);
@@ -348,14 +397,111 @@ export function keyphrasePage(notesDocData) {
 
 export function folderPage() {
     return {
-        widget: base({
+        widget: base(() => ({
+            id: 'folder',
+            gap: '1rem',
             children: [
-                text({
-                    text: 'Folder page'
+                ...appState.tree[appState.folderId].children.map(cid => button({
+                    ...styles.card,
+                    width: '100%',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    children: [
+                        text({
+                            fontSize: '1.5rem',
+                            fontWeight: 600,
+                            text: appState.tree[cid]['name']
+                        }),
+                        button({
+                            hoverColor: colors.gray[100],
+                            children: [
+                                svg({
+                                    width: '1rem',
+                                    height: '1rem',
+                                    fill: colors.gray[500],
+                                    svg: icons.menu
+                                })
+                            ]
+                        })
+                    ]
+                })),
+                button({
+                    ...styles.floatingButton,
+                    click: function (event) {
+                        modalOn(menu({
+                            ...styles.menu,
+                            gap: '1rem',
+                            children: [
+                                button({
+                                    ...styles.menuButton,
+                                    click: function (event) {
+                                        modalOn(menu({
+                                            ...styles.menu,
+                                            alignItems: 'start',
+                                            children: [
+                                                text({
+                                                    fontWeight: 600,
+                                                    text: 'Name'
+                                                }),
+                                                hint({
+                                                    id: 'new-folder-name-hint',
+                                                    marginTop: '0.5rem',
+                                                    errorText: 'Required'
+                                                }, true),
+                                                input({
+                                                    marginTop: '0.5rem',
+                                                    id: 'new-folder-name-input',
+                                                    width: '100%',
+                                                    attributes: { type: 'text', maxlength: '64' }
+                                                }),
+                                                button({
+                                                    ...styles.dangerButton,
+                                                    marginTop: '1rem',
+                                                    alignSelf: 'end',
+                                                    fontWeight: 600,
+                                                    click: async function (event) {
+                                                        if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                            widgets['new-folder-name-hint'].update(false);
+                                                            return;
+                                                        }
+                                                        const newFolderId = generateTreeId();
+                                                        appState.tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parents: [appState.folderId], children: [] }
+                                                        appState.tree[appState.folderId].children.push(newFolderId);
+                                                        updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                        });
+                                                        modalOff();
+                                                    },
+                                                    children: [
+                                                        text({ text: 'Create' })
+                                                    ]
+                                                })
+                                            ]
+                                        }))
+                                    },
+                                    children: [text({
+                                        text: 'New Folder'
+                                    })]
+                                }),
+                                button({
+                                    ...styles.menuButton,
+                                    children: [text({
+                                        text: 'New Note'
+                                    })]
+                                }),
+                            ]
+                        }))
+                    },
+                    children: [
+                        svg({
+                            ...styles.floatingButtonIcon,
+                            svg: icons.add
+                        })
+                    ]
                 })
             ]
-        }),
-        meta: { title: `${appState.folderId ? 'abc' : 'Home'} | ${appName}`, description: 'Folder page.' }
+        })),
+        meta: { title: `${appState.tree[appState.folderId]['name']} | ${appName}`, description: 'Folder page.' }
     };
 }
 
