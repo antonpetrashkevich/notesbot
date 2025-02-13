@@ -1,6 +1,6 @@
 import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { collection, doc, query, where, orderBy, limit, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc } from "firebase/firestore";
+import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc } from "firebase/firestore";
 
 
 export const styles = {
@@ -37,23 +37,6 @@ export const styles = {
 }
 
 
-export function toBase64(uint8Array) {
-    let binary = '';
-    uint8Array.forEach(byte => {
-        binary += String.fromCharCode(byte);
-    });
-    return btoa(binary);
-}
-export function fromBase64(base64) {
-    const binaryString = atob(base64);
-    const uint8Array = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-        uint8Array[i] = binaryString.charCodeAt(i);
-    }
-    return uint8Array;
-}
-
-
 export async function generateKey(keyphrase, salt) {
     const keyMaterial = await window.crypto.subtle.importKey(
         'raw',
@@ -65,7 +48,7 @@ export async function generateKey(keyphrase, salt) {
     return window.crypto.subtle.deriveKey(
         {
             name: 'PBKDF2',
-            salt: fromBase64(salt),
+            salt: salt,
             iterations: 2 ** 16,
             hash: 'SHA-256',
         },
@@ -85,16 +68,16 @@ export async function encrypt(key, data) {
         key,
         data
     );
-    return { iv: toBase64(iv), data: toBase64(new Uint8Array(encryptedData)) };
+    return { iv: Bytes.fromUint8Array(iv), data: Bytes.fromUint8Array(new Uint8Array(encryptedData)) };
 }
-export async function decrypt(key, ivdata) {
+export async function decrypt(key, iv, data) {
     return await window.crypto.subtle.decrypt(
         {
             name: "AES-GCM",
-            iv: fromBase64(ivdata.iv),
+            iv
         },
         key,
-        fromBase64(ivdata.data)
+        data
     );
 }
 
@@ -109,15 +92,13 @@ export function listenNotebook() {
             } else {
                 try {
                     const docData = docSnap.data();
-                    appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt);
-                    appState.notes = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.notes)));
-                    appState.folders = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.folders)));
+                    appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
+                    appState.tree = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
                     if (!appState.initialized) {
                         appState.initialized = true;
-                        updatePage(homePage());
+                        updatePage(folderPage());
                     } else {
-                        widgets['folders-list']?.update();
-                        widgets['notes-list']?.update();
+                        widgets['tree-list']?.update();
                     }
                 } catch (error) {
                     if (error instanceof DOMException && error.name === "OperationError") {
@@ -139,7 +120,7 @@ function listenParagraphs(noteId) {
             appState.paragraphs = [];
             for (const docSnap of querySnapshot.docs) {
                 const docData = docSnap.data();
-                appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, ...JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.content))) });
+                appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, ...JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.content.iv.toUint8Array(), docData.content.data.toUint8Array()))) });
             }
             widgets['paragraphs-list']?.update();
         },
@@ -269,10 +250,9 @@ export function setupPage() {
                                 updatePage(loadingPage());
                                 try {
                                     window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                    const salt = toBase64(window.crypto.getRandomValues(new Uint8Array(16)));
+                                    const salt = window.crypto.getRandomValues(new Uint8Array(16));
                                     const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
-                                    const notes = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
-                                    const folders = await encrypt(key, appState.textEncoder.encode(JSON.stringify({})));
+                                    const tree = await encrypt(key, appState.textEncoder.encode(JSON.stringify({ root: { name: 'root', type: 'folder', parents: [], children: [] } })));
                                     const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
                                     const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
                                         const notebookDoc = await transaction.get(notebookDocRef);
@@ -280,9 +260,8 @@ export function setupPage() {
                                             throw "User already exists";
                                         }
                                         transaction.set(notebookDocRef, {
-                                            salt,
-                                            notes,
-                                            folders
+                                            salt: Bytes.fromUint8Array(salt),
+                                            tree
                                         });
                                         return true;
                                     });
@@ -367,83 +346,21 @@ export function keyphrasePage(notesDocData) {
 }
 
 
-export function homePage() {
+export function folderPage() {
     return {
-        widget: row({
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem',
+        widget: base({
             children: [
                 text({
-                    text: 'Home page'
+                    text: 'Folder page'
                 })
             ]
         }),
-        meta: { title: `Home | ${appName}`, description: 'Home page.' }
-    };
-}
-
-
-export function newFolderPage() {
-    return {
-        widget: row({
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem',
-            children: [
-                text({
-                    text: 'Link sent. Check your email.'
-                })
-            ]
-        }),
-        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
-    };
-}
-
-
-export function newNotePage() {
-    return {
-        widget: row({
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem',
-            children: [
-                text({
-                    text: 'Link sent. Check your email.'
-                })
-            ]
-        }),
-        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
+        meta: { title: `${appState.folderId ? 'abc' : 'Home'} | ${appName}`, description: 'Folder page.' }
     };
 }
 
 
 export function notePage() {
-    return {
-        widget: row({
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem',
-            children: [
-                text({
-                    text: 'Link sent. Check your email.'
-                })
-            ]
-        }),
-        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
-    };
-}
-
-
-export function paragraphPage() {
     return {
         widget: row({
             width: '100%',

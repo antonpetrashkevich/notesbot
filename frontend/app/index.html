@@ -11,7 +11,7 @@
 <body>
     <script type="module">
         import { appState, updatePage, goTo, startApp, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { listenNotebook, loginPage, setupTutorialPage, setupPage, keyphrasePage, homePage, newFolderPage, newNotePage, notePage, paragraphPage } from './notesbot.js';
+        import { listenNotebook, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
@@ -43,22 +43,15 @@
             if (!appState.initialized) {
                 return;
             }
-            else if (segments.length === 1 && segments[0] === 'newfolder') {
-                updatePage(newFolderPage());
-            }
-            else if (segments.length === 1 && segments[0] === 'newnote') {
-                updatePage(newNotePage());
+            else if (segments.length === 1 && segments[0] === 'folder') {
+                appState.folderId = params.id;
+                updatePage(folderPage());
             }
             else if (segments.length === 1 && segments[0] === 'note') {
-                appState.noteId = params.nid;
+                appState.noteId = params.id;
                 updatePage(notePage());
-            }
-            else if (segments.length === 1 && segments[0] === 'paragraph') {
-                appState.noteId = params.nid;
-                appState.paragraphId = params.pid;
-                updatePage(paragraphPage());
             } else {
-                updatePage(homePage());
+                updatePage(folderPage());
             }
         }
 
@@ -73,9 +66,10 @@
                 try {
                     updatePage(loadingPage());
                     appState.key = null;
-                    appState.notes = null;
-                    appState.folders = null;
+                    appState.tree = null;
                     appState.initialized = null;
+                    appState.folderId = null;
+                    appState.noteId = null;
                     appState.stopListenNotebook?.();
                     window.localStorage.removeItem('keyphrase');
                     updatePage(loginPage());
