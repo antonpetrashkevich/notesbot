@@ -462,6 +462,65 @@ export function folderPage() {
                                             ...styles.menuButton,
                                             click: function (event) {
                                                 event.stopPropagation();
+                                                modalOn(menu((value) => ({
+                                                    ...styles.menu,
+                                                    alignItems: 'start',
+                                                    gap: '0.5rem',
+                                                    children: [
+                                                        text({
+                                                            fontWeight: 600,
+                                                            text: 'Move to Folder'
+                                                        }),
+                                                        value === 'root' ? null : button({
+                                                            ...styles.menuButton,
+                                                            justifyContent: 'start',
+                                                            click: function (event) {
+                                                                event.stopPropagation();
+                                                                this.parent.update(appState.tree[value].parent);
+                                                            },
+                                                            children: [
+                                                                text({
+                                                                    text: '[...]'
+                                                                })
+                                                            ]
+                                                        }),
+                                                        ...appState.tree[value].children.map(id => button({
+                                                            ...styles.menuButton,
+                                                            justifyContent: 'start',
+                                                            click: function (event) {
+                                                                event.stopPropagation();
+                                                                this.parent.update(id);
+                                                            },
+                                                            children: [
+                                                                text({
+                                                                    text: appState.tree[id].name
+                                                                })
+                                                            ]
+                                                        })),
+                                                        button({
+                                                            ...styles.dangerButton,
+                                                            alignSelf: 'end',
+                                                            fontWeight: 600,
+                                                            click: async function (event) {
+                                                                event.stopPropagation();
+                                                                const oldParent = appState.tree[appState.tree[cid].parent];
+                                                                const newParent = appState.tree[value];
+                                                                oldParent.children = oldParent.children.filter(id => id !== cid);
+                                                                newParent.children.push(cid);
+                                                                appState.tree[cid].parent = value;
+                                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                });
+                                                                modalOff();
+                                                            },
+                                                            children: [
+                                                                text({
+                                                                    text: `Move to ${appState.tree[value].name}`
+                                                                })
+                                                            ]
+                                                        })
+                                                    ],
+                                                }), 'root'));
                                             },
                                             children: [text({
                                                 text: 'Move to Folder'
@@ -524,7 +583,6 @@ export function folderPage() {
                                                 event.stopPropagation();
                                                 if (appState.tree[cid].type === 'note') {
                                                     modalOn(menu({
-                                                        minWidth: undefined,
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
