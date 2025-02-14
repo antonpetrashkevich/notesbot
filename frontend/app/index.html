@@ -43,16 +43,15 @@
             if (!appState.initialized) {
                 return;
             }
-            else if (segments.length === 1 && segments[0] === 'folder') {
-                appState.folderId = params.id;
+            else if (segments.length === 2 && segments[0] === 'folder') {
+                appState.folderId = segments[1];
                 updatePage(folderPage());
             }
-            else if (segments.length === 1 && segments[0] === 'note') {
-                appState.noteId = params.id;
+            else if (segments.length === 2 && segments[0] === 'note') {
+                appState.noteId = segments[1];
                 updatePage(notePage());
             } else {
-                appState.folderId = undefined;
-                appState.noteId = undefined;
+                appState.folderId = 'root';
                 updatePage(folderPage());
             }
         }
@@ -70,9 +69,11 @@
                     updatePage(loadingPage());
                     appState.key = null;
                     appState.tree = null;
+                    appState.orphanNoteIds = null;
                     appState.initialized = null;
                     appState.folderId = null;
                     appState.noteId = null;
+                    appState.paragraphs = null;
                     appState.stopListenNotebook?.();
                     window.localStorage.removeItem('keyphrase');
                     updatePage(loginPage());

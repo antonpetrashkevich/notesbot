@@ -1,6 +1,6 @@
 import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc } from "firebase/firestore";
+import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
 
 export const styles = {
@@ -17,22 +17,6 @@ export const styles = {
         backgroundColor: colors.gray[100],
     },
     menu: {
-
-    },
-    floatingButton: {
-        position: 'fixed',
-        bottom: '1rem',
-        right: '1rem',
-        zIndex: 10,
-        padding: 0,
-        borderRadius: '2rem',
-        backgroundColor: colors.red[500],
-        hoverColor: colors.red[600],
-    },
-    floatingButtonIcon: {
-        width: '4rem',
-        height: '4rem',
-        fill: 'white',
     },
     menuButton: {
         width: '100%',
@@ -45,7 +29,7 @@ export const styles = {
         justifyContent: 'center',
         hoverColor: colors.red[100],
         fontWeight: 600,
-        color: colors.red[600],
+        color: colors.red[500],
     },
     actionButton: {
         padding: '0.75rem',
@@ -63,8 +47,8 @@ export const styles = {
     dangerButton: {
         padding: '0.75rem',
         justifyContent: 'center',
-        backgroundColor: colors.red[600],
-        hoverColor: colors.red[700],
+        backgroundColor: colors.red[500],
+        hoverColor: colors.red[600],
         color: 'white',
     }
 }
@@ -123,7 +107,7 @@ function generateTreeId() {
         for (let i = 0; i < 8; i++) {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
-        if (!appState.tree.hasOwnProperty(result)) {
+        if (!appState.tree.hasOwnProperty(result) && appState.orphanNoteIds.indexOf(result) === -1) {
             return result;
         }
     }
@@ -135,24 +119,30 @@ export function listenNotebook() {
         async (docSnap) => {
             if (!docSnap.exists()) {
                 updatePage(setupTutorialPage());
-            } else if (!window.localStorage.getItem('keyphrase')) {
-                updatePage(keyphrasePage());
             } else {
                 try {
                     const docData = docSnap.data();
-                    appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
-                    appState.tree = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
-                    if (!appState.initialized) {
-                        appState.initialized = true;
-                        updatePage(folderPage());
-                    } else {
-                        widgets['folder']?.update();
+                    if (docData.status === 'deleted' && !appState.initialized) {
+                        updatePage(setupTutorialPage());
+                    } else if (docData.status === 'active' && !window.localStorage.getItem('keyphrase')) {
+                        updatePage(keyphrasePage());
+                    }
+                    else if (docData.status === 'active' && window.localStorage.getItem('keyphrase')) {
+                        appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
+                        appState.tree = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
+                        appState.orphanNoteIds = docData.orphanNoteIds;
+                        if (!appState.initialized) {
+                            appState.initialized = true;
+                            updatePage(folderPage());
+                        } else {
+                            widgets['folder']?.update();
+                        }
                     }
                 } catch (error) {
-                    console.error(error);
                     if (error instanceof DOMException && error.name === "OperationError") {
                         updatePage(keyphrasePage());
                     } else {
+                        console.error(error);
                         updatePage(generalErrorPage());
                     }
                 }
@@ -217,9 +207,9 @@ export function setupTutorialPage() {
                 column({
                     gap: '1rem',
                     children: [
-                        text({ text: '🔐 Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.' }),
-                        text({ text: '✍️ Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.' }),
-                        text({ text: '🕵️ Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.' }),
+                        text({ text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.' }),
+                        text({ text: 'Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.' }),
+                        text({ text: 'Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.' }),
                     ]
                 }),
                 row({
@@ -301,17 +291,27 @@ export function setupPage() {
                                     window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
                                     const salt = window.crypto.getRandomValues(new Uint8Array(16));
                                     const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
-                                    const tree = await encrypt(key, appState.textEncoder.encode(JSON.stringify({ root: { name: 'Home', type: 'folder', parents: [], children: [] } })));
+                                    const tree = await encrypt(key, appState.textEncoder.encode(JSON.stringify({ root: { name: 'Home', type: 'folder', parent: null, children: [] } })));
                                     const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
                                     const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
                                         const notebookDoc = await transaction.get(notebookDocRef);
-                                        if (notebookDoc.exists()) {
+                                        if (notebookDoc.exists() && notebookDoc.data().status === 'active') {
                                             throw "User already exists";
+                                        } else if (notebookDoc.exists() && notebookDoc.data().status === 'deleted') {
+                                            transaction.update(notebookDocRef, {
+                                                status: 'active',
+                                                salt: Bytes.fromUint8Array(salt),
+                                                tree,
+                                            });
                                         }
-                                        transaction.set(notebookDocRef, {
-                                            salt: Bytes.fromUint8Array(salt),
-                                            tree
-                                        });
+                                        else {
+                                            transaction.set(notebookDocRef, {
+                                                status: 'active',
+                                                salt: Bytes.fromUint8Array(salt),
+                                                tree,
+                                                orphanNoteIds: []
+                                            });
+                                        }
                                         return true;
                                     });
                                 } catch (error) {
@@ -406,6 +406,13 @@ export function folderPage() {
                     width: '100%',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    click: function (event) {
+                        if (appState.tree[cid]['type'] === 'folder') {
+                            goTo(`/folder/${cid}`);
+                        } else if (appState.tree[cid]['type'] === 'note') {
+                            goTo(`/note/${cid}`);
+                        }
+                    },
                     children: [
                         text({
                             fontSize: '1.5rem',
@@ -414,88 +421,417 @@ export function folderPage() {
                         }),
                         button({
                             hoverColor: colors.gray[100],
+                            click: function (event) {
+                                event.stopPropagation();
+                                modalOn(menu({
+                                    ...styles.menu,
+                                    children: [
+                                        appState.tree[appState.folderId].children.indexOf(cid) > 0 ? button({
+                                            ...styles.menuButton,
+                                            click: async function (event) {
+                                                event.stopPropagation();
+                                                const arr = appState.tree[appState.folderId].children;
+                                                const index = arr.indexOf(cid);
+                                                [arr[index], arr[index - 1]] = [arr[index - 1], arr[index]];
+                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                });
+                                                modalOff();
+                                            },
+                                            children: [text({
+                                                text: 'Move Up'
+                                            })]
+                                        }) : null,
+                                        appState.tree[appState.folderId].children.indexOf(cid) < appState.tree[appState.folderId].children.length - 1 ? button({
+                                            ...styles.menuButton,
+                                            click: async function (event) {
+                                                event.stopPropagation();
+                                                const arr = appState.tree[appState.folderId].children;
+                                                const index = arr.indexOf(cid);
+                                                [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                });
+                                                modalOff();
+                                            },
+                                            children: [text({
+                                                text: 'Move Down'
+                                            })]
+                                        }) : null,
+                                        button({
+                                            ...styles.menuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                            },
+                                            children: [text({
+                                                text: 'Move to Folder'
+                                            })]
+                                        }),
+                                        button({
+                                            ...styles.menuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                                modalOn(menu({
+                                                    ...styles.menu,
+                                                    alignItems: 'start',
+                                                    children: [
+                                                        text({
+                                                            fontWeight: 600,
+                                                            text: 'New Name'
+                                                        }),
+                                                        hint({
+                                                            id: 'new-folder-name-hint',
+                                                            marginTop: '0.5rem',
+                                                            errorText: 'Required'
+                                                        }, true),
+                                                        input({
+                                                            marginTop: '0.5rem',
+                                                            id: 'new-folder-name-input',
+                                                            width: '100%',
+                                                            attributes: { type: 'text', maxlength: '64' }
+                                                        }),
+                                                        button({
+                                                            ...styles.dangerButton,
+                                                            marginTop: '1rem',
+                                                            alignSelf: 'end',
+                                                            fontWeight: 600,
+                                                            click: async function (event) {
+                                                                event.stopPropagation();
+                                                                if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                    widgets['new-folder-name-hint'].update(false);
+                                                                    return;
+                                                                }
+                                                                appState.tree[cid]['name'] = widgets['new-folder-name-input'].domElement.value.trim();
+                                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                });
+                                                                modalOff();
+                                                            },
+                                                            children: [
+                                                                text({ text: 'Rename' })
+                                                            ]
+                                                        })
+                                                    ]
+                                                }))
+                                            },
+                                            children: [text({
+                                                text: 'Rename'
+                                            })]
+                                        }),
+                                        button({
+                                            ...styles.dangeMenuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                                if (appState.tree[cid].type === 'note') {
+                                                    modalOn(menu({
+                                                        minWidth: undefined,
+                                                        alignItems: 'start',
+                                                        gap: '0.5rem',
+                                                        children: [
+                                                            text({
+                                                                fontWeight: 600,
+                                                                text: 'Delete note'
+                                                            }),
+                                                            text({
+                                                                text: 'You won\'t be able to restore it. Consider moving to "Archive" folder'
+                                                            }),
+                                                            button({
+                                                                ...styles.dangerButton,
+                                                                alignSelf: 'end',
+                                                                click: async function (event) {
+                                                                    event.stopPropagation();
+                                                                    delete appState.tree[cid];
+                                                                    appState.tree[appState.folderId].children = appState.tree[appState.folderId].children.filter(id => id !== cid);
+                                                                    updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                        tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                        orphanNoteIds: arrayUnion(cid),
+                                                                    });
+                                                                    modalOff();
+                                                                },
+                                                                children: [
+                                                                    text({
+                                                                        text: 'Delete'
+                                                                    })]
+                                                            })
+                                                        ]
+                                                    }));
+                                                }
+                                                else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length > 0) {
+                                                    modalOn(menu({
+                                                        minWidth: undefined,
+                                                        alignItems: 'start',
+                                                        gap: '0.5rem',
+                                                        children: [
+                                                            text({
+                                                                fontWeight: 600,
+                                                                text: 'Delete folder'
+                                                            }),
+                                                            text({
+                                                                text: 'Before deleting, move or delete all the notes and folders inside'
+                                                            }),
+                                                        ]
+                                                    }))
+                                                }
+                                                else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length === 0) {
+                                                    modalOn(menu({
+                                                        minWidth: undefined,
+                                                        alignItems: 'start',
+                                                        gap: '0.5rem',
+                                                        children: [
+                                                            text({
+                                                                fontWeight: 600,
+                                                                text: 'Delete folder'
+                                                            }),
+                                                            text({
+                                                                text: 'You won\'t be able to restore it'
+                                                            }),
+                                                            button({
+                                                                ...styles.dangerButton,
+                                                                alignSelf: 'end',
+                                                                click: async function (event) {
+                                                                    event.stopPropagation();
+                                                                    delete appState.tree[cid];
+                                                                    appState.tree[appState.folderId].children = appState.tree[appState.folderId].children.filter(id => id !== cid);
+                                                                    updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                        tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                    });
+                                                                    modalOff();
+                                                                },
+                                                                children: [
+                                                                    text({
+                                                                        text: 'Delete'
+                                                                    })]
+                                                            })
+                                                        ]
+                                                    }))
+                                                }
+                                            },
+                                            children: [text({
+                                                text: 'Delete'
+                                            })]
+                                        }),
+                                    ]
+                                }));
+                            },
                             children: [
                                 svg({
                                     width: '1rem',
                                     height: '1rem',
-                                    fill: colors.gray[500],
+                                    fill: colors.gray[600],
                                     svg: icons.menu
                                 })
                             ]
                         })
                     ]
                 })),
-                button({
-                    ...styles.floatingButton,
-                    click: function (event) {
-                        modalOn(menu({
-                            ...styles.menu,
-                            gap: '1rem',
-                            children: [
-                                button({
-                                    ...styles.menuButton,
-                                    click: function (event) {
-                                        modalOn(menu({
-                                            ...styles.menu,
-                                            alignItems: 'start',
-                                            children: [
-                                                text({
-                                                    fontWeight: 600,
-                                                    text: 'Name'
-                                                }),
-                                                hint({
-                                                    id: 'new-folder-name-hint',
-                                                    marginTop: '0.5rem',
-                                                    errorText: 'Required'
-                                                }, true),
-                                                input({
-                                                    marginTop: '0.5rem',
-                                                    id: 'new-folder-name-input',
-                                                    width: '100%',
-                                                    attributes: { type: 'text', maxlength: '64' }
-                                                }),
-                                                button({
-                                                    ...styles.dangerButton,
-                                                    marginTop: '1rem',
-                                                    alignSelf: 'end',
-                                                    fontWeight: 600,
-                                                    click: async function (event) {
-                                                        if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                            widgets['new-folder-name-hint'].update(false);
-                                                            return;
-                                                        }
-                                                        const newFolderId = generateTreeId();
-                                                        appState.tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parents: [appState.folderId], children: [] }
-                                                        appState.tree[appState.folderId].children.push(newFolderId);
-                                                        updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
-                                                        });
-                                                        modalOff();
-                                                    },
-                                                    children: [
-                                                        text({ text: 'Create' })
-                                                    ]
-                                                })
-                                            ]
-                                        }))
-                                    },
-                                    children: [text({
-                                        text: 'New Folder'
-                                    })]
-                                }),
-                                button({
-                                    ...styles.menuButton,
-                                    children: [text({
-                                        text: 'New Note'
-                                    })]
-                                }),
-                            ]
-                        }))
-                    },
+                row({
+                    position: 'fixed',
+                    bottom: 0,
+                    left: 0,
+                    zIndex: 10,
+                    width: '100%',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     children: [
-                        svg({
-                            ...styles.floatingButtonIcon,
-                            svg: icons.add
+                        button({
+                            margin: '1rem',
+                            borderRadius: '2rem',
+                            hoverColor: colors.gray[100],
+                            click: function (event) {
+                                event.stopPropagation();
+                                modalOn(menu({
+                                    ...styles.menu,
+                                    children: [
+                                        button({
+                                            ...styles.dangeMenuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                                modalOn(menu({
+                                                    minWidth: undefined,
+                                                    alignItems: 'start',
+                                                    gap: '0.5rem',
+                                                    children: [
+                                                        text({
+                                                            fontWeight: 600,
+                                                            text: 'Delete account'
+                                                        }),
+                                                        text({
+                                                            text: 'You won\'t be able to restore it'
+                                                        }),
+                                                        button({
+                                                            ...styles.dangerButton,
+                                                            alignSelf: 'end',
+                                                            click: async function (event) {
+                                                                event.stopPropagation();
+                                                                updatePage(loadingPage());
+                                                                await updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                    status: 'deleted',
+                                                                    orphanNoteIds: appState.orphanNoteIds.concat(Object.keys(appState.tree).filter(id => appState.tree[id].type === 'note')),
+                                                                });
+                                                                signOut(appState.firebase.auth);
+                                                            },
+                                                            children: [
+                                                                text({
+                                                                    text: 'Delete'
+                                                                })]
+                                                        })
+                                                    ]
+                                                }));
+                                            },
+                                            children: [text({
+                                                text: 'Delete account'
+                                            })]
+                                        }),
+                                        button({
+                                            ...styles.dangeMenuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                                signOut(appState.firebase.auth);
+                                            },
+                                            children: [text({
+                                                text: 'Log out'
+                                            })]
+                                        })
+                                    ]
+                                }))
+                            },
+                            children: [
+                                svg({
+                                    width: '2rem',
+                                    height: '2rem',
+                                    fill: colors.gray[600],
+                                    svg: icons.menu
+                                })
+                            ]
+                        }),
+                        button({
+                            margin: '1rem',
+                            padding: 0,
+                            borderRadius: '2rem',
+                            backgroundColor: colors.red[500],
+                            hoverColor: colors.red[600],
+                            click: function (event) {
+                                event.stopPropagation();
+                                modalOn(menu({
+                                    ...styles.menu,
+                                    children: [
+                                        button({
+                                            ...styles.menuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                                modalOn(menu({
+                                                    ...styles.menu,
+                                                    alignItems: 'start',
+                                                    children: [
+                                                        text({
+                                                            fontWeight: 600,
+                                                            text: 'Name'
+                                                        }),
+                                                        hint({
+                                                            id: 'new-folder-name-hint',
+                                                            marginTop: '0.5rem',
+                                                            errorText: 'Required'
+                                                        }, true),
+                                                        input({
+                                                            marginTop: '0.5rem',
+                                                            id: 'new-folder-name-input',
+                                                            width: '100%',
+                                                            attributes: { type: 'text', maxlength: '64' }
+                                                        }),
+                                                        button({
+                                                            ...styles.dangerButton,
+                                                            marginTop: '1rem',
+                                                            alignSelf: 'end',
+                                                            fontWeight: 600,
+                                                            click: async function (event) {
+                                                                event.stopPropagation();
+                                                                if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                    widgets['new-folder-name-hint'].update(false);
+                                                                    return;
+                                                                }
+                                                                const newFolderId = generateTreeId();
+                                                                appState.tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: appState.folderId, children: [] }
+                                                                appState.tree[appState.folderId].children.push(newFolderId);
+                                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                });
+                                                                modalOff();
+                                                            },
+                                                            children: [
+                                                                text({ text: 'Create' })
+                                                            ]
+                                                        })
+                                                    ]
+                                                }))
+                                            },
+                                            children: [text({
+                                                text: 'New Folder'
+                                            })]
+                                        }),
+                                        button({
+                                            ...styles.menuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                                modalOn(menu({
+                                                    ...styles.menu,
+                                                    alignItems: 'start',
+                                                    children: [
+                                                        text({
+                                                            fontWeight: 600,
+                                                            text: 'Name'
+                                                        }),
+                                                        hint({
+                                                            id: 'new-note-name-hint',
+                                                            marginTop: '0.5rem',
+                                                            errorText: 'Required'
+                                                        }, true),
+                                                        input({
+                                                            marginTop: '0.5rem',
+                                                            id: 'new-note-name-input',
+                                                            width: '100%',
+                                                            attributes: { type: 'text', maxlength: '64' }
+                                                        }),
+                                                        button({
+                                                            ...styles.dangerButton,
+                                                            marginTop: '1rem',
+                                                            alignSelf: 'end',
+                                                            fontWeight: 600,
+                                                            click: async function (event) {
+                                                                event.stopPropagation();
+                                                                if (!widgets['new-note-name-input'].domElement.value?.trim()) {
+                                                                    widgets['new-note-name-hint'].update(false);
+                                                                    return;
+                                                                }
+                                                                const newNoteId = generateTreeId();
+                                                                appState.tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: appState.folderId }
+                                                                appState.tree[appState.folderId].children.push(newNoteId);
+                                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                });
+                                                                modalOff();
+                                                            },
+                                                            children: [
+                                                                text({ text: 'Create' })
+                                                            ]
+                                                        })
+                                                    ]
+                                                }))
+                                            },
+                                            children: [text({
+                                                text: 'New Note'
+                                            })]
+                                        }),
+                                    ]
+                                }))
+                            },
+                            children: [
+                                svg({
+                                    width: '4rem',
+                                    height: '4rem',
+                                    fill: 'white',
+                                    svg: icons.add
+                                })
+                            ]
                         })
                     ]
                 })
