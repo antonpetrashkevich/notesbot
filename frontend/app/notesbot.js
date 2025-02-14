@@ -505,7 +505,7 @@ export function folderPage() {
                                                                 })
                                                             ]
                                                         }),
-                                                        ...appState.tree[value].children.map(id => button({
+                                                        ...appState.tree[value].children.filter(id => appState.tree[id].type === 'folder').map(id => button({
                                                             ...styles.menuButton,
                                                             justifyContent: 'start',
                                                             click: function (event) {
@@ -569,7 +569,7 @@ export function folderPage() {
                                                             id: 'new-folder-name-input',
                                                             width: '100%',
                                                             attributes: { type: 'text', maxlength: '64' }
-                                                        }),
+                                                        }, appState.tree[cid].name),
                                                         button({
                                                             ...styles.dangerButton,
                                                             marginTop: '1rem',
