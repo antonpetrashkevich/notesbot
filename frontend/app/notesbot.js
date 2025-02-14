@@ -50,6 +50,13 @@ export const styles = {
         backgroundColor: colors.red[500],
         hoverColor: colors.red[600],
         color: 'white',
+    },
+    folderEntry: {
+        // padding: '0.75rem',
+        borderRadius: '0.5rem',
+        borderStyle: 'solid',
+        borderWidth: '1px',
+        borderColor: colors.gray[300],
     }
 }
 
@@ -401,8 +408,22 @@ export function folderPage() {
             id: 'folder',
             gap: '1rem',
             children: [
+                appState.folderId === 'root' ? null : button({
+                    ...styles.folderEntry,
+                    width: '100%',
+                    click: function (event) {
+                        goTo(`/folder/${appState.tree[appState.folderId].parent}`);
+                    },
+                    children: [
+                        text({
+                            fontSize: '1.5rem',
+                            fontWeight: 600,
+                            text: '...'
+                        })
+                    ]
+                }),
                 ...appState.tree[appState.folderId].children.map(cid => button({
-                    ...styles.card,
+                    ...styles.folderEntry,
                     width: '100%',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -480,7 +501,7 @@ export function folderPage() {
                                                             },
                                                             children: [
                                                                 text({
-                                                                    text: '[...]'
+                                                                    text: '...'
                                                                 })
                                                             ]
                                                         }),
