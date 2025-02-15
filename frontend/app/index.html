@@ -10,8 +10,8 @@
 
 <body>
     <script type="module">
-        import { appState, updatePage, goTo, startApp, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { listenNotebook, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
+        import { appState, updatePage, startApp, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { listenNotebook, listenParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
@@ -39,25 +39,7 @@
         appState.textDecoder = new TextDecoder();
 
 
-        function pathController(segments, params) {
-            if (!appState.initialized) {
-                return;
-            }
-            else if (segments.length === 2 && segments[0] === 'folder') {
-                appState.folderId = segments[1];
-                updatePage(folderPage());
-            }
-            else if (segments.length === 2 && segments[0] === 'note') {
-                appState.noteId = segments[1];
-                updatePage(notePage());
-            } else {
-                appState.folderId = 'root';
-                updatePage(folderPage());
-            }
-        }
-
-
-        startApp({ name: 'XPL', pathController });
+        startApp({ name: 'XPL' });
         updatePage(loadingPage());
         onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {

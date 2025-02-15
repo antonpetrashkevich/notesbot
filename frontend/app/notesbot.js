@@ -1,4 +1,4 @@
-import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
+import { appName, appState, widgets, pageWidget, colors, icons, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -122,6 +122,7 @@ function generateTreeId() {
 
 
 export function listenNotebook() {
+    appState.stopListenNotebook?.();
     appState.stopListenNotebook = onSnapshot(doc(appState.firebase.firestore, 'notebooks', appState.user.uid),
         async (docSnap) => {
             if (!docSnap.exists()) {
@@ -140,7 +141,19 @@ export function listenNotebook() {
                         appState.orphanNoteIds = docData.orphanNoteIds;
                         if (!appState.initialized) {
                             appState.initialized = true;
-                            updatePage(folderPage());
+                            startPathController(function pathController(segments, params) {
+                                if (segments.length === 2 && segments[0] === 'folder') {
+                                    appState.folderId = segments[1];
+                                    updatePage(folderPage());
+                                }
+                                else if (segments.length === 2 && segments[0] === 'note') {
+                                    appState.noteId = segments[1];
+                                    listenParagraphs();
+                                } else {
+                                    appState.folderId = 'root';
+                                    updatePage(folderPage());
+                                }
+                            });
                         } else {
                             widgets['folder']?.update();
                         }
@@ -160,8 +173,11 @@ export function listenNotebook() {
             updatePage(generalErrorPage());
         });
 }
-function listenParagraphs(noteId) {
-    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteIds', 'array-contains', noteId), orderBy('timestamp', 'desc'), limit(32)),
+export function listenParagraphs() {
+    appState.stopListenParagraphs?.();
+    appState.paragraphs = [];
+    updatePage(notePage());
+    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', appState.noteId), orderBy('timestamp', 'desc'), limit(32)),
         async (querySnapshot) => {
             appState.paragraphs = [];
             for (const docSnap of querySnapshot.docs) {
@@ -378,7 +394,6 @@ export function keyphrasePage(notesDocData) {
                                 try {
                                     updatePage(loadingPage());
                                     window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                    appState.stopListenNotebook();
                                     listenNotebook();
                                 } catch (error) {
                                     if (error instanceof DOMException && error.name === "OperationError") {
@@ -923,18 +938,257 @@ export function folderPage() {
 
 export function notePage() {
     return {
-        widget: row({
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
+        widget: base(() => ({
+            id: 'note',
             gap: '1rem',
             children: [
-                text({
-                    text: 'Link sent. Check your email.'
-                })
+                row({
+                    width: '100%',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    children: [
+                        text({
+                            fontSize: '2rem',
+                            fontWeight: 600,
+                            text: appState.tree[appState.noteId].name
+                        }),
+                        button({
+                            hoverColor: colors.gray[100],
+                            click: function (event) {
+                                event.stopPropagation();
+                                goTo('/');
+                            },
+                            children: [
+                                svg({
+                                    width: '1.75rem',
+                                    height: '1.75rem',
+                                    fill: colors.gray[600],
+                                    svg: icons.home
+                                })
+                            ]
+                        })
+                    ]
+                }),
+                column({
+                    width: '100%',
+                    gap: '0.5rem',
+                    children: [
+                        textArea({
+                            id: 'add-note-input',
+                            width: '100%',
+                            attributes: { rows: 8 },
+                        }),
+                        button({
+                            ...styles.dangerButton,
+                            width: '100%',
+                            fontWeight: 600,
+                            click: async function (event) {
+                                event.stopPropagation();
+                                if (widgets['add-note-input'].domElement.value.trim()) {
+                                    addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
+                                        timestamp: Math.floor(Date.now() / 1000),
+                                        noteId: appState.noteId,
+                                        content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
+                                            text: widgets['add-note-input'].domElement.value
+                                        }))),
+                                    });
+                                } else {
+                                    modalOn(menu({
+                                        ...styles.menu,
+                                        alignItems: 'start',
+                                        gap: '0.5rem',
+                                        children: [
+                                            text({
+                                                fontWeight: 600,
+                                                text: 'Save'
+                                            }),
+                                            text({
+                                                text: 'Empty text is not allowed'
+                                            })
+                                        ]
+                                    }));
+                                }
+                            },
+                            children: [
+                                text({
+                                    text: 'Add'
+                                })
+                            ]
+                        })
+                    ]
+                }),
+                ...appState.paragraphs.map((paragraph, index) => column(function (value) {
+                    if (value === 'view') {
+                        return {
+                            ...styles.card,
+                            width: '100%',
+                            gap: '2rem',
+                            children: [
+                                text({
+                                    width: '100%',
+                                    whiteSpace: 'pre-wrap',
+                                    text: paragraph.text
+                                }),
+                                row({
+                                    width: '100%',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    gap: '1rem',
+                                    children: [
+                                        text({
+                                            fontSize: '0.875rem',
+                                            color: colors.gray[600],
+                                            text: new Date(paragraph.timestamp * 1000).toLocaleString()
+                                        }),
+                                        row({
+                                            gap: '0.5rem',
+                                            children: [
+                                                button({
+                                                    hoverColor: colors.gray[100],
+                                                    click: function (event) {
+                                                        event.stopPropagation();
+                                                        navigator.clipboard.writeText(paragraph.text);
+                                                    },
+                                                    children: [
+                                                        svg({
+                                                            width: '1.25rem',
+                                                            height: '1.25rem',
+                                                            fill: colors.gray[600],
+                                                            svg: icons.copy
+                                                        })
+                                                    ]
+                                                }),
+                                                button({
+                                                    hoverColor: colors.gray[100],
+                                                    click: function (event) {
+                                                        event.stopPropagation();
+                                                        this.parent.parent.parent.update('edit');
+                                                    },
+                                                    children: [
+                                                        svg({
+                                                            width: '1.25rem',
+                                                            height: '1.25rem',
+                                                            fill: colors.gray[600],
+                                                            svg: icons.edit
+                                                        })
+                                                    ]
+                                                }),
+                                                button({
+                                                    hoverColor: colors.gray[100],
+                                                    click: function (event) {
+                                                        event.stopPropagation();
+                                                        modalOn(menu({
+                                                            alignItems: 'start',
+                                                            gap: '0.5rem',
+                                                            children: [
+                                                                text({
+                                                                    fontWeight: 600,
+                                                                    text: 'Delete'
+                                                                }),
+                                                                text({
+                                                                    text: 'You won\'t be able to restore it'
+                                                                }),
+                                                                button({
+                                                                    ...styles.dangerButton,
+                                                                    alignSelf: 'end',
+                                                                    click: async function (event) {
+                                                                        event.stopPropagation();
+                                                                        deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
+                                                                        modalOff();
+                                                                    },
+                                                                    children: [
+                                                                        text({
+                                                                            text: 'Delete'
+                                                                        })]
+                                                                })
+                                                            ]
+                                                        }))
+                                                    },
+                                                    children: [
+                                                        svg({
+                                                            width: '1.25rem',
+                                                            height: '1.25rem',
+                                                            fill: colors.gray[600],
+                                                            svg: icons.delete
+                                                        })
+                                                    ]
+                                                }),
+                                            ]
+                                        })
+                                    ]
+                                })
+                            ]
+                        };
+                    } else if (value === 'edit') {
+                        return {
+                            width: '100%',
+                            gap: '0.5rem',
+                            children: [
+                                textArea({
+                                    id: `edit-note-input-${paragraph.id}`,
+                                    width: '100%',
+                                    attributes: { rows: 8 },
+                                }, paragraph.text),
+                                row({
+                                    width: '100%',
+                                    gap: '1rem',
+                                    children: [
+                                        button({
+                                            ...styles.actionSecondaryButton,
+                                            flexGrow: 1,
+                                            click: async function (event) {
+                                                event.stopPropagation();
+                                                this.parent.parent.update('view');
+                                            },
+                                            children: [
+                                                text({
+                                                    text: 'Cancel'
+                                                })
+                                            ]
+                                        }),
+                                        button({
+                                            ...styles.dangerButton,
+                                            flexGrow: 1,
+                                            fontWeight: 600,
+                                            click: async function (event) {
+                                                event.stopPropagation();
+                                                if (widgets[`edit-note-input-${paragraph.id}`].domElement.value.trim()) {
+                                                    updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
+                                                        content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
+                                                            text: widgets[`edit-note-input-${paragraph.id}`].domElement.value
+                                                        }))),
+                                                    });
+                                                } else {
+                                                    modalOn(menu({
+                                                        ...styles.menu,
+                                                        alignItems: 'start',
+                                                        gap: '0.5rem',
+                                                        children: [
+                                                            text({
+                                                                fontWeight: 600,
+                                                                text: 'Save'
+                                                            }),
+                                                            text({
+                                                                text: 'Empty text is not allowed'
+                                                            })
+                                                        ]
+                                                    }));
+                                                }
+                                            },
+                                            children: [
+                                                text({
+                                                    text: 'Save'
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                })
+                            ]
+                        }
+                    }
+                }, 'view'))
             ]
-        }),
-        meta: { title: `Error | ${appName}`, description: 'Server fault.' }
+        })),
+        meta: { title: `${appState.tree[appState.noteId]['name']} | ${appName}`, description: 'Note page.' }
     };
 }
