@@ -10,8 +10,8 @@
 
 <body>
     <script type="module">
-        import { appState, updatePage, startApp, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { listenNotebook, listenParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
+        import { appState, lightTheme, darkTheme, updatePage, startApp, setTheme, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { demoPage, listenNotebook, listenParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
@@ -39,32 +39,41 @@
         appState.textDecoder = new TextDecoder();
 
 
-        startApp({ name: 'XPL' });
-        updatePage(loadingPage());
-        onAuthStateChanged(appState.firebase.auth, async (user) => {
-            if (user) {
-                appState.user = user;
-                appState.folderId = 'root';
-                listenNotebook();
+        startApp('XPL');
+        setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme, { backgroundColor: 'var(--background-color)', fontFamily: 'var(--font-family)', color: 'var(--text-color)' });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (e.matches) {
+                setTheme(darkTheme);
             } else {
-                try {
-                    updatePage(loadingPage());
-                    appState.key = null;
-                    appState.tree = null;
-                    appState.orphanNoteIds = null;
-                    appState.initialized = null;
-                    appState.folderId = null;
-                    appState.noteId = null;
-                    appState.paragraphs = null;
-                    appState.stopListenNotebook?.();
-                    window.localStorage.removeItem('keyphrase');
-                    updatePage(loginPage());
-                } catch (e) {
-                    console.error(e);
-                    updatePage(generalErrorPage());
-                }
+                setTheme(lightTheme);
             }
         });
+        updatePage(demoPage());
+        // updatePage(loadingPage());
+        // onAuthStateChanged(appState.firebase.auth, async (user) => {
+        //     if (user) {
+        //         appState.user = user;
+        //         appState.folderId = 'root';
+        //         listenNotebook();
+        //     } else {
+        //         try {
+        //             updatePage(loadingPage());
+        //             appState.key = null;
+        //             appState.tree = null;
+        //             appState.orphanNoteIds = null;
+        //             appState.initialized = null;
+        //             appState.folderId = null;
+        //             appState.noteId = null;
+        //             appState.paragraphs = null;
+        //             appState.stopListenNotebook?.();
+        //             window.localStorage.removeItem('keyphrase');
+        //             updatePage(loginPage());
+        //         } catch (e) {
+        //             console.error(e);
+        //             updatePage(generalErrorPage());
+        //         }
+        //     }
+        // });
     </script>
 </body>
 
