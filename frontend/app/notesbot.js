@@ -1,23 +1,10 @@
-import { appName, appState, widgets, pageWidget, colors, lightTheme, darkTheme, icons, updatePage, goTo, startApp, startPathController, setTheme, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base, systemFontFamily } from '/home/n1/projects/profiler/frontend/apex.js';
+import { appName, appState, widgets, pageWidget, colors, lightTheme, darkTheme, styles, icons, updatePage, goTo, startApp, startPathController, setTheme, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage, fixedHeader, menu, base, systemFontFamily } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
 
 const styles = {
-    card: {
-        padding: '0.75rem',
-        borderRadius: '0.5rem',
-        borderStyle: 'solid',
-        borderWidth: '1px',
-        borderColor: 'var(--border-color)',
-    },
-    filledCard: {
-        padding: '0.75rem',
-        borderRadius: '0.5rem',
-        backgroundColor: colors.gray[100],
-    },
-    menu: {
-    },
+    ...styles,
     menuButton: {
         width: '100%',
         justifyContent: 'center',
@@ -58,108 +45,6 @@ const styles = {
         borderWidth: '1px',
         borderColor: colors.gray[300],
     },
-
-
-    h1: {
-        fontSize: '2rem',
-        fontWeight: 600,
-        color: 'var(--text-accent-color)',
-    },
-    h2: {
-        fontSize: '1.5rem',
-        fontWeight: 600,
-        color: 'var(--text-accent-color)',
-    },
-    h3: {
-        fontSize: '1.25rem',
-        fontWeight: 600,
-        color: 'var(--text-accent-color)',
-    },
-    h4: {
-        fontSize: '1rem',
-        fontWeight: 600,
-        color: 'var(--text-accent-color)',
-    },
-    textAux: {
-        fontSize: '0.875rem',
-        fontWeight: 600,
-        color: 'var(--text-aux-color)',
-    },
-    textButton: {
-        backgroundColor: 'var(--text-button-background-color)',
-        hoverColor: 'var(--text-button-background-hover-color)',
-        color: 'var(--text-button-text-color)',
-        fill: 'var(--text-button-icon-color)',
-    },
-    textButtonBorder: {
-        borderStyle: 'solid',
-        borderWidth: '1px',
-        borderColor: 'var(--border-color)',
-        backgroundColor: 'var(--text-button-background-color)',
-        hoverColor: 'var(--text-button-background-hover-color)',
-        color: 'var(--text-button-text-color)',
-        fill: 'var(--text-button-icon-color)',
-    },
-    textButtonFilledSubtle: {
-        backgroundColor: 'var(--text-button-filled-subtle--background-color)',
-        hoverColor: 'var(--text-button-filled-subtle--background-hover-color)',
-        color: 'var(--text-button-text-color)',
-        fill: 'var(--text-button-icon-color)',
-    },
-    blueButton: {
-        backgroundColor: 'var(--blue-button-background-color)',
-        hoverColor: 'var(--blue-button-background-hover-color)',
-        color: 'var(--blue-button-text-color)',
-        fill: 'var(--blue-button-icon-color)',
-    },
-    blueButtonBorder: {
-        borderStyle: 'solid',
-        borderWidth: '1px',
-        borderColor: 'var(--border-color)',
-        backgroundColor: 'var(--blue-button-background-color)',
-        hoverColor: 'var(--blue-button-background-hover-color)',
-        color: 'var(--blue-button-text-color)',
-        fill: 'var(--blue-button-icon-color)',
-    },
-    blueButtonFilledSubtle: {
-        backgroundColor: 'var(--blue-button-filled-subtle--background-color)',
-        hoverColor: 'var(--blue-button-filled-subtle--background-hover-color)',
-        color: 'var(--blue-button-text-color)',
-        fill: 'var(--blue-button-icon-color)',
-    },
-    blueButtonFilled: {
-        backgroundColor: 'var(--blue-button-filled-background-color)',
-        hoverColor: 'var(--blue-button-filled-background-hover-color)',
-        color: 'var(--blue-button-filled-text-color)',
-        fill: 'var(--blue-button-filled-icon-color)',
-    },
-    redButton: {
-        backgroundColor: 'var(--red-button-background-color)',
-        hoverColor: 'var(--red-button-background-hover-color)',
-        color: 'var(--red-button-text-color)',
-        fill: 'var(--red-button-icon-color)',
-    },
-    redButtonBorder: {
-        borderStyle: 'solid',
-        borderWidth: '1px',
-        borderColor: 'var(--border-color)',
-        backgroundColor: 'var(--red-button-background-color)',
-        hoverColor: 'var(--red-button-background-hover-color)',
-        color: 'var(--red-button-text-color)',
-        fill: 'var(--red-button-icon-color)',
-    },
-    redButtonFilledSubtle: {
-        backgroundColor: 'var(--red-button-filled-subtle--background-color)',
-        hoverColor: 'var(--red-button-filled-subtle--background-hover-color)',
-        color: 'var(--red-button-text-color)',
-        fill: 'var(--red-button-icon-color)',
-    },
-    redButtonFilled: {
-        backgroundColor: 'var(--red-button-filled-background-color)',
-        hoverColor: 'var(--red-button-filled-background-hover-color)',
-        color: 'var(--red-button-filled-text-color)',
-        fill: 'var(--red-button-filled-icon-color)',
-    }
 }
 export function demoPage() {
     return {
@@ -169,6 +54,9 @@ export function demoPage() {
             children: [
                 column({
                     ...styles.card,
+                    ...styles.border,
+                    // ...styles.yellowBackground1,
+                    // ...styles.yellowBorder,
                     gap: '1rem',
                     children: [
                         text({
@@ -180,24 +68,101 @@ export function demoPage() {
                             text: 'Hint auxilary message'
                         }),
                         text({
+                            // ...styles.grayColor3,
                             text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
                         }),
-                        button({
-                            ...styles.redButton,
-                            alignSelf: 'end',
+                        row({
+                            width: '100%',
+                            justifyContent: 'space-between',
                             alignItems: 'center',
-                            gap: '0.5rem',
                             children: [
-                                svg({
-                                    width: '1.25rem',
-                                    svg: icons.time,
+                                button({
+                                    ...styles.grayColor1,
+                                    ...styles.grayBackgroundHovered1,
+                                    alignSelf: 'end',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    children: [
+                                        svg({
+                                            width: '1.25rem',
+                                            svg: icons.time,
+                                        }),
+                                        text({
+                                            fontWeight: 600,
+                                            text: 'Button'
+                                        })
+                                    ]
                                 }),
-                                text({
-                                    fontWeight: 600,
-                                    text: 'Button'
-                                })
+                                button({
+                                    ...styles.blueColor1,
+                                    ...styles.blueBackgroundHovered1,
+                                    alignSelf: 'end',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    children: [
+                                        svg({
+                                            width: '1.25rem',
+                                            svg: icons.time,
+                                        }),
+                                        text({
+                                            fontWeight: 600,
+                                            text: 'Button'
+                                        })
+                                    ]
+                                }),
+                                button({
+                                    ...styles.redColor1,
+                                    ...styles.redBackgroundHovered1,
+                                    alignSelf: 'end',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    children: [
+                                        svg({
+                                            width: '1.25rem',
+                                            svg: icons.time,
+                                        }),
+                                        text({
+                                            fontWeight: 600,
+                                            text: 'Button'
+                                        })
+                                    ]
+                                }),
+                                button({
+                                    ...styles.greenColor1,
+                                    ...styles.greenBackgroundHovered1,
+                                    alignSelf: 'end',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    children: [
+                                        svg({
+                                            width: '1.25rem',
+                                            svg: icons.time,
+                                        }),
+                                        text({
+                                            fontWeight: 600,
+                                            text: 'Button'
+                                        })
+                                    ]
+                                }),
+                                button({
+                                    ...styles.yellowColor1,
+                                    ...styles.yellowBackgroundHovered1,
+                                    alignSelf: 'end',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    children: [
+                                        svg({
+                                            width: '1.25rem',
+                                            svg: icons.time,
+                                        }),
+                                        text({
+                                            fontWeight: 600,
+                                            text: 'Button'
+                                        })
+                                    ]
+                                }),
                             ]
-                        })
+                        }),
                         // textLink({
                         //     attributes: {
                         //         href: 'https://domain.com',

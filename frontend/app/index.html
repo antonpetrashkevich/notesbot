@@ -40,7 +40,13 @@
 
 
         startApp('XPL');
-        setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme, { backgroundColor: 'var(--background-color)', fontFamily: 'var(--font-family)', color: 'var(--text-color)' });
+        setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme,
+            {
+                backgroundColor: 'var(--background-color)',
+                fontFamily: 'var(--font-family)',
+                fill: 'var(--icon-color)',
+                color: 'var(--text-color)'
+            });
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (e.matches) {
                 setTheme(darkTheme);
