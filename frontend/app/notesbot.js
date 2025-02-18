@@ -36,6 +36,7 @@ export const lightTheme = {
     '--fg-accent': colors.gray[950],
     '--hint-normal': colors.gray[400],
     '--hint-error': colors.red[500],
+    '--spinner': colors.gray[300],
     '--text-button-hover': colors.gray[100],
     '--action-button-bg': colors.blue[500],
     '--action-button-hover': colors.blue[600],
@@ -59,6 +60,7 @@ export const darkTheme = {
     '--fg-accent': colors.gray[100],
     '--hint-normal': colors.gray[500],
     '--hint-error': colors.red[400],
+    '--spinner': colors.gray[600],
     '--text-button-hover': colors.gray[700],
     '--action-button-bg': colors.blue[600],
     '--action-button-hover': colors.blue[700],
@@ -236,7 +238,7 @@ export function listenNotebook() {
                     if (docData.status === 'deleted' && !appState.initialized) {
                         updatePage(setupTutorialPage());
                     } else if (docData.status === 'active' && !window.localStorage.getItem('keyphrase')) {
-                        updatePage(keyphrasePage());
+                        updatePage(keyphrasePage(false));
                     }
                     else if (docData.status === 'active' && window.localStorage.getItem('keyphrase')) {
                         appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
@@ -263,7 +265,8 @@ export function listenNotebook() {
                     }
                 } catch (error) {
                     if (error instanceof DOMException && error.name === "OperationError") {
-                        updatePage(keyphrasePage());
+                        window.localStorage.removeItem('keyphrase');
+                        updatePage(keyphrasePage(true));
                     } else {
                         console.error(error);
                         updatePage(generalErrorPage());
@@ -516,57 +519,76 @@ export function setupPage() {
 }
 
 
-export function keyphrasePage(notesDocData) {
+export function keyphrasePage(invalidAttempt) {
     return {
         widget: base({
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             children: [
-                text({ fontSize: '2rem', fontWeight: 600, text: 'Keyphrase' }),
                 column({
+                    ...styles.card,
+                    ...styles.border,
                     width: '100%',
                     justifyContent: 'center',
+                    gap: '2rem',
                     children: [
-                        text({ fontWeight: 600, text: 'Your keyphrase' }),
-                        hint(() => ({ id: 'keyphrase-hint', marginTop: '0.5rem', errorText: 'Invalid' }), true),
-                        input({ id: 'keyphrase-input', width: '100%', marginTop: '0.5rem', attributes: { type: 'password', maxlength: '64' } }),
-                    ]
-                }),
-                row({
-                    width: '100%',
-                    gap: '1rem',
-                    children: [
-                        button({
-                            flexGrow: 1,
-                            ...styles.actionSecondaryButton,
-                            click: function (event) {
-                                signOut(appState.firebase.auth);
-                            },
-                            text: 'Log out'
+                        text({
+                            ...styles.h1,
+                            text: 'Keyphrase'
                         }),
-                        button({
-                            flexGrow: 1,
-                            ...styles.actionButton,
-                            click: async function (event) {
-                                if (!widgets['keyphrase-input'].domElement.value) {
-                                    widgets['keyphrase-hint'].update(false);
-                                    window.scrollTo(0, 0);
-                                    return;
-                                }
-                                try {
-                                    updatePage(loadingPage());
-                                    window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                    listenNotebook();
-                                } catch (error) {
-                                    if (error instanceof DOMException && error.name === "OperationError") {
-                                        updatePage(keyphrasePage());
-                                        widgets['keyphrase-hint'].update(false);
-                                    } else {
-                                        updatePage(generalErrorPage());
-                                    }
-                                }
-                            },
+                        column({
+                            width: '100%',
+                            justifyContent: 'center',
                             children: [
-                                text({ text: 'Save' })
+                                text({
+                                    fontWeight: 600,
+                                    text: 'Your keyphrase'
+                                }),
+                                hint(() => ({
+                                    ...styles.hint,
+                                    id: 'keyphrase-hint',
+                                    marginTop: '0.5rem',
+                                    errorText: 'Invalid'
+                                }), !invalidAttempt),
+                                input({
+                                    ...styles.border,
+                                    id: 'keyphrase-input',
+                                    width: '100%',
+                                    marginTop: '0.5rem',
+                                    attributes: { type: 'password', maxlength: '64' }
+                                }),
+                            ]
+                        }),
+                        row({
+                            width: '100%',
+                            gap: '1rem',
+                            children: [
+                                button({
+                                    flexBasis: 0,
+                                    flexGrow: 1,
+                                    ...styles.actionButtonNegative,
+                                    click: function (event) {
+                                        signOut(appState.firebase.auth);
+                                    },
+                                    text: 'Log out'
+                                }),
+                                button({
+                                    flexBasis: 0,
+                                    flexGrow: 1,
+                                    ...styles.actionButton,
+                                    click: async function (event) {
+                                        if (!widgets['keyphrase-input'].domElement.value) {
+                                            widgets['keyphrase-hint'].update(false);
+                                            window.scrollTo(0, 0);
+                                            return;
+                                        }
+                                        updatePage(loadingPage('var(--spinner)'));
+                                        window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                        listenNotebook();
+                                    },
+                                    children: [
+                                        text({ text: 'Save' })
+                                    ]
+                                })
                             ]
                         })
                     ]
