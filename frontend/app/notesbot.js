@@ -28,55 +28,57 @@ export const lightTheme = {
     '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
     '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     '--shadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
-    '--border-width': '1px',
-    '--border-style': 'solid',
-    '--border-color': colors.gray[300],
+    '--border': colors.gray[300],
     '--bg': 'white',
+    '--hover': colors.gray[100],
+    '--hover-red': colors.red[100],
     '--fg': colors.gray[900],
     '--fg-accent': colors.gray[950],
-    '--hint-normal': colors.gray[400],
-    '--hint-error': colors.red[500],
-    '--spinner': colors.gray[300],
-    '--text-button-hover': colors.gray[100],
+    '--fg-secondary': colors.gray[500],
+    '--fg-tertiary': colors.gray[400],
+    '--fg-red': colors.red[500],
+    '--button-bg': colors.gray[100],
+    '--button-hover': colors.gray[200],
     '--action-button-bg': colors.blue[500],
     '--action-button-hover': colors.blue[600],
     '--action-button-fg': 'white',
     '--action-button-light-bg': colors.blue[200],
     '--action-button-light-hover': colors.blue[300],
     '--action-button-light-fg': colors.blue[600],
-    '--action-button-negative-bg': colors.gray[100],
-    '--action-button-negative-hover': colors.gray[200],
-    '--action-button-negative-fg': colors.gray[500],
+    '--floating-action-button-bg': colors.blue[300],
+    '--floating-action-button-hover': colors.blue[400],
+    '--floating-action-button-fg': colors.blue[700],
 }
 export const darkTheme = {
     '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
     '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     '--shadow': '0 1px 2px rgba(255, 255, 255, 0.1)',
-    '--border-width': '1px',
-    '--border-style': 'solid',
-    '--border-color': colors.gray[600],
+    '--border': colors.gray[600],
     '--bg': colors.gray[800],
+    '--hover': colors.gray[700],
+    '--hover-red': colors.red[900],
     '--fg': colors.gray[300],
     '--fg-accent': colors.gray[100],
-    '--hint-normal': colors.gray[500],
-    '--hint-error': colors.red[400],
-    '--spinner': colors.gray[600],
-    '--text-button-hover': colors.gray[700],
+    '--fg-secondary': colors.gray[400],
+    '--fg-tertiary': colors.gray[500],
+    '--fg-red': colors.red[400],
+    '--button-bg': colors.gray[700],
+    '--button-hover': colors.gray[600],
     '--action-button-bg': colors.blue[600],
     '--action-button-hover': colors.blue[700],
     '--action-button-fg': 'white',
     '--action-button-light-bg': colors.blue[200],
     '--action-button-light-hover': colors.blue[300],
     '--action-button-light-fg': colors.blue[600],
-    '--action-button-negative-bg': colors.gray[700],
-    '--action-button-negative-hover': colors.gray[600],
-    '--action-button-negative-fg': colors.gray[400],
+    '--floating-action-button-bg': colors.blue[400],
+    '--floating-action-button-hover': colors.blue[500],
+    '--floating-action-button-fg': colors.blue[800],
 }
 export const styles = {
     border: {
-        borderWidth: 'var(--border-width)',
-        borderStyle: 'var(--border-style)',
-        borderColor: 'var(--border-color)',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: 'var(--border)',
     },
     card: {
         padding: '0.75rem',
@@ -103,16 +105,11 @@ export const styles = {
         color: 'var(--fg-accent)',
     },
     hint: {
-        normalColor: 'var(--hint-normal)',
-        errorColor: 'var(--hint-error)',
-    },
-    textButton: {
-        justifyContent: 'center',
-        hoverColor: 'var(--text-button-hover)',
+        normalColor: 'var(--fg-tertiary)',
+        errorColor: 'var(--fg-red)',
     },
     actionButton: {
         padding: '0.75rem',
-        justifyContent: 'center',
         backgroundColor: 'var(--action-button-bg)',
         hoverColor: 'var(--action-button-hover)',
         fontWeight: 600,
@@ -126,29 +123,40 @@ export const styles = {
         fontWeight: 600,
         color: 'var(--action-button-light-fg)',
     },
-    actionButtonNegative: {
+    actionButtonOptional: {
         padding: '0.75rem',
-        justifyContent: 'center',
-        backgroundColor: 'var(--action-button-negative-bg)',
-        hoverColor: 'var(--action-button-negative-hover)',
+        backgroundColor: 'var(--button-bg)',
+        hoverColor: 'var(--button-hover)',
         fontWeight: 600,
-        color: 'var(--action-button-negative-fg)',
+        color: 'var(--fg-secondary)',
     },
-
-
+    floatingActionButton: {
+        backgroundColor: 'var(--floating-action-button-bg)',
+        hoverColor: 'var(--floating-action-button-hover)',
+        fontWeight: 600,
+        fill: 'var(--floating-action-button-fg)',
+        color: 'var(--floating-action-button-fg)',
+    },
+    menu: {
+        borderWidth: '2px',
+        borderStyle: 'solid',
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--bg)'
+    },
     menuButton: {
         width: '100%',
         justifyContent: 'center',
-        hoverColor: colors.gray[100],
+        hoverColor: 'var(--hover)',
         fontWeight: 600,
     },
     menuDangerButton: {
         width: '100%',
         justifyContent: 'center',
-        hoverColor: colors.red[100],
+        hoverColor: 'var(--hover-red)',
         fontWeight: 600,
-        color: colors.red[500],
+        color: 'var(--fg-red)',
     },
+
     dangerButton: {
         padding: '0.75rem',
         justifyContent: 'center',
@@ -310,9 +318,9 @@ export function loginPage() {
             justifyContent: 'center',
             children: [
                 button({
-                    ...styles.textButton,
                     alignSelf: 'center',
                     gap: '0.5rem',
+                    hoverColor: 'var(--hover)',
                     click: function (event) {
                         signInWithPopup(appState.firebase.auth, new GoogleAuthProvider());
                     },
@@ -359,7 +367,7 @@ export function setupTutorialPage() {
                                 button({
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButtonNegative,
+                                    ...styles.actionButtonOptional,
                                     click: function (event) {
                                         signOut(appState.firebase.auth);
                                     },
@@ -449,7 +457,7 @@ export function setupPage() {
                                 button({
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButtonNegative,
+                                    ...styles.actionButtonOptional,
                                     click: function (event) {
                                         updatePage(setupTutorialPage());
                                     },
@@ -547,6 +555,7 @@ export function keyphrasePage(invalidAttempt) {
                                     ...styles.hint,
                                     id: 'keyphrase-hint',
                                     marginTop: '0.5rem',
+                                    normalText: 'Invalid',
                                     errorText: 'Invalid'
                                 }), !invalidAttempt),
                                 input({
@@ -563,25 +572,27 @@ export function keyphrasePage(invalidAttempt) {
                             gap: '1rem',
                             children: [
                                 button({
+                                    ...styles.actionButtonOptional,
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButtonNegative,
+                                    justifyContent: 'center',
                                     click: function (event) {
                                         signOut(appState.firebase.auth);
                                     },
                                     text: 'Log out'
                                 }),
                                 button({
+                                    ...styles.actionButton,
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButton,
+                                    justifyContent: 'center',
                                     click: async function (event) {
                                         if (!widgets['keyphrase-input'].domElement.value) {
                                             widgets['keyphrase-hint'].update(false);
                                             window.scrollTo(0, 0);
                                             return;
                                         }
-                                        updatePage(loadingPage('var(--spinner)'));
+                                        updatePage(loadingPage('var(--fg-tertiary)'));
                                         window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
                                         listenNotebook();
                                     },
@@ -913,12 +924,36 @@ export function folderPage() {
                         button({
                             margin: '1rem',
                             borderRadius: '2rem',
-                            hoverColor: colors.gray[100],
+                            hoverColor: 'var(--hover)',
+                            fill: 'var(--fg-secondary)',
                             click: function (event) {
                                 event.stopPropagation();
                                 modalOn(menu({
                                     ...styles.menu,
                                     children: [
+                                        button(() => ({
+                                            ...styles.menuButton,
+                                            click: function (event) {
+                                                event.stopPropagation();
+                                                let theme;
+                                                if (window.localStorage.getItem('theme') === 'auto') {
+                                                    window.localStorage.setItem('theme', 'light');
+                                                    theme = lightTheme;
+                                                } else if (window.localStorage.getItem('theme') === 'light') {
+                                                    window.localStorage.setItem('theme', 'dark');
+                                                    theme = darkTheme;
+                                                } else if (window.localStorage.getItem('theme') === 'dark') {
+                                                    window.localStorage.setItem('theme', 'auto');
+                                                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme;
+                                                }
+                                                setTheme(theme);
+                                                this.update();
+                                            }, children: [
+                                                text({
+                                                    text: `Theme: ${window.localStorage.getItem('theme')}`
+                                                })
+                                            ]
+                                        })),
                                         button({
                                             ...styles.menuDangerButton,
                                             click: function (event) {
@@ -976,17 +1011,14 @@ export function folderPage() {
                                 svg({
                                     width: '2rem',
                                     height: '2rem',
-                                    fill: colors.gray[600],
                                     svg: icons.menu
                                 })
                             ]
                         }),
                         button({
+                            ...styles.floatingActionButton,
                             margin: '1rem',
-                            padding: 0,
                             borderRadius: '2rem',
-                            backgroundColor: colors.red[500],
-                            hoverColor: colors.red[600],
                             click: function (event) {
                                 event.stopPropagation();
                                 modalOn(menu({
@@ -1103,9 +1135,8 @@ export function folderPage() {
                             },
                             children: [
                                 svg({
-                                    width: '4rem',
-                                    height: '4rem',
-                                    fill: 'white',
+                                    width: '2rem',
+                                    height: '2rem',
                                     svg: icons.add
                                 })
                             ]

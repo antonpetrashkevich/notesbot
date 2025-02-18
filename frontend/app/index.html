@@ -40,7 +40,10 @@
 
 
         startApp('XPL');
-        setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme,
+        if (!window.localStorage.getItem('theme')) {
+            window.localStorage.setItem('theme', 'auto');
+        }
+        setTheme(window.localStorage.getItem('theme') === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme) : (window.localStorage.getItem('theme') === 'dark' ? darkTheme : lightTheme),
             {
                 backgroundColor: 'var(--bg)',
                 fontFamily: 'var(--font-family)',
@@ -48,10 +51,12 @@
                 color: 'var(--fg)'
             });
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            if (e.matches) {
-                setTheme(darkTheme);
-            } else {
-                setTheme(lightTheme);
+            if (window.localStorage.getItem('theme') === 'auto') {
+                if (e.matches) {
+                    setTheme(darkTheme);
+                } else {
+                    setTheme(lightTheme);
+                }
             }
         });
         updatePage(loadingPage());
