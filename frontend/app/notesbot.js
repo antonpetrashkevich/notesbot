@@ -27,7 +27,9 @@ export const icons = {
 export const lightTheme = {
     '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
     '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    '--shadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
+    '--shadow-1': '0 1px 2px rgba(0, 0, 0, 0.1)',
+    '--shadow-2': '0 2px 4px rgba(0, 0, 0, 0.1)',
+    '--shadow-3': '0 4px 8px rgba(0, 0, 0, 0.1)',
     '--border': colors.gray[300],
     '--bg': 'white',
     '--hover': colors.gray[100],
@@ -42,17 +44,19 @@ export const lightTheme = {
     '--action-button-bg': colors.blue[500],
     '--action-button-hover': colors.blue[600],
     '--action-button-fg': 'white',
-    '--action-button-light-bg': colors.blue[200],
-    '--action-button-light-hover': colors.blue[300],
-    '--action-button-light-fg': colors.blue[600],
-    '--floating-action-button-bg': colors.blue[300],
-    '--floating-action-button-hover': colors.blue[400],
-    '--floating-action-button-fg': colors.blue[700],
+    '--action-button-light-bg': colors.blue[300],
+    '--action-button-light-hover': colors.blue[400],
+    '--action-button-light-fg': colors.blue[700],
+    '--danger-button-bg': colors.red[500],
+    '--danger-button-hover': colors.red[600],
+    '--danger-button-fg': 'white',
 }
 export const darkTheme = {
     '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
     '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    '--shadow': '0 1px 2px rgba(255, 255, 255, 0.1)',
+    '--shadow-1': '0 1px 2px rgba(255, 255, 255, 0.1)',
+    '--shadow-2': '0 2px 4px rgba(255, 255, 255, 0.1)',
+    '--shadow-3': '0 4px 8px rgba(255, 255, 255, 0.1)',
     '--border': colors.gray[600],
     '--bg': colors.gray[800],
     '--hover': colors.gray[700],
@@ -67,12 +71,12 @@ export const darkTheme = {
     '--action-button-bg': colors.blue[600],
     '--action-button-hover': colors.blue[700],
     '--action-button-fg': 'white',
-    '--action-button-light-bg': colors.blue[200],
-    '--action-button-light-hover': colors.blue[300],
-    '--action-button-light-fg': colors.blue[600],
-    '--floating-action-button-bg': colors.blue[400],
-    '--floating-action-button-hover': colors.blue[500],
-    '--floating-action-button-fg': colors.blue[800],
+    '--action-button-light-bg': colors.blue[400],
+    '--action-button-light-hover': colors.blue[500],
+    '--action-button-light-fg': colors.blue[800],
+    '--danger-button-bg': colors.red[700],
+    '--danger-button-hover': colors.red[800],
+    '--danger-button-fg': 'white',
 }
 export const styles = {
     border: {
@@ -109,39 +113,36 @@ export const styles = {
         errorColor: 'var(--fg-red)',
     },
     actionButton: {
-        padding: '0.75rem',
         backgroundColor: 'var(--action-button-bg)',
         hoverColor: 'var(--action-button-hover)',
         fontWeight: 600,
         color: 'var(--action-button-fg)',
     },
     actionButtonLight: {
-        padding: '0.75rem',
-        justifyContent: 'center',
         backgroundColor: 'var(--action-button-light-bg)',
         hoverColor: 'var(--action-button-light-hover)',
         fontWeight: 600,
+        fill: 'var(--action-button-light-fg)',
         color: 'var(--action-button-light-fg)',
     },
     actionButtonOptional: {
-        padding: '0.75rem',
         backgroundColor: 'var(--button-bg)',
         hoverColor: 'var(--button-hover)',
         fontWeight: 600,
         color: 'var(--fg-secondary)',
     },
-    floatingActionButton: {
-        backgroundColor: 'var(--floating-action-button-bg)',
-        hoverColor: 'var(--floating-action-button-hover)',
+    dangerButton: {
+        backgroundColor: 'var(--danger-button-bg)',
+        hoverColor: 'var(--danger-button-hover)',
         fontWeight: 600,
-        fill: 'var(--floating-action-button-fg)',
-        color: 'var(--floating-action-button-fg)',
+        color: 'var(--danger-button-fg)',
     },
     menu: {
-        borderWidth: '2px',
+        borderWidth: '1px',
         borderStyle: 'solid',
         borderColor: 'var(--border)',
-        backgroundColor: 'var(--bg)'
+        backgroundColor: 'var(--bg)',
+        boxShadow: 'var(--shadow-2)'
     },
     menuButton: {
         width: '100%',
@@ -157,13 +158,7 @@ export const styles = {
         color: 'var(--fg-red)',
     },
 
-    dangerButton: {
-        padding: '0.75rem',
-        justifyContent: 'center',
-        backgroundColor: colors.red[500],
-        hoverColor: colors.red[600],
-        color: 'white',
-    },
+
     folderEntry: {
         // padding: '0.75rem',
         borderRadius: '0.5rem',
@@ -365,18 +360,20 @@ export function setupTutorialPage() {
                             gap: '1rem',
                             children: [
                                 button({
+                                    ...styles.actionButtonOptional,
+                                    padding: '0.75rem',
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButtonOptional,
                                     click: function (event) {
                                         signOut(appState.firebase.auth);
                                     },
                                     text: 'Log out'
                                 }),
                                 button({
+                                    ...styles.actionButton,
+                                    padding: '0.75rem',
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButton,
                                     click: function (event) {
                                         updatePage(setupPage());
                                     },
@@ -455,18 +452,20 @@ export function setupPage() {
                             gap: '1rem',
                             children: [
                                 button({
+                                    ...styles.actionButtonOptional,
+                                    padding: '0.75rem',
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButtonOptional,
                                     click: function (event) {
                                         updatePage(setupTutorialPage());
                                     },
                                     text: 'Back'
                                 }),
                                 button({
+                                    ...styles.actionButton,
+                                    padding: '0.75rem',
                                     flexBasis: 0,
                                     flexGrow: 1,
-                                    ...styles.actionButton,
                                     click: async function (event) {
                                         widgets['keyphrase-hint'].update(true);
                                         widgets['keyphrase-repeat-hint'].update(true);
@@ -555,7 +554,6 @@ export function keyphrasePage(invalidAttempt) {
                                     ...styles.hint,
                                     id: 'keyphrase-hint',
                                     marginTop: '0.5rem',
-                                    normalText: 'Invalid',
                                     errorText: 'Invalid'
                                 }), !invalidAttempt),
                                 input({
@@ -573,6 +571,7 @@ export function keyphrasePage(invalidAttempt) {
                             children: [
                                 button({
                                     ...styles.actionButtonOptional,
+                                    padding: '0.75rem',
                                     flexBasis: 0,
                                     flexGrow: 1,
                                     justifyContent: 'center',
@@ -583,6 +582,7 @@ export function keyphrasePage(invalidAttempt) {
                                 }),
                                 button({
                                     ...styles.actionButton,
+                                    padding: '0.75rem',
                                     flexBasis: 0,
                                     flexGrow: 1,
                                     justifyContent: 'center',
@@ -959,7 +959,7 @@ export function folderPage() {
                                             click: function (event) {
                                                 event.stopPropagation();
                                                 modalOn(menu({
-                                                    minWidth: undefined,
+                                                    ...styles.menu,
                                                     alignItems: 'start',
                                                     gap: '0.5rem',
                                                     children: [
@@ -972,6 +972,8 @@ export function folderPage() {
                                                         }),
                                                         button({
                                                             ...styles.dangerButton,
+                                                            marginTop: '0.5rem',
+                                                            padding: '0.75rem',
                                                             alignSelf: 'end',
                                                             click: async function (event) {
                                                                 event.stopPropagation();
@@ -1016,7 +1018,7 @@ export function folderPage() {
                             ]
                         }),
                         button({
-                            ...styles.floatingActionButton,
+                            ...styles.actionButtonLight,
                             margin: '1rem',
                             borderRadius: '2rem',
                             click: function (event) {
@@ -1031,27 +1033,28 @@ export function folderPage() {
                                                 modalOn(menu({
                                                     ...styles.menu,
                                                     alignItems: 'start',
+                                                    gap: '0.5rem',
                                                     children: [
                                                         text({
                                                             fontWeight: 600,
                                                             text: 'Name'
                                                         }),
                                                         hint({
+                                                            ...styles.hint,
                                                             id: 'new-folder-name-hint',
-                                                            marginTop: '0.5rem',
                                                             errorText: 'Required'
                                                         }, true),
                                                         input({
-                                                            marginTop: '0.5rem',
+                                                            ...styles.border,
                                                             id: 'new-folder-name-input',
                                                             width: '100%',
                                                             attributes: { type: 'text', maxlength: '64' }
                                                         }),
                                                         button({
-                                                            ...styles.dangerButton,
-                                                            marginTop: '1rem',
+                                                            ...styles.actionButton,
+                                                            marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            fontWeight: 600,
+                                                            padding: '0.75rem',
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
@@ -1084,27 +1087,28 @@ export function folderPage() {
                                                 modalOn(menu({
                                                     ...styles.menu,
                                                     alignItems: 'start',
+                                                    gap: '0.5rem',
                                                     children: [
                                                         text({
                                                             fontWeight: 600,
                                                             text: 'Name'
                                                         }),
                                                         hint({
+                                                            ...styles.hint,
                                                             id: 'new-note-name-hint',
-                                                            marginTop: '0.5rem',
                                                             errorText: 'Required'
                                                         }, true),
                                                         input({
-                                                            marginTop: '0.5rem',
+                                                            ...styles.border,
                                                             id: 'new-note-name-input',
                                                             width: '100%',
                                                             attributes: { type: 'text', maxlength: '64' }
                                                         }),
                                                         button({
-                                                            ...styles.dangerButton,
-                                                            marginTop: '1rem',
+                                                            ...styles.actionButton,
+                                                            marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            fontWeight: 600,
+                                                            padding: '0.75rem',
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 if (!widgets['new-note-name-input'].domElement.value?.trim()) {
