@@ -5,6 +5,7 @@ import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, 
 
 export const icons = {
     add: '<svg viewBox="0 -960 960 960"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>',
+    back: '<svg viewBox="0 -960 960 960"><path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></svg>',
     checkBox: '<svg viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Z"/></svg>',
     checkBoxSelected: '<svg viewBox="0 -960 960 960"><path d="m424-312 282-282-56-56-226 226-114-114-56 56 170 170ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>',
     circle: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50"/></svg>',
@@ -32,7 +33,9 @@ export const lightTheme = {
     '--shadow-3': '0 4px 8px rgba(0, 0, 0, 0.1)',
     '--border': colors.gray[300],
     '--bg': 'white',
+    '--header-bg': colors.gray[50],
     '--hover': colors.gray[100],
+    '--hover-dark': colors.gray[200],
     '--hover-red': colors.red[100],
     '--fg': colors.gray[900],
     '--fg-accent': colors.gray[950],
@@ -59,7 +62,9 @@ export const darkTheme = {
     '--shadow-3': '0 4px 8px rgba(255, 255, 255, 0.1)',
     '--border': colors.gray[600],
     '--bg': colors.gray[800],
+    '--header-bg': colors.gray[700],
     '--hover': colors.gray[700],
+    '--hover-dark': colors.gray[600],
     '--hover-red': colors.red[900],
     '--fg': colors.gray[300],
     '--fg-accent': colors.gray[100],
@@ -88,29 +93,18 @@ export const styles = {
         padding: '0.75rem',
         borderRadius: '0.5rem',
     },
-    h1: {
+    pageTitle: {
         fontSize: '2rem',
-        fontWeight: 600,
-        color: 'var(--fg-accent)',
-    },
-    h2: {
-        fontSize: '1.5rem',
-        fontWeight: 600,
-        color: 'var(--fg-accent)',
-    },
-    h3: {
-        fontSize: '1.25rem',
-        fontWeight: 600,
-        color: 'var(--fg-accent)',
-    },
-    h4: {
-        fontSize: '1rem',
         fontWeight: 600,
         color: 'var(--fg-accent)',
     },
     hint: {
         normalColor: 'var(--fg-tertiary)',
         errorColor: 'var(--fg-red)',
+    },
+    button: {
+        hoverColor: 'var(--hover)',
+        fill: 'var(--fg-secondary)'
     },
     actionButton: {
         backgroundColor: 'var(--action-button-bg)',
@@ -138,11 +132,11 @@ export const styles = {
         color: 'var(--danger-button-fg)',
     },
     menu: {
-        borderWidth: '1px',
-        borderStyle: 'solid',
-        borderColor: 'var(--border)',
+        // borderWidth: '1px',
+        // borderStyle: 'solid',
+        // borderColor: 'var(--border)',
         backgroundColor: 'var(--bg)',
-        boxShadow: 'var(--shadow-2)'
+        // boxShadow: 'var(--shadow-2)'
     },
     menuButton: {
         width: '100%',
@@ -156,15 +150,6 @@ export const styles = {
         hoverColor: 'var(--hover-red)',
         fontWeight: 600,
         color: 'var(--fg-red)',
-    },
-
-
-    folderEntry: {
-        // padding: '0.75rem',
-        borderRadius: '0.5rem',
-        borderStyle: 'solid',
-        borderWidth: '1px',
-        borderColor: colors.gray[300],
     },
 };
 
@@ -344,7 +329,7 @@ export function setupTutorialPage() {
                     gap: '2rem',
                     children: [
                         text({
-                            ...styles.h1,
+                            ...styles.pageTitle,
                             text: 'Keyphrase'
                         }),
                         column({
@@ -403,7 +388,7 @@ export function setupPage() {
                     gap: '2rem',
                     children: [
                         text({
-                            ...styles.h1,
+                            ...styles.pageTitle,
                             text: 'Keyphrase'
                         }),
                         column({
@@ -539,7 +524,7 @@ export function keyphrasePage(invalidAttempt) {
                     gap: '2rem',
                     children: [
                         text({
-                            ...styles.h1,
+                            ...styles.pageTitle,
                             text: 'Keyphrase'
                         }),
                         column({
@@ -615,27 +600,52 @@ export function folderPage() {
     return {
         widget: base(() => ({
             id: 'folder',
+            paddingTop: appState.folderId === 'root' ? undefined : '4rem',
             gap: '1rem',
             children: [
-                appState.folderId === 'root' ? null : button({
-                    ...styles.folderEntry,
+                appState.folderId === 'root' ? null : fixedHeader({
                     width: '100%',
-                    click: function (event) {
-                        goTo(`/folder/${appState.tree[appState.folderId].parent}`);
-                    },
+                    padding: '0.5rem',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: 'var(--header-bg)',
                     children: [
-                        text({
-                            fontSize: '1.5rem',
-                            fontWeight: 600,
-                            text: '...'
+                        row({
+                            alignItems: 'center',
+                            gap: '1rem',
+                            children: [
+                                button({
+                                    ...styles.button,
+                                    hoverColor: 'var(--hover-dark)',
+                                    padding: '0.5rem',
+                                    click: function (event) {
+                                        goTo(`/folder/${appState.tree[appState.folderId].parent}`);
+                                    },
+                                    children: [
+                                        svg({
+                                            width: '1.5rem',
+                                            height: '1.5rem',
+                                            svg: icons.back
+                                        })
+                                    ]
+                                }),
+                                text({
+                                    fontSize: '1.25rem',
+                                    fontWeight: 600,
+                                    text: appState.tree[appState.folderId].name
+                                })
+                            ]
                         })
                     ]
                 }),
                 ...appState.tree[appState.folderId].children.map(cid => button({
-                    ...styles.folderEntry,
                     width: '100%',
+                    padding: '0.75rem',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    borderRadius: '0.5rem',
+                    hoverColor: 'var(--hover)',
+                    fontSize: '1.25rem',
                     click: function (event) {
                         if (appState.tree[cid]['type'] === 'folder') {
                             goTo(`/folder/${cid}`);
@@ -645,12 +655,11 @@ export function folderPage() {
                     },
                     children: [
                         text({
-                            fontSize: '1.5rem',
-                            fontWeight: 600,
                             text: appState.tree[cid]['name']
                         }),
                         button({
-                            hoverColor: colors.gray[100],
+                            hoverColor: 'var(--hover-dark)',
+                            fill: 'var(--fg-tertiary)',
                             click: function (event) {
                                 event.stopPropagation();
                                 modalOn(menu({
@@ -698,11 +707,13 @@ export function folderPage() {
                                                     gap: '0.5rem',
                                                     children: [
                                                         text({
+                                                            marginBottom: '0.5rem',
                                                             fontWeight: 600,
                                                             text: 'Move to Folder'
                                                         }),
                                                         value === 'root' ? null : button({
-                                                            ...styles.menuButton,
+                                                            width: '100%',
+                                                            hoverColor: 'var(--hover)',
                                                             justifyContent: 'start',
                                                             click: function (event) {
                                                                 event.stopPropagation();
@@ -715,7 +726,8 @@ export function folderPage() {
                                                             ]
                                                         }),
                                                         ...appState.tree[value].children.filter(id => appState.tree[id].type === 'folder').map(id => button({
-                                                            ...styles.menuButton,
+                                                            width: '100%',
+                                                            hoverColor: 'var(--hover)',
                                                             justifyContent: 'start',
                                                             click: function (event) {
                                                                 event.stopPropagation();
@@ -728,9 +740,10 @@ export function folderPage() {
                                                             ]
                                                         })),
                                                         button({
-                                                            ...styles.dangerButton,
+                                                            ...styles.actionButton,
+                                                            marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            fontWeight: 600,
+                                                            padding: '0.75rem',
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 const oldParent = appState.tree[appState.tree[cid].parent];
@@ -763,27 +776,28 @@ export function folderPage() {
                                                 modalOn(menu({
                                                     ...styles.menu,
                                                     alignItems: 'start',
+                                                    gap: '0.5rem',
                                                     children: [
                                                         text({
                                                             fontWeight: 600,
                                                             text: 'New Name'
                                                         }),
                                                         hint({
+                                                            ...styles.hint,
                                                             id: 'new-folder-name-hint',
-                                                            marginTop: '0.5rem',
                                                             errorText: 'Required'
                                                         }, true),
                                                         input({
-                                                            marginTop: '0.5rem',
+                                                            ...styles.border,
                                                             id: 'new-folder-name-input',
                                                             width: '100%',
                                                             attributes: { type: 'text', maxlength: '64' }
                                                         }, appState.tree[cid].name),
                                                         button({
-                                                            ...styles.dangerButton,
-                                                            marginTop: '1rem',
+                                                            ...styles.actionButton,
+                                                            marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            fontWeight: 600,
+                                                            padding: '0.75rem',
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
@@ -813,6 +827,7 @@ export function folderPage() {
                                                 event.stopPropagation();
                                                 if (appState.tree[cid].type === 'note') {
                                                     modalOn(menu({
+                                                        ...styles.menu,
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
@@ -825,7 +840,9 @@ export function folderPage() {
                                                             }),
                                                             button({
                                                                 ...styles.dangerButton,
+                                                                marginTop: '0.5rem',
                                                                 alignSelf: 'end',
+                                                                padding: '0.75rem',
                                                                 click: async function (event) {
                                                                     event.stopPropagation();
                                                                     delete appState.tree[cid];
@@ -846,7 +863,7 @@ export function folderPage() {
                                                 }
                                                 else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length > 0) {
                                                     modalOn(menu({
-                                                        minWidth: undefined,
+                                                        ...styles.menu,
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
@@ -862,7 +879,7 @@ export function folderPage() {
                                                 }
                                                 else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length === 0) {
                                                     modalOn(menu({
-                                                        minWidth: undefined,
+                                                        ...styles.menu,
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
@@ -875,7 +892,9 @@ export function folderPage() {
                                                             }),
                                                             button({
                                                                 ...styles.dangerButton,
+                                                                marginTop: '0.5rem',
                                                                 alignSelf: 'end',
+                                                                padding: '0.75rem',
                                                                 click: async function (event) {
                                                                     event.stopPropagation();
                                                                     delete appState.tree[cid];
@@ -903,9 +922,8 @@ export function folderPage() {
                             },
                             children: [
                                 svg({
-                                    width: '1rem',
-                                    height: '1rem',
-                                    fill: colors.gray[600],
+                                    width: '1.25rem',
+                                    height: '1.25rem',
                                     svg: icons.menu
                                 })
                             ]
@@ -922,10 +940,9 @@ export function folderPage() {
                     alignItems: 'center',
                     children: [
                         button({
+                            ...styles.button,
                             margin: '1rem',
                             borderRadius: '2rem',
-                            hoverColor: 'var(--hover)',
-                            fill: 'var(--fg-secondary)',
                             click: function (event) {
                                 event.stopPropagation();
                                 modalOn(menu({
