@@ -49,10 +49,45 @@ export const lightTheme = {
     '--action-button-fg': 'white',
     '--action-button-light-bg': colors.blue[300],
     '--action-button-light-hover': colors.blue[400],
-    '--action-button-light-fg': colors.blue[700],
+    '--action-button-light-fg': colors.blue[900],
     '--danger-button-bg': colors.red[500],
     '--danger-button-hover': colors.red[600],
     '--danger-button-fg': 'white',
+
+    '--paragraph-red-border': colors.red[200],
+    '--paragraph-red-bg': colors.red[50],
+    '--paragraph-red-hover': colors.red[100],
+    '--paragraph-red-fg': colors.red[600],
+    '--paragraph-red-fg-secondary': colors.red[500],
+    '--paragraph-red-fg-tertiary': colors.red[400],
+
+    '--paragraph-green-border': colors.green[300],
+    '--paragraph-green-bg': colors.green[100],
+    '--paragraph-green-hover': colors.green[200],
+    '--paragraph-green-fg': colors.green[700],
+    '--paragraph-green-fg-secondary': colors.green[600],
+    '--paragraph-green-fg-tertiary': colors.green[500],
+
+    '--paragraph-yellow-border': colors.yellow[300],
+    '--paragraph-yellow-bg': colors.yellow[100],
+    '--paragraph-yellow-hover': colors.yellow[200],
+    '--paragraph-yellow-fg': colors.yellow[700],
+    '--paragraph-yellow-fg-secondary': colors.yellow[600],
+    '--paragraph-yellow-fg-tertiary': colors.yellow[500],
+
+    '--paragraph-blue-border': colors.blue[200],
+    '--paragraph-blue-bg': colors.blue[50],
+    '--paragraph-blue-hover': colors.blue[100],
+    '--paragraph-blue-fg': colors.blue[600],
+    '--paragraph-blue-fg-secondary': colors.blue[500],
+    '--paragraph-blue-fg-tertiary': colors.blue[400],
+
+    '--paragraph-gray-border': colors.slate[300],
+    '--paragraph-gray-bg': colors.slate[200],
+    '--paragraph-gray-hover': colors.slate[300],
+    '--paragraph-gray-fg': colors.slate[700],
+    '--paragraph-gray-fg-secondary': colors.slate[600],
+    '--paragraph-gray-fg-tertiary': colors.slate[500],
 }
 export const darkTheme = {
     '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
@@ -78,10 +113,45 @@ export const darkTheme = {
     '--action-button-fg': 'white',
     '--action-button-light-bg': colors.blue[400],
     '--action-button-light-hover': colors.blue[500],
-    '--action-button-light-fg': colors.blue[800],
+    '--action-button-light-fg': colors.blue[900],
     '--danger-button-bg': colors.red[700],
     '--danger-button-hover': colors.red[800],
     '--danger-button-fg': 'white',
+
+    '--paragraph-red-border': colors.red[900],
+    '--paragraph-red-bg': colors.red[950],
+    '--paragraph-red-hover': colors.red[900],
+    '--paragraph-red-fg': colors.red[300],
+    '--paragraph-red-fg-secondary': colors.red[400],
+    '--paragraph-red-fg-tertiary': colors.red[500],
+
+    '--paragraph-green-border': colors.green[900],
+    '--paragraph-green-bg': colors.green[950],
+    '--paragraph-green-hover': colors.green[900],
+    '--paragraph-green-fg': colors.green[400],
+    '--paragraph-green-fg-secondary': colors.green[500],
+    '--paragraph-green-fg-tertiary': colors.green[600],
+
+    '--paragraph-yellow-border': colors.yellow[900],
+    '--paragraph-yellow-bg': colors.yellow[950],
+    '--paragraph-yellow-hover': colors.yellow[900],
+    '--paragraph-yellow-fg': colors.yellow[500],
+    '--paragraph-yellow-fg-secondary': colors.yellow[600],
+    '--paragraph-yellow-fg-tertiary': colors.yellow[700],
+
+    '--paragraph-blue-border': colors.blue[900],
+    '--paragraph-blue-bg': colors.blue[950],
+    '--paragraph-blue-hover': colors.blue[900],
+    '--paragraph-blue-fg': colors.blue[300],
+    '--paragraph-blue-fg-secondary': colors.blue[400],
+    '--paragraph-blue-fg-tertiary': colors.blue[500],
+
+    '--paragraph-gray-border': colors.slate[700],
+    '--paragraph-gray-bg': colors.slate[900],
+    '--paragraph-gray-hover': colors.slate[600],
+    '--paragraph-gray-fg': colors.slate[300],
+    '--paragraph-gray-fg-secondary': colors.slate[400],
+    '--paragraph-gray-fg-tertiary': colors.slate[500],    
 }
 export const styles = {
     border: {
@@ -1175,30 +1245,39 @@ export function notePage() {
     return {
         widget: base(() => ({
             id: 'note',
+            paddingTop: '4rem',
             gap: '1rem',
             children: [
-                row({
+                fixedHeader({
                     width: '100%',
+                    padding: '0.5rem',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    backgroundColor: 'var(--header-bg)',
                     children: [
-                        text({
-                            fontSize: '2rem',
-                            fontWeight: 600,
-                            text: appState.tree[appState.noteId].name
-                        }),
-                        button({
-                            hoverColor: colors.gray[100],
-                            click: function (event) {
-                                event.stopPropagation();
-                                goTo('/');
-                            },
+                        row({
+                            alignItems: 'center',
+                            gap: '1rem',
                             children: [
-                                svg({
-                                    width: '1.75rem',
-                                    height: '1.75rem',
-                                    fill: colors.gray[600],
-                                    svg: icons.home
+                                button({
+                                    ...styles.button,
+                                    hoverColor: 'var(--hover-dark)',
+                                    padding: '0.5rem',
+                                    click: function (event) {
+                                        goTo(`/folder/${appState.tree[appState.noteId].parent}`);
+                                    },
+                                    children: [
+                                        svg({
+                                            width: '1.5rem',
+                                            height: '1.5rem',
+                                            svg: icons.back
+                                        })
+                                    ]
+                                }),
+                                text({
+                                    fontSize: '1.25rem',
+                                    fontWeight: 600,
+                                    text: appState.tree[appState.noteId].name
                                 })
                             ]
                         })
@@ -1208,18 +1287,27 @@ export function notePage() {
                     width: '100%',
                     gap: '0.5rem',
                     children: [
+                        hint({
+                            ...styles.hint,
+                            id: 'add-note-hint',
+                            errorText: 'Required'
+                        }, true),
                         textArea({
+                            ...styles.border,
                             id: 'add-note-input',
                             width: '100%',
                             attributes: { rows: 8 },
                         }),
                         button({
-                            ...styles.dangerButton,
+                            ...styles.actionButtonLight,
+                            marginBottom: '1rem',
                             width: '100%',
-                            fontWeight: 600,
+                            justifyContent: 'center',
+                            padding: '0.75rem',
                             click: async function (event) {
                                 event.stopPropagation();
                                 if (widgets['add-note-input'].domElement.value.trim()) {
+                                    widgets['add-note-hint'].update(true);
                                     addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
                                         timestamp: Math.floor(Date.now() / 1000),
                                         noteId: appState.noteId,
@@ -1228,20 +1316,7 @@ export function notePage() {
                                         }))),
                                     });
                                 } else {
-                                    modalOn(menu({
-                                        ...styles.menu,
-                                        alignItems: 'start',
-                                        gap: '0.5rem',
-                                        children: [
-                                            text({
-                                                fontWeight: 600,
-                                                text: 'Save'
-                                            }),
-                                            text({
-                                                text: 'Empty text is not allowed'
-                                            })
-                                        ]
-                                    }));
+                                    widgets['add-note-hint'].update(false);
                                 }
                             },
                             children: [
@@ -1256,8 +1331,12 @@ export function notePage() {
                     if (value === 'view') {
                         return {
                             ...styles.card,
+                            ...styles.border,
                             width: '100%',
-                            gap: '2rem',
+                            gap: '1rem',
+                            borderColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--border)' : `var(--paragraph-${paragraph.color}-border)`,
+                            backgroundColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--bg)' : `var(--paragraph-${paragraph.color}-bg)`,
+                            color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg)' : `var(--paragraph-${paragraph.color}-fg)`,
                             children: [
                                 text({
                                     width: '100%',
@@ -1272,14 +1351,15 @@ export function notePage() {
                                     children: [
                                         text({
                                             fontSize: '0.875rem',
-                                            color: colors.gray[600],
+                                            color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-tertiary)' : `var(--paragraph-${paragraph.color}-fg-tertiary)`,
                                             text: new Date(paragraph.timestamp * 1000).toLocaleString()
                                         }),
                                         row({
                                             gap: '0.5rem',
                                             children: [
                                                 button({
-                                                    hoverColor: colors.gray[100],
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         navigator.clipboard.writeText(paragraph.text);
@@ -1288,13 +1368,69 @@ export function notePage() {
                                                         svg({
                                                             width: '1.25rem',
                                                             height: '1.25rem',
-                                                            fill: colors.gray[600],
                                                             svg: icons.copy
                                                         })
                                                     ]
                                                 }),
                                                 button({
-                                                    hoverColor: colors.gray[100],
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
+                                                    click: function (event) {
+                                                        event.stopPropagation();
+                                                        modalOn(menu({
+                                                            ...styles.menu,
+                                                            alignItems: 'start',
+                                                            gap: '0.5rem',
+                                                            children: [
+                                                                text({
+                                                                    fontWeight: 600,
+                                                                    text: 'Color'
+                                                                }),
+                                                                ...['default', 'red', 'green', 'yellow', 'blue', 'gray'].map(color => button({
+                                                                    ...styles.button,
+                                                                    width: '100%',
+                                                                    alignItems: 'center',
+                                                                    gap: '1rem',
+                                                                    click: async function (event) {
+                                                                        event.stopPropagation();
+                                                                        updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
+                                                                            content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
+                                                                                text: paragraph.text,
+                                                                                color
+                                                                            }))),
+                                                                        });
+                                                                        modalOff();
+                                                                    },
+                                                                    children: [
+                                                                        svg({
+                                                                            width: '1rem',
+                                                                            height: '1rem',
+                                                                            borderRadius: '2rem',
+                                                                            borderWidth: '2px',
+                                                                            borderStyle: 'solid',
+                                                                            borderColor: color === 'default' ? 'var(--border)' : `var(--paragraph-${color}-fg)`,
+                                                                            fill: color === 'default' ? 'var(--bg)' : `var(--paragraph-${color}-bg)`,
+                                                                            svg: icons.circle
+                                                                        }),
+                                                                        text({
+                                                                            text: color.charAt(0).toUpperCase() + color.slice(1)
+                                                                        })
+                                                                    ]
+                                                                }))
+                                                            ]
+                                                        }));
+                                                    },
+                                                    children: [
+                                                        svg({
+                                                            width: '1.25rem',
+                                                            height: '1.25rem',
+                                                            svg: icons.color
+                                                        })
+                                                    ]
+                                                }),
+                                                button({
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         this.parent.parent.parent.update('edit');
@@ -1303,16 +1439,17 @@ export function notePage() {
                                                         svg({
                                                             width: '1.25rem',
                                                             height: '1.25rem',
-                                                            fill: colors.gray[600],
                                                             svg: icons.edit
                                                         })
                                                     ]
                                                 }),
                                                 button({
-                                                    hoverColor: colors.gray[100],
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         modalOn(menu({
+                                                            ...styles.menu,
                                                             alignItems: 'start',
                                                             gap: '0.5rem',
                                                             children: [
@@ -1325,7 +1462,9 @@ export function notePage() {
                                                                 }),
                                                                 button({
                                                                     ...styles.dangerButton,
+                                                                    marginTop: '0.5rem',
                                                                     alignSelf: 'end',
+                                                                    padding: '0.75rem',
                                                                     click: async function (event) {
                                                                         event.stopPropagation();
                                                                         deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
@@ -1343,7 +1482,6 @@ export function notePage() {
                                                         svg({
                                                             width: '1.25rem',
                                                             height: '1.25rem',
-                                                            fill: colors.gray[600],
                                                             svg: icons.delete
                                                         })
                                                     ]
@@ -1359,7 +1497,13 @@ export function notePage() {
                             width: '100%',
                             gap: '0.5rem',
                             children: [
+                                hint({
+                                    ...styles.hint,
+                                    id: `edit-note-hint-${paragraph.id}`,
+                                    errorText: 'Required'
+                                }, true),
                                 textArea({
+                                    ...styles.border,
                                     id: `edit-note-input-${paragraph.id}`,
                                     width: '100%',
                                     attributes: { rows: 8 },
@@ -1369,8 +1513,11 @@ export function notePage() {
                                     gap: '1rem',
                                     children: [
                                         button({
-                                            ...styles.actionSecondaryButton,
+                                            ...styles.actionButtonOptional,
+                                            flexBasis: 0,
                                             flexGrow: 1,
+                                            padding: '0.75rem',
+                                            justifyContent: 'center',
                                             click: async function (event) {
                                                 event.stopPropagation();
                                                 this.parent.parent.update('view');
@@ -1382,9 +1529,11 @@ export function notePage() {
                                             ]
                                         }),
                                         button({
-                                            ...styles.dangerButton,
+                                            ...styles.actionButton,
+                                            flexBasis: 0,
                                             flexGrow: 1,
-                                            fontWeight: 600,
+                                            padding: '0.75rem',
+                                            justifyContent: 'center',
                                             click: async function (event) {
                                                 event.stopPropagation();
                                                 if (widgets[`edit-note-input-${paragraph.id}`].domElement.value.trim()) {
@@ -1394,20 +1543,7 @@ export function notePage() {
                                                         }))),
                                                     });
                                                 } else {
-                                                    modalOn(menu({
-                                                        ...styles.menu,
-                                                        alignItems: 'start',
-                                                        gap: '0.5rem',
-                                                        children: [
-                                                            text({
-                                                                fontWeight: 600,
-                                                                text: 'Save'
-                                                            }),
-                                                            text({
-                                                                text: 'Empty text is not allowed'
-                                                            })
-                                                        ]
-                                                    }));
+                                                    widgets[`edit-note-hint-${paragraph.id}`].update(false);
                                                 }
                                             },
                                             children: [
