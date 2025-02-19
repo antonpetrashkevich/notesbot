@@ -1559,7 +1559,7 @@ export function notePage() {
                         }
                     }
                 }, 'view')),
-                appState.paragraphs.length % 2 === 0 ? button({
+                appState.paragraphs.length > 0 && appState.paragraphs.length % 32 === 0 ? button({
                     ...styles.actionButtonOptional,
                     width: '100%',
                     justifyContent: 'center',
