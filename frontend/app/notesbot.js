@@ -151,7 +151,7 @@ export const darkTheme = {
     '--paragraph-gray-hover': colors.slate[600],
     '--paragraph-gray-fg': colors.slate[300],
     '--paragraph-gray-fg-secondary': colors.slate[400],
-    '--paragraph-gray-fg-tertiary': colors.slate[500],    
+    '--paragraph-gray-fg-tertiary': colors.slate[500],
 }
 export const styles = {
     border: {
@@ -311,7 +311,9 @@ export function listenNotebook() {
                                 }
                                 else if (segments.length === 2 && segments[0] === 'note') {
                                     appState.noteId = segments[1];
-                                    listenParagraphs();
+                                    appState.paragraphs = [];
+                                    updatePage(notePage());
+                                    listenParagraphs(32);
                                 } else {
                                     appState.folderId = 'root';
                                     updatePage(folderPage());
@@ -339,11 +341,10 @@ export function listenNotebook() {
 }
 
 
-export function listenParagraphs() {
+export function listenParagraphs(count) {
     appState.stopListenParagraphs?.();
     appState.paragraphs = [];
-    updatePage(notePage());
-    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', appState.noteId), orderBy('timestamp', 'desc'), limit(32)),
+    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', appState.noteId), orderBy('timestamp', 'desc'), limit(count)),
         async (querySnapshot) => {
             appState.paragraphs = [];
             for (const docSnap of querySnapshot.docs) {
@@ -1557,7 +1558,21 @@ export function notePage() {
                             ]
                         }
                     }
-                }, 'view'))
+                }, 'view')),
+                appState.paragraphs.length % 2 === 0 ? button({
+                    ...styles.actionButtonOptional,
+                    width: '100%',
+                    justifyContent: 'center',
+                    padding: '0.75rem',
+                    click: function (event) {
+                        listenParagraphs(appState.paragraphs.length + 32);
+                    },
+                    children: [
+                        text({
+                            text: 'More'
+                        })
+                    ]
+                }) : null
             ]
         })),
         meta: { title: `${appState.tree[appState.noteId]['name']} | ${appName}`, description: 'Note page.' }
