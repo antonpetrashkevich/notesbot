@@ -1,4 +1,4 @@
-import { appName, appState, widgets, pageWidget, colors, updatePage, goTo, startApp, startPathController, setTheme, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, base, menu, fixedHeader, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+import { appName, appState, widgets, pageWidget, colors, updatePage, goTo, startApp, startPathController, setTheme, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, base, menu, fixedHeader, hint, notification, imageInput, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -43,6 +43,7 @@ export const lightTheme = {
     '--fg-accent': colors.gray[950],
     '--fg-secondary': colors.gray[500],
     '--fg-tertiary': colors.gray[400],
+    '--fg-quaternary': colors.gray[300],
     '--fg-red': colors.red[500],
     '--button-bg': colors.gray[100],
     '--button-hover': colors.gray[200],
@@ -108,6 +109,7 @@ export const darkTheme = {
     '--fg-accent': colors.gray[100],
     '--fg-secondary': colors.gray[400],
     '--fg-tertiary': colors.gray[500],
+    '--fg-quaternary': colors.gray[600],
     '--fg-red': colors.red[400],
     '--button-bg': colors.gray[700],
     '--button-hover': colors.gray[600],
@@ -197,6 +199,7 @@ export const styles = {
         backgroundColor: 'var(--button-bg)',
         hoverColor: 'var(--button-hover)',
         fontWeight: 600,
+        fill: 'var(--fg-secondary)',
         color: 'var(--fg-secondary)',
     },
     dangerButton: {
@@ -362,6 +365,26 @@ export function listenParagraphs(count) {
             updatePage(generalErrorPage());
         }
     );
+}
+
+
+export function loadingPage(color) {
+    return {
+        widget: row(() => ({
+            width: '100%',
+            height: '100%',
+            justifyContent: 'center',
+            children: [svg({
+                width: '8vh',
+                height: '8vh',
+                alignSelf: 'center',
+                fill: 'none',
+                stroke: 'var(--fg-quaternary)',
+                svg: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>'
+            })]
+        })),
+        meta: { title: `Loading | ${appName}`, description: 'Loading...' }
+    };
 }
 
 
@@ -643,7 +666,7 @@ export function keyphrasePage(invalidAttempt) {
                                             window.scrollTo(0, 0);
                                             return;
                                         }
-                                        updatePage(loadingPage('var(--fg-tertiary)'));
+                                        updatePage(loadingPage());
                                         window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
                                         listenNotebook();
                                     },
@@ -1279,29 +1302,106 @@ export function notePage() {
                     width: '100%',
                     attributes: { rows: 8 },
                 }),
-                button({
-                    ...styles.actionButtonLight,
-                    justifyContent: 'center',
-                    alignSelf: 'end',
-                    padding: '0.75rem 2rem',
-                    click: async function (event) {
-                        event.stopPropagation();
-                        if (widgets['add-note-input'].domElement.value.trim()) {
-                            widgets['add-note-hint'].update(true);
-                            addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
-                                timestamp: Math.floor(Date.now() / 1000),
-                                noteId: appState.noteId,
-                                content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
-                                    text: widgets['add-note-input'].domElement.value
-                                }))),
-                            });
-                        } else {
-                            widgets['add-note-hint'].update(false);
-                        }
-                    },
+                row({
+                    width: '100%',
+                    justifyContent: 'end',
+                    gap: '1rem',
                     children: [
-                        text({
-                            text: 'Add'
+                        widget(
+                            {
+                                id: 'image-input',
+                                tag: 'input',
+                                display: 'none',
+                                attributes: {
+                                    type: 'file',
+                                    accept: 'image/*'
+                                },
+                                handlers: {
+                                    change: function (event) {
+                                        const file = event.target.files[0];
+                                        if (file) {
+                                            if (file.size > 750 * 1024) {
+                                                modalOn(
+                                                    menu({
+                                                        ...styles.menu,
+                                                        alignItems: 'start',
+                                                        gap: '0.5rem',
+                                                        children: [
+                                                            text({
+                                                                fontWeight: 600,
+                                                                text: 'Image Upload'
+                                                            }),
+                                                            text({
+                                                                text: 'Image size exceeds 750KB'
+                                                            })
+                                                        ]
+                                                    })
+                                                )
+                                            } else {
+                                                const reader = new FileReader();
+                                                reader.onload = async function (e) {
+                                                    addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
+                                                        timestamp: Math.floor(Date.now() / 1000),
+                                                        noteId: appState.noteId,
+                                                        content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
+                                                            image: e.target.result,
+                                                        }))),
+                                                    })
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }
+                                    }
+                                },
+                            }
+                        ),
+                        button({
+                            ...styles.actionButtonOptional,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            alignSelf: 'end',
+                            padding: '0.625rem 2rem',
+                            gap: '1rem',
+                            click: async function (event) {
+                                event.stopPropagation();
+                                widgets['image-input'].domElement.click();
+                            },
+                            children: [
+                                svg({
+                                    width: '1.25rem',
+                                    height: '1.25rem',
+                                    svg: icons.upload
+                                }),
+                                text({
+                                    text: 'Image'
+                                })
+                            ]
+                        }),
+                        button({
+                            ...styles.actionButton,
+                            justifyContent: 'center',
+                            alignSelf: 'end',
+                            padding: '0.75rem 2rem',
+                            click: async function (event) {
+                                event.stopPropagation();
+                                if (widgets['add-note-input'].domElement.value.trim()) {
+                                    widgets['add-note-hint'].update(true);
+                                    addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
+                                        timestamp: Math.floor(Date.now() / 1000),
+                                        noteId: appState.noteId,
+                                        content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
+                                            text: widgets['add-note-input'].domElement.value
+                                        }))),
+                                    });
+                                } else {
+                                    widgets['add-note-hint'].update(false);
+                                }
+                            },
+                            children: [
+                                text({
+                                    text: 'Add'
+                                })
+                            ]
                         })
                     ]
                 }),
@@ -1312,21 +1412,29 @@ export function notePage() {
                             ...styles.border,
                             width: '100%',
                             gap: '1rem',
+                            padding: 0,
                             borderColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--border)' : `var(--paragraph-${paragraph.color}-border)`,
                             backgroundColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--bg)' : `var(--paragraph-${paragraph.color}-bg)`,
                             color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg)' : `var(--paragraph-${paragraph.color}-fg)`,
+                            overflow: 'hidden',
                             children: [
-                                text({
+                                paragraph.text ? text({
                                     width: '100%',
+                                    padding: '0.75rem 0.75rem 0 0.75rem',
                                     whiteSpace: 'pre-wrap',
                                     lineHeight: '1.5rem',
                                     text: paragraph.text
-                                }),
+                                }) : null,
+                                paragraph.image ? image({
+                                    width: '100%',
+                                    src: paragraph.image
+                                }) : null,
                                 row({
                                     width: '100%',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     gap: '1rem',
+                                    padding: '0 0.75rem 0.75rem 0.75rem',
                                     children: [
                                         text({
                                             fontSize: '0.875rem',
@@ -1336,7 +1444,7 @@ export function notePage() {
                                         row({
                                             gap: '0.5rem',
                                             children: [
-                                                button({
+                                                paragraph.text ? button({
                                                     hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
                                                     fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
@@ -1350,8 +1458,8 @@ export function notePage() {
                                                             svg: icons.copy
                                                         })
                                                     ]
-                                                }),
-                                                button({
+                                                }) : null,
+                                                paragraph.text ? button({
                                                     hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
                                                     fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
@@ -1406,13 +1514,14 @@ export function notePage() {
                                                             svg: icons.color
                                                         })
                                                     ]
-                                                }),
-                                                button({
+                                                }) : null,
+                                                paragraph.text ? button({
                                                     hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
                                                     fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         this.parent.parent.parent.update('edit');
+                                                        widgets[`edit-note-input-${paragraph.id}`].domElement.focus();
                                                     },
                                                     children: [
                                                         svg({
@@ -1421,7 +1530,7 @@ export function notePage() {
                                                             svg: icons.edit
                                                         })
                                                     ]
-                                                }),
+                                                }) : null,
                                                 button({
                                                     hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
                                                     fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
@@ -1485,6 +1594,10 @@ export function notePage() {
                                     ...styles.border,
                                     id: `edit-note-input-${paragraph.id}`,
                                     width: '100%',
+                                    padding: '0.75rem',
+                                    borderColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--border)' : `var(--paragraph-${paragraph.color}-border)`,
+                                    backgroundColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--bg)' : `var(--paragraph-${paragraph.color}-bg)`,
+                                    color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg)' : `var(--paragraph-${paragraph.color}-fg)`,
                                     attributes: { rows: 8 },
                                 }, paragraph.text),
                                 row({
