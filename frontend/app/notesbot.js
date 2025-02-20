@@ -744,7 +744,6 @@ export function folderPage() {
                     ]
                 }),
                 ...appState.tree[appState.folderId].children.map(cid => button({
-                    ...styles.border,
                     width: '100%',
                     padding: '1rem',
                     justifyContent: 'start',
@@ -961,7 +960,7 @@ export function folderPage() {
                                         }
                                         else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length > 0) {
                                             modalOn(menu({
-                                                ...styles.menu,
+                                                ...styles.menuDanger,
                                                 alignItems: 'start',
                                                 gap: '0.5rem',
                                                 children: [
