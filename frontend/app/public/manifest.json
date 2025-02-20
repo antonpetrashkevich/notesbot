@@ -4,10 +4,12 @@
     "description": "End-to-end encrypted notes",
     "start_url": "/",
     "display": "standalone",
+    "background_color": "oklch(.424 .199 265.638)",
     "icons": [
         {
             "src": "/icon.svg",
-            "type": "image/svg+xml"
+            "type": "image/svg+xml",
+            "purpose": "maskable"
         }
     ]
 }
