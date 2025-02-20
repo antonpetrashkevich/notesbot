@@ -35,7 +35,6 @@ export const lightTheme = {
     '--shadow-3': '0 4px 8px rgba(0, 0, 0, 0.1)',
     '--border': colors.gray[300],
     '--bg': 'white',
-    // '--bg-gradient': colors.gray[50],
     '--header-bg': colors.gray[50],
     '--hover': colors.gray[100],
     '--hover-dark': colors.gray[200],
@@ -58,40 +57,40 @@ export const lightTheme = {
     '--danger-button-hover': colors.red[600],
     '--danger-button-fg': 'white',
 
-    '--paragraph-red-border': colors.red[200],
-    '--paragraph-red-bg': colors.red[50],
-    '--paragraph-red-hover': colors.red[100],
-    '--paragraph-red-fg': colors.red[600],
-    '--paragraph-red-fg-secondary': colors.red[500],
-    '--paragraph-red-fg-tertiary': colors.red[400],
+    '--panel-red-border': colors.red[300],
+    '--panel-red-bg': colors.red[100],
+    '--panel-red-hover': colors.red[200],
+    '--panel-red-fg': colors.red[700],
+    '--panel-red-fg-secondary': colors.red[600],
+    '--panel-red-fg-tertiary': colors.red[500],
 
-    '--paragraph-green-border': colors.green[300],
-    '--paragraph-green-bg': colors.green[100],
-    '--paragraph-green-hover': colors.green[200],
-    '--paragraph-green-fg': colors.green[700],
-    '--paragraph-green-fg-secondary': colors.green[600],
-    '--paragraph-green-fg-tertiary': colors.green[500],
+    '--panel-green-border': colors.green[300],
+    '--panel-green-bg': colors.green[100],
+    '--panel-green-hover': colors.green[200],
+    '--panel-green-fg': colors.green[700],
+    '--panel-green-fg-secondary': colors.green[600],
+    '--panel-green-fg-tertiary': colors.green[500],
 
-    '--paragraph-yellow-border': colors.yellow[300],
-    '--paragraph-yellow-bg': colors.yellow[100],
-    '--paragraph-yellow-hover': colors.yellow[200],
-    '--paragraph-yellow-fg': colors.yellow[700],
-    '--paragraph-yellow-fg-secondary': colors.yellow[600],
-    '--paragraph-yellow-fg-tertiary': colors.yellow[500],
+    '--panel-yellow-border': colors.yellow[300],
+    '--panel-yellow-bg': colors.yellow[100],
+    '--panel-yellow-hover': colors.yellow[200],
+    '--panel-yellow-fg': colors.yellow[700],
+    '--panel-yellow-fg-secondary': colors.yellow[600],
+    '--panel-yellow-fg-tertiary': colors.yellow[500],
 
-    '--paragraph-blue-border': colors.blue[200],
-    '--paragraph-blue-bg': colors.blue[50],
-    '--paragraph-blue-hover': colors.blue[100],
-    '--paragraph-blue-fg': colors.blue[600],
-    '--paragraph-blue-fg-secondary': colors.blue[500],
-    '--paragraph-blue-fg-tertiary': colors.blue[400],
+    '--panel-blue-border': colors.blue[300],
+    '--panel-blue-bg': colors.blue[100],
+    '--panel-blue-hover': colors.blue[200],
+    '--panel-blue-fg': colors.blue[700],
+    '--panel-blue-fg-secondary': colors.blue[600],
+    '--panel-blue-fg-tertiary': colors.blue[500],
 
-    '--paragraph-gray-border': colors.slate[300],
-    '--paragraph-gray-bg': colors.slate[200],
-    '--paragraph-gray-hover': colors.slate[300],
-    '--paragraph-gray-fg': colors.slate[700],
-    '--paragraph-gray-fg-secondary': colors.slate[600],
-    '--paragraph-gray-fg-tertiary': colors.slate[500],
+    '--panel-gray-border': colors.slate[300],
+    '--panel-gray-bg': colors.slate[100],
+    '--panel-gray-hover': colors.slate[200],
+    '--panel-gray-fg': colors.slate[700],
+    '--panel-gray-fg-secondary': colors.slate[600],
+    '--panel-gray-fg-tertiary': colors.slate[500],
 }
 export const darkTheme = {
     '--meta-theme-color': '#364153',
@@ -102,7 +101,6 @@ export const darkTheme = {
     '--shadow-3': '0 4px 8px rgba(255, 255, 255, 0.1)',
     '--border': colors.gray[600],
     '--bg': colors.gray[800],
-    // '--bg-gradient': colors.gray[700],
     '--header-bg': colors.gray[700],
     '--hover': colors.gray[700],
     '--hover-dark': colors.gray[600],
@@ -125,40 +123,40 @@ export const darkTheme = {
     '--danger-button-hover': colors.red[800],
     '--danger-button-fg': 'white',
 
-    '--paragraph-red-border': colors.red[900],
-    '--paragraph-red-bg': colors.red[950],
-    '--paragraph-red-hover': colors.red[900],
-    '--paragraph-red-fg': colors.red[300],
-    '--paragraph-red-fg-secondary': colors.red[400],
-    '--paragraph-red-fg-tertiary': colors.red[500],
+    '--panel-red-border': colors.red[900],
+    '--panel-red-bg': colors.red[950],
+    '--panel-red-hover': colors.red[900],
+    '--panel-red-fg': colors.red[300],
+    '--panel-red-fg-secondary': colors.red[400],
+    '--panel-red-fg-tertiary': colors.red[500],
 
-    '--paragraph-green-border': colors.green[900],
-    '--paragraph-green-bg': colors.green[950],
-    '--paragraph-green-hover': colors.green[900],
-    '--paragraph-green-fg': colors.green[400],
-    '--paragraph-green-fg-secondary': colors.green[500],
-    '--paragraph-green-fg-tertiary': colors.green[600],
+    '--panel-green-border': colors.green[900],
+    '--panel-green-bg': colors.green[950],
+    '--panel-green-hover': colors.green[900],
+    '--panel-green-fg': colors.green[400],
+    '--panel-green-fg-secondary': colors.green[500],
+    '--panel-green-fg-tertiary': colors.green[600],
 
-    '--paragraph-yellow-border': colors.yellow[900],
-    '--paragraph-yellow-bg': colors.yellow[950],
-    '--paragraph-yellow-hover': colors.yellow[900],
-    '--paragraph-yellow-fg': colors.yellow[500],
-    '--paragraph-yellow-fg-secondary': colors.yellow[600],
-    '--paragraph-yellow-fg-tertiary': colors.yellow[700],
+    '--panel-yellow-border': colors.yellow[900],
+    '--panel-yellow-bg': colors.yellow[950],
+    '--panel-yellow-hover': colors.yellow[900],
+    '--panel-yellow-fg': colors.yellow[500],
+    '--panel-yellow-fg-secondary': colors.yellow[600],
+    '--panel-yellow-fg-tertiary': colors.yellow[700],
 
-    '--paragraph-blue-border': colors.blue[900],
-    '--paragraph-blue-bg': colors.blue[950],
-    '--paragraph-blue-hover': colors.blue[900],
-    '--paragraph-blue-fg': colors.blue[300],
-    '--paragraph-blue-fg-secondary': colors.blue[400],
-    '--paragraph-blue-fg-tertiary': colors.blue[500],
+    '--panel-blue-border': colors.blue[900],
+    '--panel-blue-bg': colors.blue[950],
+    '--panel-blue-hover': colors.blue[900],
+    '--panel-blue-fg': colors.blue[300],
+    '--panel-blue-fg-secondary': colors.blue[400],
+    '--panel-blue-fg-tertiary': colors.blue[500],
 
-    '--paragraph-gray-border': colors.slate[700],
-    '--paragraph-gray-bg': colors.slate[900],
-    '--paragraph-gray-hover': colors.slate[600],
-    '--paragraph-gray-fg': colors.slate[300],
-    '--paragraph-gray-fg-secondary': colors.slate[400],
-    '--paragraph-gray-fg-tertiary': colors.slate[500],
+    '--panel-gray-border': colors.slate[700],
+    '--panel-gray-bg': colors.slate[900],
+    '--panel-gray-hover': colors.slate[600],
+    '--panel-gray-fg': colors.slate[300],
+    '--panel-gray-fg-secondary': colors.slate[400],
+    '--panel-gray-fg-tertiary': colors.slate[500],
 }
 export const styles = {
     border: {
@@ -217,13 +215,6 @@ export const styles = {
         fontWeight: 600,
         color: 'var(--danger-button-fg)',
     },
-    menu: {
-        // borderWidth: '1px',
-        // borderStyle: 'solid',
-        // borderColor: 'var(--border)',
-        backgroundColor: 'var(--bg)',
-        // boxShadow: 'var(--shadow-2)'
-    },
     menuButton: {
         width: '100%',
         justifyContent: 'center',
@@ -236,6 +227,22 @@ export const styles = {
         hoverColor: 'var(--hover-red)',
         fontWeight: 600,
         color: 'var(--fg-red)',
+    },
+    menu: {
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--bg)',
+        boxShadow: 'var(--shadow-3)'
+    },
+    menuDanger: {
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: 'var(--panel-red-border)',
+        backgroundColor: 'var(--panel-red-bg)',
+        fill: 'var(--panel-red-fg-secondary)',
+        color: 'var(--panel-red-fg)',
+        boxShadow: 'var(--shadow-3)'
     },
 };
 
@@ -1332,7 +1339,7 @@ export function notePage() {
                                             if (file.size > 750 * 1024) {
                                                 modalOn(
                                                     menu({
-                                                        ...styles.menu,
+                                                        ...styles.menuDanger,
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
@@ -1422,9 +1429,9 @@ export function notePage() {
                             width: '100%',
                             gap: '1rem',
                             padding: 0,
-                            borderColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--border)' : `var(--paragraph-${paragraph.color}-border)`,
-                            backgroundColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--bg)' : `var(--paragraph-${paragraph.color}-bg)`,
-                            color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg)' : `var(--paragraph-${paragraph.color}-fg)`,
+                            borderColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--border)' : `var(--panel-${paragraph.color}-border)`,
+                            backgroundColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--bg)' : `var(--panel-${paragraph.color}-bg)`,
+                            color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg)' : `var(--panel-${paragraph.color}-fg)`,
                             overflow: 'hidden',
                             children: [
                                 paragraph.text ? text({
@@ -1447,15 +1454,15 @@ export function notePage() {
                                     children: [
                                         text({
                                             fontSize: '0.875rem',
-                                            color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-tertiary)' : `var(--paragraph-${paragraph.color}-fg-tertiary)`,
+                                            color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-tertiary)' : `var(--panel-${paragraph.color}-fg-tertiary)`,
                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                         }),
                                         row({
                                             gap: '0.5rem',
                                             children: [
                                                 paragraph.text ? button({
-                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
-                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--panel-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--panel-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         navigator.clipboard.writeText(paragraph.text);
@@ -1469,8 +1476,8 @@ export function notePage() {
                                                     ]
                                                 }) : null,
                                                 paragraph.text ? button({
-                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
-                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--panel-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--panel-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         modalOn(menu({
@@ -1504,8 +1511,8 @@ export function notePage() {
                                                                             borderRadius: '2rem',
                                                                             borderWidth: '2px',
                                                                             borderStyle: 'solid',
-                                                                            borderColor: color === 'default' ? 'var(--border)' : `var(--paragraph-${color}-fg)`,
-                                                                            fill: color === 'default' ? 'var(--bg)' : `var(--paragraph-${color}-bg)`,
+                                                                            borderColor: color === 'default' ? 'var(--border)' : `var(--panel-${color}-fg)`,
+                                                                            fill: color === 'default' ? 'var(--bg)' : `var(--panel-${color}-bg)`,
                                                                             svg: icons.circle
                                                                         }),
                                                                         text({
@@ -1525,8 +1532,8 @@ export function notePage() {
                                                     ]
                                                 }) : null,
                                                 paragraph.text ? button({
-                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
-                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--panel-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--panel-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         this.parent.parent.parent.update('edit');
@@ -1541,8 +1548,8 @@ export function notePage() {
                                                     ]
                                                 }) : null,
                                                 button({
-                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--paragraph-${paragraph.color}-hover)`,
-                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--paragraph-${paragraph.color}-fg-secondary)`,
+                                                    hoverColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--hover)' : `var(--panel-${paragraph.color}-hover)`,
+                                                    fill: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-secondary)' : `var(--panel-${paragraph.color}-fg-secondary)`,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         modalOn(menu({
@@ -1604,9 +1611,9 @@ export function notePage() {
                                     id: `edit-note-input-${paragraph.id}`,
                                     width: '100%',
                                     padding: '0.75rem',
-                                    borderColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--border)' : `var(--paragraph-${paragraph.color}-border)`,
-                                    backgroundColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--bg)' : `var(--paragraph-${paragraph.color}-bg)`,
-                                    color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg)' : `var(--paragraph-${paragraph.color}-fg)`,
+                                    borderColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--border)' : `var(--panel-${paragraph.color}-border)`,
+                                    backgroundColor: (!paragraph.color || paragraph.color === 'default') ? 'var(--bg)' : `var(--panel-${paragraph.color}-bg)`,
+                                    color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg)' : `var(--panel-${paragraph.color}-fg)`,
                                     attributes: { rows: 8 },
                                 }, paragraph.text),
                                 row({
