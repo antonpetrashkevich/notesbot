@@ -93,7 +93,7 @@ export const lightTheme = {
     '--paragraph-gray-fg-tertiary': colors.slate[500],
 }
 export const darkTheme = {
-    '--meta-theme-color': '#364153',
+    '--meta-theme-color': '#1e2939',
     '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
     '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     '--shadow-1': '0 1px 2px rgba(255, 255, 255, 0.1)',
