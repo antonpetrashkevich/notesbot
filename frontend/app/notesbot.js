@@ -35,6 +35,7 @@ export const lightTheme = {
     '--shadow-3': '0 4px 8px rgba(0, 0, 0, 0.1)',
     '--border': colors.gray[300],
     '--bg': 'white',
+    // '--bg-gradient': colors.gray[50],
     '--header-bg': colors.gray[50],
     '--hover': colors.gray[100],
     '--hover-dark': colors.gray[200],
@@ -93,7 +94,7 @@ export const lightTheme = {
     '--paragraph-gray-fg-tertiary': colors.slate[500],
 }
 export const darkTheme = {
-    '--meta-theme-color': '#1e2939',
+    '--meta-theme-color': '#364153',
     '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
     '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     '--shadow-1': '0 1px 2px rgba(255, 255, 255, 0.1)',
@@ -101,6 +102,7 @@ export const darkTheme = {
     '--shadow-3': '0 4px 8px rgba(255, 255, 255, 0.1)',
     '--border': colors.gray[600],
     '--bg': colors.gray[800],
+    // '--bg-gradient': colors.gray[700],
     '--header-bg': colors.gray[700],
     '--hover': colors.gray[700],
     '--hover-dark': colors.gray[600],
@@ -180,6 +182,13 @@ export const styles = {
     button: {
         hoverColor: 'var(--hover)',
         fill: 'var(--fg-secondary)'
+    },
+    buttonL: {
+        height: '2.5rem',
+        minWidth: '6rem',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '0.75rem'
     },
     actionButton: {
         backgroundColor: 'var(--action-button-bg)',
@@ -445,7 +454,7 @@ export function setupTutorialPage() {
                             children: [
                                 button({
                                     ...styles.actionButtonOptional,
-                                    padding: '0.75rem',
+                                    ...styles.buttonL,
                                     click: function (event) {
                                         signOut(appState.firebase.auth);
                                     },
@@ -453,7 +462,7 @@ export function setupTutorialPage() {
                                 }),
                                 button({
                                     ...styles.actionButton,
-                                    padding: '0.75rem',
+                                    ...styles.buttonL,
                                     click: function (event) {
                                         updatePage(setupPage());
                                     },
@@ -534,7 +543,7 @@ export function setupPage() {
                             children: [
                                 button({
                                     ...styles.actionButtonOptional,
-                                    padding: '0.75rem',
+                                    ...styles.buttonL,
                                     click: function (event) {
                                         updatePage(setupTutorialPage());
                                     },
@@ -542,7 +551,7 @@ export function setupPage() {
                                 }),
                                 button({
                                     ...styles.actionButton,
-                                    padding: '0.75rem',
+                                    ...styles.buttonL,
                                     click: async function (event) {
                                         widgets['keyphrase-hint'].update(true);
                                         widgets['keyphrase-repeat-hint'].update(true);
@@ -649,7 +658,7 @@ export function keyphrasePage(invalidAttempt) {
                             children: [
                                 button({
                                     ...styles.actionButtonOptional,
-                                    padding: '0.75rem',
+                                    ...styles.buttonL,
                                     justifyContent: 'center',
                                     click: function (event) {
                                         signOut(appState.firebase.auth);
@@ -658,7 +667,7 @@ export function keyphrasePage(invalidAttempt) {
                                 }),
                                 button({
                                     ...styles.actionButton,
-                                    padding: '0.75rem',
+                                    ...styles.buttonL,
                                     justifyContent: 'center',
                                     click: async function (event) {
                                         if (!widgets['keyphrase-input'].domElement.value) {
@@ -824,7 +833,7 @@ export function folderPage() {
                                                     ...styles.actionButton,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
-                                                    padding: '0.75rem',
+                                                    ...styles.buttonL,
                                                     click: async function (event) {
                                                         event.stopPropagation();
                                                         const oldParent = appState.tree[appState.tree[cid].parent];
@@ -878,7 +887,7 @@ export function folderPage() {
                                                     ...styles.actionButton,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
-                                                    padding: '0.75rem',
+                                                    ...styles.buttonL,
                                                     click: async function (event) {
                                                         event.stopPropagation();
                                                         if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
@@ -923,7 +932,7 @@ export function folderPage() {
                                                         ...styles.dangerButton,
                                                         marginTop: '0.5rem',
                                                         alignSelf: 'end',
-                                                        padding: '0.75rem',
+                                                        ...styles.buttonL,
                                                         click: async function (event) {
                                                             event.stopPropagation();
                                                             delete appState.tree[cid];
@@ -975,7 +984,7 @@ export function folderPage() {
                                                         ...styles.dangerButton,
                                                         marginTop: '0.5rem',
                                                         alignSelf: 'end',
-                                                        padding: '0.75rem',
+                                                        ...styles.buttonL,
                                                         click: async function (event) {
                                                             event.stopPropagation();
                                                             delete appState.tree[cid];
@@ -1067,7 +1076,7 @@ export function folderPage() {
                                                         button({
                                                             ...styles.dangerButton,
                                                             marginTop: '0.5rem',
-                                                            padding: '0.75rem',
+                                                            ...styles.buttonL,
                                                             alignSelf: 'end',
                                                             click: async function (event) {
                                                                 event.stopPropagation();
@@ -1149,7 +1158,7 @@ export function folderPage() {
                                                             ...styles.actionButton,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            padding: '0.75rem',
+                                                            ...styles.buttonL,
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
@@ -1203,7 +1212,7 @@ export function folderPage() {
                                                             ...styles.actionButton,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            padding: '0.75rem',
+                                                            ...styles.buttonL,
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 if (!widgets['new-note-name-input'].domElement.value?.trim()) {
@@ -1357,12 +1366,11 @@ export function notePage() {
                         ),
                         button({
                             ...styles.actionButtonOptional,
-                            minWidth: '8rem',
+                            ...styles.buttonL,
                             alignSelf: 'end',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            padding: '0.625rem 0.75rem',
-                            gap: '1rem',
+                            gap: '0.5rem',
                             click: async function (event) {
                                 event.stopPropagation();
                                 widgets['image-input'].domElement.click();
@@ -1380,10 +1388,9 @@ export function notePage() {
                         }),
                         button({
                             ...styles.actionButton,
-                            minWidth: '8rem',
                             alignSelf: 'end',
                             justifyContent: 'center',
-                            padding: '0.75rem',
+                            ...styles.buttonL,
                             click: async function (event) {
                                 event.stopPropagation();
                                 if (widgets['add-note-input'].domElement.value.trim()) {
@@ -1554,7 +1561,7 @@ export function notePage() {
                                                                     ...styles.dangerButton,
                                                                     marginTop: '0.5rem',
                                                                     alignSelf: 'end',
-                                                                    padding: '0.75rem',
+                                                                    ...styles.buttonL,
                                                                     click: async function (event) {
                                                                         event.stopPropagation();
                                                                         deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
@@ -1585,7 +1592,7 @@ export function notePage() {
                     } else if (value === 'edit') {
                         return {
                             width: '100%',
-                            gap: '0.5rem',
+                            gap: '1rem',
                             children: [
                                 hint({
                                     ...styles.hint,
@@ -1609,7 +1616,7 @@ export function notePage() {
                                     children: [
                                         button({
                                             ...styles.actionButtonOptional,
-                                            padding: '0.75rem',
+                                            ...styles.buttonL,
                                             justifyContent: 'center',
                                             click: async function (event) {
                                                 event.stopPropagation();
@@ -1623,7 +1630,7 @@ export function notePage() {
                                         }),
                                         button({
                                             ...styles.actionButton,
-                                            padding: '0.75rem',
+                                            ...styles.buttonL,
                                             justifyContent: 'center',
                                             click: async function (event) {
                                                 event.stopPropagation();
@@ -1653,7 +1660,7 @@ export function notePage() {
                     ...styles.actionButtonOptional,
                     width: '100%',
                     justifyContent: 'center',
-                    padding: '0.75rem',
+                    ...styles.buttonL,
                     click: function (event) {
                         listenParagraphs(appState.paragraphs.length + 32);
                     },

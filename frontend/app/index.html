@@ -47,6 +47,7 @@
         setTheme(window.localStorage.getItem('theme') === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme) : (window.localStorage.getItem('theme') === 'dark' ? darkTheme : lightTheme),
             {
                 backgroundColor: 'var(--bg)',
+                // background: 'linear-gradient(to bottom, var(--bg), var(--bg-gradient))',
                 fontFamily: 'var(--font-family)',
                 fill: 'var(--fg-aux)',
                 color: 'var(--fg)'
