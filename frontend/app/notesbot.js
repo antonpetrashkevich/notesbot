@@ -1,4 +1,4 @@
-import { appName, appState, widgets, pageWidget, colors, updatePage, goTo, startApp, startPathController, setTheme, modalOn, modalOff, widget, templateWidget, row, column, grid, text, textLink, image, svg, canvas, video, youtubeVideo, button, select, input, textArea, base, menu, fixedHeader, hint, notification, imageInput, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+import { appName, appState, widgets, pageWidget, colors, updatePage, goTo, startApp, startPathController, setTheme, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea, base, menu, fixedHeader, hint, notification, imageInput, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -1269,7 +1269,7 @@ export function notePage() {
     return {
         widget: base(() => ({
             id: 'note',
-            paddingTop: '4rem',
+            paddingTop: '4.5rem',
             gap: '1rem',
             children: [
                 fixedHeader({
