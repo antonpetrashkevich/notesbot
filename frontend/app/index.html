@@ -11,7 +11,7 @@
 
 <body>
     <script type="module">
-        import { appState, updatePage, startApp, setTheme, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { appState, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, startApp, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
         import { lightTheme, darkTheme, listenNotebook, listenParagraphs, loadingPage, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
@@ -44,19 +44,19 @@
         if (!window.localStorage.getItem('theme')) {
             window.localStorage.setItem('theme', 'auto');
         }
-        setTheme(window.localStorage.getItem('theme') === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme) : (window.localStorage.getItem('theme') === 'dark' ? darkTheme : lightTheme),
-            {
-                backgroundColor: 'var(--bg-1)',
-                fontFamily: 'var(--font-family)',
-                fill: 'var(--fg-3)',
-                color: 'var(--fg-1)'
-            });
+        updateTheme(window.localStorage.getItem('theme') === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme) : (window.localStorage.getItem('theme') === 'dark' ? darkTheme : lightTheme));
+        updateBodyStyle({
+            backgroundColor: 'var(--bg-1)',
+            fontFamily: 'var(--font-family)',
+            fill: 'var(--fg-3)',
+            color: 'var(--fg-1)'
+        })
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (window.localStorage.getItem('theme') === 'auto') {
                 if (e.matches) {
-                    setTheme(darkTheme);
+                    updateTheme(darkTheme);
                 } else {
-                    setTheme(lightTheme);
+                    updateTheme(lightTheme);
                 }
             }
         });

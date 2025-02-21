@@ -1,4 +1,4 @@
-import { appName, appState, widgets, pageWidget, colors, updatePage, goTo, startApp, startPathController, setTheme, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea, base, menu, fixedHeader, hint, notification, imageInput, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+import { appName, appState, widgets, pageWidget, colors, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea, base, menu, fixedHeader, hint, notification, imageInput, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -27,152 +27,156 @@ export const icons = {
     upload: '<svg viewBox="0 -960 960 960"><path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg>',
 }
 export const lightTheme = {
-    '--meta-theme-color': '#f9fafb',
-    '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-    '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    '--shadow-1': '0 4px 8px rgba(0, 0, 0, 0.1)',
-    '--shadow-2': '0 2px 4px rgba(0, 0, 0, 0.1)',
-    '--shadow-3': '0 1px 2px rgba(0, 0, 0, 0.1)',
-    '--border-1': colors.gray[300],
-    '--bg-1': 'white',
-    '--bg-2': colors.gray[50],
-    '--hover-1': colors.gray[100],
-    '--hover-2': colors.gray[200],
-    '--hover-red': colors.red[100],
-    '--fg-0': colors.gray[950],
-    '--fg-1': colors.gray[900],
-    '--fg-2': colors.gray[500],
-    '--fg-3': colors.gray[400],
-    '--fg-4': colors.gray[300],
-    '--fg-red': colors.red[500],
+    styleProperties: {
+        '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+        '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        '--shadow-1': '0 4px 8px rgba(0, 0, 0, 0.1)',
+        '--shadow-2': '0 2px 4px rgba(0, 0, 0, 0.1)',
+        '--shadow-3': '0 1px 2px rgba(0, 0, 0, 0.1)',
+        '--border-1': colors.gray[300],
+        '--bg-1': 'white',
+        '--bg-2': colors.gray[50],
+        '--hover-1': colors.gray[100],
+        '--hover-2': colors.gray[200],
+        '--hover-red': colors.red[100],
+        '--fg-0': colors.gray[950],
+        '--fg-1': colors.gray[900],
+        '--fg-2': colors.gray[500],
+        '--fg-3': colors.gray[400],
+        '--fg-4': colors.gray[300],
+        '--fg-red': colors.red[500],
 
-    '--action-button-bg': colors.blue[500],
-    '--action-button-hover': colors.blue[600],
-    '--action-button-fg': 'white',
+        '--action-button-bg': colors.blue[500],
+        '--action-button-hover': colors.blue[600],
+        '--action-button-fg': 'white',
 
-    '--action-button-light-bg': colors.blue[400],
-    '--action-button-light-hover': colors.blue[500],
-    '--action-button-light-fg': colors.blue[900],
+        '--action-button-light-bg': colors.blue[400],
+        '--action-button-light-hover': colors.blue[500],
+        '--action-button-light-fg': colors.blue[900],
 
-    '--action-button-optional-bg': colors.gray[100],
-    '--action-button-optional-hover': colors.gray[200],
+        '--action-button-optional-bg': colors.gray[100],
+        '--action-button-optional-hover': colors.gray[200],
 
-    '--danger-button-bg': colors.red[500],
-    '--danger-button-hover': colors.red[600],
-    '--danger-button-fg': 'white',
+        '--danger-button-bg': colors.red[500],
+        '--danger-button-hover': colors.red[600],
+        '--danger-button-fg': 'white',
 
-    '--warning-button-bg': colors.yellow[500],
-    '--warning-button-hover': colors.yellow[600],
-    '--warning-button-fg': colors.yellow[900],
+        '--warning-button-bg': colors.yellow[500],
+        '--warning-button-hover': colors.yellow[600],
+        '--warning-button-fg': colors.yellow[900],
 
-    '--panel-red-border': colors.red[300],
-    '--panel-red-bg': colors.red[100],
-    '--panel-red-hover': colors.red[200],
-    '--panel-red-fg': colors.red[700],
-    '--panel-red-fg-secondary': colors.red[600],
-    '--panel-red-fg-tertiary': colors.red[500],
+        '--panel-red-border': colors.red[300],
+        '--panel-red-bg': colors.red[100],
+        '--panel-red-hover': colors.red[200],
+        '--panel-red-fg': colors.red[700],
+        '--panel-red-fg-secondary': colors.red[600],
+        '--panel-red-fg-tertiary': colors.red[500],
 
-    '--panel-green-border': colors.green[300],
-    '--panel-green-bg': colors.green[100],
-    '--panel-green-hover': colors.green[200],
-    '--panel-green-fg': colors.green[700],
-    '--panel-green-fg-secondary': colors.green[600],
-    '--panel-green-fg-tertiary': colors.green[500],
+        '--panel-green-border': colors.green[300],
+        '--panel-green-bg': colors.green[100],
+        '--panel-green-hover': colors.green[200],
+        '--panel-green-fg': colors.green[700],
+        '--panel-green-fg-secondary': colors.green[600],
+        '--panel-green-fg-tertiary': colors.green[500],
 
-    '--panel-yellow-border': colors.yellow[300],
-    '--panel-yellow-bg': colors.yellow[100],
-    '--panel-yellow-hover': colors.yellow[200],
-    '--panel-yellow-fg': colors.yellow[700],
-    '--panel-yellow-fg-secondary': colors.yellow[600],
-    '--panel-yellow-fg-tertiary': colors.yellow[500],
+        '--panel-yellow-border': colors.yellow[300],
+        '--panel-yellow-bg': colors.yellow[100],
+        '--panel-yellow-hover': colors.yellow[200],
+        '--panel-yellow-fg': colors.yellow[700],
+        '--panel-yellow-fg-secondary': colors.yellow[600],
+        '--panel-yellow-fg-tertiary': colors.yellow[500],
 
-    '--panel-blue-border': colors.blue[300],
-    '--panel-blue-bg': colors.blue[100],
-    '--panel-blue-hover': colors.blue[200],
-    '--panel-blue-fg': colors.blue[700],
-    '--panel-blue-fg-secondary': colors.blue[600],
-    '--panel-blue-fg-tertiary': colors.blue[500],
+        '--panel-blue-border': colors.blue[300],
+        '--panel-blue-bg': colors.blue[100],
+        '--panel-blue-hover': colors.blue[200],
+        '--panel-blue-fg': colors.blue[700],
+        '--panel-blue-fg-secondary': colors.blue[600],
+        '--panel-blue-fg-tertiary': colors.blue[500],
 
-    '--panel-gray-border': colors.slate[300],
-    '--panel-gray-bg': colors.slate[100],
-    '--panel-gray-hover': colors.slate[200],
-    '--panel-gray-fg': colors.slate[700],
-    '--panel-gray-fg-secondary': colors.slate[600],
-    '--panel-gray-fg-tertiary': colors.slate[500],
+        '--panel-gray-border': colors.slate[300],
+        '--panel-gray-bg': colors.slate[100],
+        '--panel-gray-hover': colors.slate[200],
+        '--panel-gray-fg': colors.slate[700],
+        '--panel-gray-fg-secondary': colors.slate[600],
+        '--panel-gray-fg-tertiary': colors.slate[500],
+    },
+    metaThemeColor: '#f9fafb'
 }
 export const darkTheme = {
-    '--meta-theme-color': '#364153',
-    '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-    '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-    '--shadow-1': '0 4px 8px rgba(255, 255, 255, 0.1)',
-    '--shadow-2': '0 2px 4px rgba(255, 255, 255, 0.1)',
-    '--shadow-3': '0 1px 2px rgba(255, 255, 255, 0.1)',
-    '--border-1': colors.gray[600],
-    '--bg-1': colors.gray[800],
-    '--bg-2': colors.gray[700],
-    '--hover-1': colors.gray[700],
-    '--hover-2': colors.gray[600],
-    '--hover-red': colors.red[900],
-    '--fg-0': colors.gray[100],
-    '--fg-1': colors.gray[300],
-    '--fg-2': colors.gray[400],
-    '--fg-3': colors.gray[500],
-    '--fg-4': colors.gray[600],
-    '--fg-red': colors.red[400],
+    styleProperties: {
+        '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+        '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        '--shadow-1': '0 4px 8px rgba(255, 255, 255, 0.1)',
+        '--shadow-2': '0 2px 4px rgba(255, 255, 255, 0.1)',
+        '--shadow-3': '0 1px 2px rgba(255, 255, 255, 0.1)',
+        '--border-1': colors.gray[600],
+        '--bg-1': colors.gray[800],
+        '--bg-2': colors.gray[700],
+        '--hover-1': colors.gray[700],
+        '--hover-2': colors.gray[600],
+        '--hover-red': colors.red[900],
+        '--fg-0': colors.gray[100],
+        '--fg-1': colors.gray[300],
+        '--fg-2': colors.gray[400],
+        '--fg-3': colors.gray[500],
+        '--fg-4': colors.gray[600],
+        '--fg-red': colors.red[400],
 
-    '--action-button-bg': colors.blue[600],
-    '--action-button-hover': colors.blue[700],
-    '--action-button-fg': 'white',
+        '--action-button-bg': colors.blue[600],
+        '--action-button-hover': colors.blue[700],
+        '--action-button-fg': 'white',
 
-    '--action-button-light-bg': colors.blue[400],
-    '--action-button-light-hover': colors.blue[500],
-    '--action-button-light-fg': colors.blue[900],
+        '--action-button-light-bg': colors.blue[400],
+        '--action-button-light-hover': colors.blue[500],
+        '--action-button-light-fg': colors.blue[900],
 
-    '--action-button-optional-bg': colors.gray[700],
-    '--action-button-optional-hover': colors.gray[600],
+        '--action-button-optional-bg': colors.gray[700],
+        '--action-button-optional-hover': colors.gray[600],
 
-    '--danger-button-bg': colors.red[700],
-    '--danger-button-hover': colors.red[800],
-    '--danger-button-fg': 'white',
+        '--danger-button-bg': colors.red[700],
+        '--danger-button-hover': colors.red[800],
+        '--danger-button-fg': 'white',
 
-    '--warning-button-bg': colors.yellow[500],
-    '--warning-button-hover': colors.yellow[600],
-    '--warning-button-fg': colors.yellow[900],
+        '--warning-button-bg': colors.yellow[500],
+        '--warning-button-hover': colors.yellow[600],
+        '--warning-button-fg': colors.yellow[900],
 
-    '--panel-red-border': colors.red[900],
-    '--panel-red-bg': colors.red[950],
-    '--panel-red-hover': colors.red[900],
-    '--panel-red-fg': colors.red[300],
-    '--panel-red-fg-secondary': colors.red[400],
-    '--panel-red-fg-tertiary': colors.red[500],
+        '--panel-red-border': colors.red[900],
+        '--panel-red-bg': colors.red[950],
+        '--panel-red-hover': colors.red[900],
+        '--panel-red-fg': colors.red[300],
+        '--panel-red-fg-secondary': colors.red[400],
+        '--panel-red-fg-tertiary': colors.red[500],
 
-    '--panel-green-border': colors.green[900],
-    '--panel-green-bg': colors.green[950],
-    '--panel-green-hover': colors.green[900],
-    '--panel-green-fg': colors.green[400],
-    '--panel-green-fg-secondary': colors.green[500],
-    '--panel-green-fg-tertiary': colors.green[600],
+        '--panel-green-border': colors.green[900],
+        '--panel-green-bg': colors.green[950],
+        '--panel-green-hover': colors.green[900],
+        '--panel-green-fg': colors.green[400],
+        '--panel-green-fg-secondary': colors.green[500],
+        '--panel-green-fg-tertiary': colors.green[600],
 
-    '--panel-yellow-border': colors.yellow[900],
-    '--panel-yellow-bg': colors.yellow[950],
-    '--panel-yellow-hover': colors.yellow[900],
-    '--panel-yellow-fg': colors.yellow[500],
-    '--panel-yellow-fg-secondary': colors.yellow[600],
-    '--panel-yellow-fg-tertiary': colors.yellow[700],
+        '--panel-yellow-border': colors.yellow[900],
+        '--panel-yellow-bg': colors.yellow[950],
+        '--panel-yellow-hover': colors.yellow[900],
+        '--panel-yellow-fg': colors.yellow[500],
+        '--panel-yellow-fg-secondary': colors.yellow[600],
+        '--panel-yellow-fg-tertiary': colors.yellow[700],
 
-    '--panel-blue-border': colors.blue[900],
-    '--panel-blue-bg': colors.blue[950],
-    '--panel-blue-hover': colors.blue[900],
-    '--panel-blue-fg': colors.blue[300],
-    '--panel-blue-fg-secondary': colors.blue[400],
-    '--panel-blue-fg-tertiary': colors.blue[500],
+        '--panel-blue-border': colors.blue[900],
+        '--panel-blue-bg': colors.blue[950],
+        '--panel-blue-hover': colors.blue[900],
+        '--panel-blue-fg': colors.blue[300],
+        '--panel-blue-fg-secondary': colors.blue[400],
+        '--panel-blue-fg-tertiary': colors.blue[500],
 
-    '--panel-gray-border': colors.slate[700],
-    '--panel-gray-bg': colors.slate[900],
-    '--panel-gray-hover': colors.slate[600],
-    '--panel-gray-fg': colors.slate[300],
-    '--panel-gray-fg-secondary': colors.slate[400],
-    '--panel-gray-fg-tertiary': colors.slate[500],
+        '--panel-gray-border': colors.slate[700],
+        '--panel-gray-bg': colors.slate[900],
+        '--panel-gray-hover': colors.slate[600],
+        '--panel-gray-fg': colors.slate[300],
+        '--panel-gray-fg-secondary': colors.slate[400],
+        '--panel-gray-fg-tertiary': colors.slate[500],
+    },
+    metaThemeColor: '#364153'
 }
 export const styles = {
     border: {
@@ -407,7 +411,7 @@ export function listenParagraphs(count) {
                 const docData = docSnap.data();
                 appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? appState.textDecoder.decode(await decrypt(appState.key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? appState.textDecoder.decode(await decrypt(appState.key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(appState.key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
             }
-            widgets['note']?.update();
+            widgets['note']?.update(appState.paragraphs.length === count);
         },
         (error) => {
             console.error(error);
@@ -1089,7 +1093,7 @@ export function folderPage() {
                                                     window.localStorage.setItem('theme', 'auto');
                                                     theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme;
                                                 }
-                                                setTheme(theme);
+                                                updateTheme(theme);
                                                 this.update();
                                             }, children: [
                                                 text({
@@ -1300,7 +1304,7 @@ export function folderPage() {
 
 export function notePage() {
     return {
-        widget: base(() => ({
+        widget: base((value) => ({
             id: 'note',
             paddingTop: '4.5rem',
             gap: '1rem',
@@ -1746,7 +1750,7 @@ export function notePage() {
                         }
                     }
                 }, 'view')),
-                appState.paragraphs.length > 0 && appState.paragraphs.length % 32 === 0 ? button({
+                value ? button({
                     ...styles.actionButtonOptional,
                     width: '100%',
                     justifyContent: 'center',
@@ -1761,7 +1765,7 @@ export function notePage() {
                     ]
                 }) : null
             ]
-        })),
+        }), false),
         meta: { title: `${appState.tree[appState.noteId]['name']} | ${appName}`, description: 'Note page.' }
     };
 }
