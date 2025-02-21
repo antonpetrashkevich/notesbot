@@ -61,6 +61,10 @@ export const lightTheme = {
     '--danger-button-hover': colors.red[600],
     '--danger-button-fg': 'white',
 
+    '--warning-button-bg': colors.yellow[500],
+    '--warning-button-hover': colors.yellow[600],
+    '--warning-button-fg': colors.yellow[900],
+
     '--panel-red-border': colors.red[300],
     '--panel-red-bg': colors.red[100],
     '--panel-red-hover': colors.red[200],
@@ -130,6 +134,10 @@ export const darkTheme = {
     '--danger-button-bg': colors.red[700],
     '--danger-button-hover': colors.red[800],
     '--danger-button-fg': 'white',
+
+    '--warning-button-bg': colors.yellow[500],
+    '--warning-button-hover': colors.yellow[600],
+    '--warning-button-fg': colors.yellow[900],
 
     '--panel-red-border': colors.red[900],
     '--panel-red-bg': colors.red[950],
@@ -221,7 +229,15 @@ export const styles = {
         backgroundColor: 'var(--danger-button-bg)',
         hoverColor: 'var(--danger-button-hover)',
         fontWeight: 600,
+        fill: 'var(--danger-button-fg)',
         color: 'var(--danger-button-fg)',
+    },
+    warningButton: {
+        backgroundColor: 'var(--warning-button-bg)',
+        hoverColor: 'var(--warning-button-hover)',
+        fontWeight: 600,
+        fill: 'var(--warning-button-fg)',
+        color: 'var(--warning-button-fg)',
     },
     menuButton: {
         width: '100%',
@@ -250,6 +266,15 @@ export const styles = {
         backgroundColor: 'var(--panel-red-bg)',
         fill: 'var(--panel-red-fg-secondary)',
         color: 'var(--panel-red-fg)',
+        boxShadow: 'var(--shadow-1)'
+    },
+    menuWarning: {
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: 'var(--panel-yellow-border)',
+        backgroundColor: 'var(--panel-yellow-bg)',
+        fill: 'var(--panel-yellow-fg-secondary)',
+        color: 'var(--panel-yellow-fg)',
         boxShadow: 'var(--shadow-1)'
     },
 };
@@ -380,7 +405,7 @@ export function listenParagraphs(count) {
             appState.paragraphs = [];
             for (const docSnap of querySnapshot.docs) {
                 const docData = docSnap.data();
-                appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, ...JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.content.iv.toUint8Array(), docData.content.data.toUint8Array()))) });
+                appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? appState.textDecoder.decode(await decrypt(appState.key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? appState.textDecoder.decode(await decrypt(appState.key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(appState.key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
             }
             widgets['note']?.update();
         },
@@ -1344,10 +1369,10 @@ export function notePage() {
                                     change: function (event) {
                                         const file = event.target.files[0];
                                         if (file) {
-                                            if (file.size > 750 * 1024) {
+                                            if (file.size > (1024 * 1024 - 8 * 1024)) {
                                                 modalOn(
                                                     menu({
-                                                        ...styles.menuDanger,
+                                                        ...styles.menuWarning,
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
@@ -1356,7 +1381,63 @@ export function notePage() {
                                                                 text: 'Image Upload'
                                                             }),
                                                             text({
-                                                                text: 'Image size exceeds 750KB'
+                                                                text: 'Image would be downscaled to 1MB jpeg'
+                                                            }),
+                                                            button({
+                                                                ...styles.buttonL,
+                                                                ...styles.warningButton,
+                                                                marginTop: '0.5rem',
+                                                                alignSelf: 'end',
+                                                                click: function (event) {
+                                                                    modalOff();
+                                                                    const reader = new FileReader();
+                                                                    reader.readAsDataURL(file);
+                                                                    reader.onload = (event) => {
+                                                                        const img = new Image();
+                                                                        img.src = event.target.result;
+                                                                        img.onload = () => {
+                                                                            const canvas = document.createElement("canvas");
+                                                                            const ctx = canvas.getContext("2d");
+                                                                            let width = img.width;
+                                                                            let height = img.height;
+                                                                            let quality = 1.0;
+                                                                            canvas.width = width;
+                                                                            canvas.height = height;
+                                                                            ctx.drawImage(img, 0, 0, width, height);
+                                                                            const compress = () => {
+                                                                                canvas.toBlob(
+                                                                                    (blob) => {
+                                                                                        if (blob.size > (1024 * 1024 - 8 * 1024)) {
+                                                                                            quality -= 0.05;
+                                                                                            compress();
+                                                                                        } else {
+                                                                                            let compressOutputReader = new FileReader();
+                                                                                            compressOutputReader.onload = async function (e) {
+                                                                                                addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
+                                                                                                    timestamp: Math.floor(Date.now() / 1000),
+                                                                                                    noteId: appState.noteId,
+                                                                                                    image: {
+                                                                                                        type: 'image/jpeg',
+                                                                                                        content: await encrypt(appState.key, e.target.result)
+                                                                                                    },
+                                                                                                })
+                                                                                            };
+                                                                                            compressOutputReader.readAsArrayBuffer(blob);
+                                                                                        }
+                                                                                    },
+                                                                                    'image/jpeg',
+                                                                                    quality
+                                                                                );
+                                                                            };
+                                                                            compress();
+                                                                        };
+                                                                    };
+                                                                },
+                                                                children: [
+                                                                    text({
+                                                                        text: 'OK'
+                                                                    })
+                                                                ]
                                                             })
                                                         ]
                                                     })
@@ -1367,12 +1448,13 @@ export function notePage() {
                                                     addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
                                                         timestamp: Math.floor(Date.now() / 1000),
                                                         noteId: appState.noteId,
-                                                        content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
-                                                            image: e.target.result,
-                                                        }))),
+                                                        image: {
+                                                            type: file.type,
+                                                            content: await encrypt(appState.key, e.target.result)
+                                                        },
                                                     })
                                                 };
-                                                reader.readAsDataURL(file);
+                                                reader.readAsArrayBuffer(file);
                                             }
                                         }
                                     }
@@ -1413,9 +1495,7 @@ export function notePage() {
                                     addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
                                         timestamp: Math.floor(Date.now() / 1000),
                                         noteId: appState.noteId,
-                                        content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
-                                            text: widgets['add-note-input'].domElement.value
-                                        }))),
+                                        text: await encrypt(appState.key, appState.textEncoder.encode(widgets['add-note-input'].domElement.value)),
                                     });
                                 } else {
                                     widgets['add-note-hint'].update(false);
@@ -1505,10 +1585,7 @@ export function notePage() {
                                                                     click: async function (event) {
                                                                         event.stopPropagation();
                                                                         updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
-                                                                            content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
-                                                                                text: paragraph.text,
-                                                                                color
-                                                                            }))),
+                                                                            color: await encrypt(appState.key, appState.textEncoder.encode(color)),
                                                                         });
                                                                         modalOff();
                                                                     },
@@ -1651,9 +1728,7 @@ export function notePage() {
                                                 event.stopPropagation();
                                                 if (widgets[`edit-note-input-${paragraph.id}`].domElement.value.trim()) {
                                                     updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
-                                                        content: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify({
-                                                            text: widgets[`edit-note-input-${paragraph.id}`].domElement.value
-                                                        }))),
+                                                        text: await encrypt(appState.key, appState.textEncoder.encode(widgets[`edit-note-input-${paragraph.id}`].domElement.value)),
                                                     });
                                                 } else {
                                                     widgets[`edit-note-hint-${paragraph.id}`].update(false);
