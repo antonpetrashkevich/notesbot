@@ -754,7 +754,7 @@ export function folderPage() {
                 ...appState.tree[appState.folderId].children.map(cid => button({
                     width: '100%',
                     padding: '1rem',
-                    justifyContent: 'start',
+                    justifyContent: 'center',
                     alignItems: 'center',
                     borderRadius: '0.5rem',
                     hoverColor: 'var(--hover-1)',

@@ -46,10 +46,10 @@
         }
         setTheme(window.localStorage.getItem('theme') === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme) : (window.localStorage.getItem('theme') === 'dark' ? darkTheme : lightTheme),
             {
-                backgroundColor: 'var(--bg)',
+                backgroundColor: 'var(--bg-1)',
                 fontFamily: 'var(--font-family)',
-                fill: 'var(--fg-tertiary)',
-                color: 'var(--fg)'
+                fill: 'var(--fg-3)',
+                color: 'var(--fg-1)'
             });
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (window.localStorage.getItem('theme') === 'auto') {
