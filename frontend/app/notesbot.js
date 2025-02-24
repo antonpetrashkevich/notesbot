@@ -880,15 +880,11 @@ export function folderPage() {
                             ]
                         }),
                         button({
-                            ...styles.buttonL,
                             margin: '1rem',
                             padding: 0,
                             borderRadius: '2rem',
-                            backgroundColor: 'var(--panel-blue-bg)',
                             hoverColor: 'var(--panel-blue-bg-2)',
-                            fontWeight: 600,
                             fill: 'var(--panel-blue-fg-2)',
-                            color: 'var(--panel-blue-fg)',
                             click: function (event) {
                                 event.stopPropagation();
                                 modalOn(menu({
