@@ -47,10 +47,10 @@
         }
         updateTheme(window.localStorage.getItem('theme') === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme) : (window.localStorage.getItem('theme') === 'dark' ? darkTheme : lightTheme));
         updateBodyStyle({
-            backgroundColor: 'var(--bg-1)',
+            backgroundColor: 'var(--bg)',
             fontFamily: 'var(--font-family)',
             fill: 'var(--fg-3)',
-            color: 'var(--fg-1)'
+            color: 'var(--fg)'
         })
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (window.localStorage.getItem('theme') === 'auto') {
