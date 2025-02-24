@@ -883,8 +883,9 @@ export function folderPage() {
                             margin: '1rem',
                             padding: 0,
                             borderRadius: '2rem',
-                            hoverColor: 'var(--panel-blue-bg-2)',
-                            fill: 'var(--panel-blue-fg-2)',
+                            backgroundColor: 'var(--panel-blue-bg-2)',
+                            hoverColor: 'var(--panel-blue-bg-3)',
+                            fill: 'var(--panel-blue-fg)',
                             click: function (event) {
                                 event.stopPropagation();
                                 modalOn(menu({
