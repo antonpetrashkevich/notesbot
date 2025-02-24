@@ -1,287 +1,7 @@
-import { appName, appState, widgets, pageWidget, colors, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea, base, menu, fixedHeader, hint, notification, imageInput, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
+import { appName, appState, widgets, pageWidget, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea} from '/home/n1/projects/profiler/frontend/apex.js';
+import { colors, icons, lightTheme, darkTheme, styles, base, menu, fixedHeader, hint, notification, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
-
-
-export const icons = {
-    add: '<svg viewBox="0 -960 960 960"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>',
-    back: '<svg viewBox="0 -960 960 960"><path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></svg>',
-    checkBox: '<svg viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Z"/></svg>',
-    checkBoxSelected: '<svg viewBox="0 -960 960 960"><path d="m424-312 282-282-56-56-226 226-114-114-56 56 170 170ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>',
-    circle: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50"/></svg>',
-    close: '<svg viewBox="0 -960 960 960"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>',
-    color: '<svg viewBox="0 -960 960 960"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-220 40q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120-160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm200 0q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120 160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></svg>',
-    copy: '<svg viewBox="0 -960 960 960"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>',
-    date: '<svg viewBox="0 -960 960 960"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg>',
-    done: '<svg viewBox="0 -960 960 960"><path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-    delete: '<svg viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>',
-    edit: '<svg viewBox="0 -960 960 960"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>',
-    home: '<svg viewBox="0 -960 960 960"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>',
-    menu: '<svg viewBox="0 -960 960 960"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>',
-    more: '<svg viewBox="0 -960 960 960"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>',
-    radioButton: '<svg viewBox="0 -960 960 960"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-    radioButtonSelected: '<svg viewBox="0 -960 960 960"><path d="M480-280q83 0 141.5-58.5T680-480q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480q0 83 58.5 141.5T480-280Zm0 200q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-    spinner: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>',
-    time: '<svg viewBox="0 -960 960 960"><path d="m612-292 56-56-148-148v-184h-80v216l172 172ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-400Zm0 320q133 0 226.5-93.5T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160Z"/></svg>',
-    up: '<svg viewBox="0 -960 960 960"><path d="M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z"/></svg>',
-    upload: '<svg viewBox="0 -960 960 960"><path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg>',
-}
-export const lightTheme = {
-    styleProperties: {
-        '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-        '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-        '--shadow-1': '0 4px 8px rgba(0, 0, 0, 0.1)',
-        '--shadow-2': '0 2px 4px rgba(0, 0, 0, 0.1)',
-        '--shadow-3': '0 1px 2px rgba(0, 0, 0, 0.1)',
-        '--border-1': colors.gray[300],
-        '--bg-1': 'white',
-        '--bg-2': colors.gray[50],
-        '--hover-1': colors.gray[100],
-        '--hover-2': colors.gray[200],
-        '--hover-red': colors.red[100],
-        '--fg-0': colors.gray[950],
-        '--fg-1': colors.gray[900],
-        '--fg-2': colors.gray[500],
-        '--fg-3': colors.gray[400],
-        '--fg-4': colors.gray[300],
-        '--fg-red': colors.red[500],
-
-        '--action-button-bg': colors.blue[500],
-        '--action-button-hover': colors.blue[600],
-        '--action-button-fg': 'white',
-
-        '--action-button-light-bg': colors.blue[400],
-        '--action-button-light-hover': colors.blue[500],
-        '--action-button-light-fg': colors.blue[900],
-
-        '--action-button-optional-bg': colors.gray[100],
-        '--action-button-optional-hover': colors.gray[200],
-
-        '--danger-button-bg': colors.red[500],
-        '--danger-button-hover': colors.red[600],
-        '--danger-button-fg': 'white',
-
-        '--warning-button-bg': colors.yellow[500],
-        '--warning-button-hover': colors.yellow[600],
-        '--warning-button-fg': colors.yellow[900],
-
-        '--panel-red-border': colors.red[300],
-        '--panel-red-bg': colors.red[100],
-        '--panel-red-hover': colors.red[200],
-        '--panel-red-fg': colors.red[700],
-        '--panel-red-fg-secondary': colors.red[600],
-        '--panel-red-fg-tertiary': colors.red[500],
-
-        '--panel-green-border': colors.green[300],
-        '--panel-green-bg': colors.green[100],
-        '--panel-green-hover': colors.green[200],
-        '--panel-green-fg': colors.green[700],
-        '--panel-green-fg-secondary': colors.green[600],
-        '--panel-green-fg-tertiary': colors.green[500],
-
-        '--panel-yellow-border': colors.yellow[300],
-        '--panel-yellow-bg': colors.yellow[100],
-        '--panel-yellow-hover': colors.yellow[200],
-        '--panel-yellow-fg': colors.yellow[700],
-        '--panel-yellow-fg-secondary': colors.yellow[600],
-        '--panel-yellow-fg-tertiary': colors.yellow[500],
-
-        '--panel-blue-border': colors.blue[300],
-        '--panel-blue-bg': colors.blue[100],
-        '--panel-blue-hover': colors.blue[200],
-        '--panel-blue-fg': colors.blue[700],
-        '--panel-blue-fg-secondary': colors.blue[600],
-        '--panel-blue-fg-tertiary': colors.blue[500],
-
-        '--panel-gray-border': colors.slate[300],
-        '--panel-gray-bg': colors.slate[100],
-        '--panel-gray-hover': colors.slate[200],
-        '--panel-gray-fg': colors.slate[700],
-        '--panel-gray-fg-secondary': colors.slate[600],
-        '--panel-gray-fg-tertiary': colors.slate[500],
-    },
-    metaThemeColor: '#f9fafb'
-}
-export const darkTheme = {
-    styleProperties: {
-        '--font-family': 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-        '--mono-font-family': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-        '--shadow-1': '0 4px 8px rgba(255, 255, 255, 0.1)',
-        '--shadow-2': '0 2px 4px rgba(255, 255, 255, 0.1)',
-        '--shadow-3': '0 1px 2px rgba(255, 255, 255, 0.1)',
-        '--border-1': colors.gray[600],
-        '--bg-1': colors.gray[800],
-        '--bg-2': colors.gray[700],
-        '--hover-1': colors.gray[700],
-        '--hover-2': colors.gray[600],
-        '--hover-red': colors.red[900],
-        '--fg-0': colors.gray[100],
-        '--fg-1': colors.gray[300],
-        '--fg-2': colors.gray[400],
-        '--fg-3': colors.gray[500],
-        '--fg-4': colors.gray[600],
-        '--fg-red': colors.red[400],
-
-        '--action-button-bg': colors.blue[600],
-        '--action-button-hover': colors.blue[700],
-        '--action-button-fg': 'white',
-
-        '--action-button-light-bg': colors.blue[400],
-        '--action-button-light-hover': colors.blue[500],
-        '--action-button-light-fg': colors.blue[900],
-
-        '--action-button-optional-bg': colors.gray[700],
-        '--action-button-optional-hover': colors.gray[600],
-
-        '--danger-button-bg': colors.red[700],
-        '--danger-button-hover': colors.red[800],
-        '--danger-button-fg': 'white',
-
-        '--warning-button-bg': colors.yellow[500],
-        '--warning-button-hover': colors.yellow[600],
-        '--warning-button-fg': colors.yellow[900],
-
-        '--panel-red-border': colors.red[900],
-        '--panel-red-bg': colors.red[950],
-        '--panel-red-hover': colors.red[900],
-        '--panel-red-fg': colors.red[300],
-        '--panel-red-fg-secondary': colors.red[400],
-        '--panel-red-fg-tertiary': colors.red[500],
-
-        '--panel-green-border': colors.green[900],
-        '--panel-green-bg': colors.green[950],
-        '--panel-green-hover': colors.green[900],
-        '--panel-green-fg': colors.green[400],
-        '--panel-green-fg-secondary': colors.green[500],
-        '--panel-green-fg-tertiary': colors.green[600],
-
-        '--panel-yellow-border': colors.yellow[900],
-        '--panel-yellow-bg': colors.yellow[950],
-        '--panel-yellow-hover': colors.yellow[900],
-        '--panel-yellow-fg': colors.yellow[500],
-        '--panel-yellow-fg-secondary': colors.yellow[600],
-        '--panel-yellow-fg-tertiary': colors.yellow[700],
-
-        '--panel-blue-border': colors.blue[900],
-        '--panel-blue-bg': colors.blue[950],
-        '--panel-blue-hover': colors.blue[900],
-        '--panel-blue-fg': colors.blue[300],
-        '--panel-blue-fg-secondary': colors.blue[400],
-        '--panel-blue-fg-tertiary': colors.blue[500],
-
-        '--panel-gray-border': colors.slate[700],
-        '--panel-gray-bg': colors.slate[900],
-        '--panel-gray-hover': colors.slate[600],
-        '--panel-gray-fg': colors.slate[300],
-        '--panel-gray-fg-secondary': colors.slate[400],
-        '--panel-gray-fg-tertiary': colors.slate[500],
-    },
-    metaThemeColor: '#364153'
-}
-export const styles = {
-    border: {
-        borderWidth: '1px',
-        borderStyle: 'solid',
-        borderColor: 'var(--border-1)',
-    },
-    card: {
-        padding: '0.75rem',
-        borderRadius: '0.5rem',
-    },
-    pageTitle: {
-        fontSize: '2rem',
-        fontWeight: 600,
-        color: 'var(--fg-0)',
-    },
-    hint: {
-        normalColor: 'var(--fg-3)',
-        errorColor: 'var(--fg-red)',
-    },
-    buttonL: {
-        height: '2.5rem',
-        minWidth: '6rem',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '0.75rem'
-    },
-    button: {
-        hoverColor: 'var(--hover-1)',
-        fill: 'var(--fg-2)'
-    },
-    actionButton: {
-        backgroundColor: 'var(--action-button-bg)',
-        hoverColor: 'var(--action-button-hover)',
-        fontWeight: 600,
-        fill: 'var(--action-button-fg)',
-        color: 'var(--action-button-fg)',
-    },
-    actionButtonLight: {
-        backgroundColor: 'var(--action-button-light-bg)',
-        hoverColor: 'var(--action-button-light-hover)',
-        fontWeight: 600,
-        fill: 'var(--action-button-light-fg)',
-        color: 'var(--action-button-light-fg)',
-    },
-    actionButtonOptional: {
-        backgroundColor: 'var(--action-button-optional-bg)',
-        hoverColor: 'var(--action-button-optional-hover)',
-        fontWeight: 600,
-        fill: 'var(--fg-2)',
-        color: 'var(--fg-2)',
-    },
-    dangerButton: {
-        backgroundColor: 'var(--danger-button-bg)',
-        hoverColor: 'var(--danger-button-hover)',
-        fontWeight: 600,
-        fill: 'var(--danger-button-fg)',
-        color: 'var(--danger-button-fg)',
-    },
-    warningButton: {
-        backgroundColor: 'var(--warning-button-bg)',
-        hoverColor: 'var(--warning-button-hover)',
-        fontWeight: 600,
-        fill: 'var(--warning-button-fg)',
-        color: 'var(--warning-button-fg)',
-    },
-    menuButton: {
-        width: '100%',
-        justifyContent: 'center',
-        hoverColor: 'var(--hover-1)',
-        fontWeight: 600,
-    },
-    menuDangerButton: {
-        width: '100%',
-        justifyContent: 'center',
-        hoverColor: 'var(--hover-red)',
-        fontWeight: 600,
-        color: 'var(--fg-red)',
-    },
-    menu: {
-        borderWidth: '1px',
-        borderStyle: 'solid',
-        borderColor: 'var(--border-1)',
-        backgroundColor: 'var(--bg-1)',
-        boxShadow: 'var(--shadow-1)'
-    },
-    menuDanger: {
-        borderWidth: '1px',
-        borderStyle: 'solid',
-        borderColor: 'var(--panel-red-border)',
-        backgroundColor: 'var(--panel-red-bg)',
-        fill: 'var(--panel-red-fg-secondary)',
-        color: 'var(--panel-red-fg)',
-        boxShadow: 'var(--shadow-1)'
-    },
-    menuWarning: {
-        borderWidth: '1px',
-        borderStyle: 'solid',
-        borderColor: 'var(--panel-yellow-border)',
-        backgroundColor: 'var(--panel-yellow-bg)',
-        fill: 'var(--panel-yellow-fg-secondary)',
-        color: 'var(--panel-yellow-fg)',
-        boxShadow: 'var(--shadow-1)'
-    },
-};
 
 
 async function generateKey(keyphrase, salt) {
@@ -421,26 +141,6 @@ export function listenParagraphs(count) {
 }
 
 
-export function loadingPage(color) {
-    return {
-        widget: row(() => ({
-            width: '100%',
-            height: '100%',
-            justifyContent: 'center',
-            children: [svg({
-                width: '8vh',
-                height: '8vh',
-                alignSelf: 'center',
-                fill: 'none',
-                stroke: 'var(--fg-4)',
-                svg: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>'
-            })]
-        })),
-        meta: { title: `Loading | ${appName}`, description: 'Loading...' }
-    };
-}
-
-
 export function loginPage() {
     return {
         widget: row(() => ({
@@ -547,7 +247,6 @@ export function setupPage() {
                                     text: 'Your keyphrase'
                                 }),
                                 hint(() => ({
-                                    ...styles.hint,
                                     id: 'keyphrase-hint',
                                     marginTop: '0.5rem',
                                     errorText: 'Required'
@@ -565,7 +264,6 @@ export function setupPage() {
                                     text: 'Repeat keyphrase'
                                 }),
                                 hint(() => ({
-                                    ...styles.hint,
                                     id: 'keyphrase-repeat-hint',
                                     marginTop: '0.5rem',
                                     errorText: 'Invalid'
@@ -681,7 +379,6 @@ export function keyphrasePage(invalidAttempt) {
                                     text: 'Your keyphrase'
                                 }),
                                 hint(() => ({
-                                    ...styles.hint,
                                     id: 'keyphrase-hint',
                                     marginTop: '0.5rem',
                                     errorText: 'Invalid'
@@ -917,7 +614,6 @@ export function folderPage() {
                                                     text: 'New Name'
                                                 }),
                                                 hint({
-                                                    ...styles.hint,
                                                     id: 'new-folder-name-hint',
                                                     errorText: 'Required'
                                                 }, true),
@@ -1188,7 +884,6 @@ export function folderPage() {
                                                             text: 'Name'
                                                         }),
                                                         hint({
-                                                            ...styles.hint,
                                                             id: 'new-folder-name-hint',
                                                             errorText: 'Required'
                                                         }, true),
@@ -1242,7 +937,6 @@ export function folderPage() {
                                                             text: 'Name'
                                                         }),
                                                         hint({
-                                                            ...styles.hint,
                                                             id: 'new-note-name-hint',
                                                             errorText: 'Required'
                                                         }, true),
@@ -1345,7 +1039,6 @@ export function notePage() {
                     ]
                 }),
                 hint({
-                    ...styles.hint,
                     id: 'add-note-hint',
                     errorText: 'Required'
                 }, true),
@@ -1385,7 +1078,7 @@ export function notePage() {
                                                                 text: 'Image Upload'
                                                             }),
                                                             text({
-                                                                text: 'Image would be downscaled to 1MB jpeg'
+                                                                text: 'Image would be compressed to 1MB jpeg'
                                                             }),
                                                             button({
                                                                 ...styles.buttonL,
@@ -1691,7 +1384,6 @@ export function notePage() {
                             gap: '1rem',
                             children: [
                                 hint({
-                                    ...styles.hint,
                                     id: `edit-note-hint-${paragraph.id}`,
                                     errorText: 'Required'
                                 }, true),

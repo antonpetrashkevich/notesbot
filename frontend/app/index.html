@@ -11,8 +11,9 @@
 
 <body>
     <script type="module">
-        import { appState, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, startApp, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { lightTheme, darkTheme, listenNotebook, listenParagraphs, loadingPage, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
+        import { appName, appState, widgets, pageWidget, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { colors, icons, lightTheme, darkTheme, styles, base, menu, fixedHeader, hint, notification, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+        import { listenNotebook, listenParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
