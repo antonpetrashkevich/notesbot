@@ -181,7 +181,7 @@ export function setupTutorialPage() {
                     gap: '2rem',
                     children: [
                         text({
-                            ...styles.pageTitle,
+                            ...styles.textPageTitle,
                             text: 'Keyphrase'
                         }),
                         column({
@@ -237,7 +237,7 @@ export function setupPage() {
                     gap: '2rem',
                     children: [
                         text({
-                            ...styles.pageTitle,
+                            ...styles.textPageTitle,
                             text: 'Keyphrase'
                         }),
                         column({
@@ -368,7 +368,7 @@ export function keyphrasePage(invalidAttempt) {
                     gap: '2rem',
                     children: [
                         text({
-                            ...styles.pageTitle,
+                            ...styles.textPageTitle,
                             text: 'Keyphrase'
                         }),
                         column({
@@ -464,7 +464,7 @@ export function folderPage() {
                                     ]
                                 }),
                                 text({
-                                    ...styles.headerTitle,
+                                    ...styles.textHeaderTitle,
                                     text: appState.tree[appState.folderId].name
                                 })
                             ]
@@ -992,7 +992,7 @@ export function notePage() {
                                     ]
                                 }),
                                 text({
-                                    ...styles.headerTitle,
+                                    ...styles.textHeaderTitle,
                                     text: appState.tree[appState.noteId].name
                                 })
                             ]
@@ -1185,7 +1185,7 @@ export function notePage() {
                                     padding: '0 0.75rem 0.75rem 0.75rem',
                                     children: [
                                         text({
-                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.auxText : styles[`${paragraph.color}PanelAuxText`]),
+                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux : styles[`${paragraph.color}PanelTextAux`]),
                                             fontWeight: 400,
                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                         }),
