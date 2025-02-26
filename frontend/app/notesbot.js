@@ -444,11 +444,6 @@ export function folderPage() {
             gap: '1rem',
             children: [
                 appState.folderId === 'root' ? null : fixedHeader({
-                    width: '100%',
-                    padding: '0.5rem',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    backgroundColor: 'var(--bg-2)',
                     children: [
                         row({
                             alignItems: 'center',
@@ -477,13 +472,14 @@ export function folderPage() {
                     ]
                 }),
                 ...appState.tree[appState.folderId].children.map(cid => button({
+                    ...styles.textButton,
                     width: '100%',
                     padding: '1rem',
                     justifyContent: 'center',
                     alignItems: 'center',
                     borderRadius: '0.5rem',
-                    hoverColor: 'var(--text-button-bg-1)',
                     fontSize: '1.125rem',
+                    fontWeight: 400,
                     click: function (event) {
                         if (appState.tree[cid]['type'] === 'folder') {
                             goTo(`/folder/${cid}`);
@@ -976,11 +972,6 @@ export function notePage() {
             gap: '1rem',
             children: [
                 fixedHeader({
-                    width: '100%',
-                    padding: '0.5rem',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    backgroundColor: 'var(--bg-2)',
                     children: [
                         row({
                             alignItems: 'center',
