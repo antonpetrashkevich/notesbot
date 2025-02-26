@@ -9,6 +9,14 @@
     ],
     "rewrites": [
       {
+        "source": "/manifest.json",
+        "destination": "/manifest.json"
+      },
+      {
+        "source": "/icon.svg",
+        "destination": "/icon.svg"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
