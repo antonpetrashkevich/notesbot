@@ -440,8 +440,9 @@ export function folderPage() {
     return {
         widget: base(() => ({
             id: 'folder',
-            paddingTop: appState.folderId === 'root' ? undefined : '4rem',
+            justifyContent:'center',
             gap: '1rem',
+            paddingTop: appState.folderId === 'root' ? undefined : '4rem',
             children: [
                 appState.folderId === 'root' ? null : fixedHeader({
                     children: [
