@@ -1,5 +1,5 @@
 import { appName, appState, widgets, pageWidget, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-import { colors, icons, lightTheme, darkTheme, styles, base, menu, prompt, fixedHeader, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+import { colors, icons, lightTheme, darkTheme, styles, initTheme, base, menu, prompt, fixedHeader, hint, notification, imageInput, switchThemeButton, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -801,33 +801,7 @@ export function folderPage() {
                             margin: '1rem',
                             gap: '1rem',
                             children: [
-                                button(() => ({
-                                    ...styles.buttonM,
-                                    ...styles.filledButton1,
-                                    borderRadius: '2rem',
-                                    click: function (event) {
-                                        event.stopPropagation();
-                                        let theme;
-                                        if (window.localStorage.getItem('theme') === 'auto') {
-                                            window.localStorage.setItem('theme', 'light');
-                                            theme = lightTheme;
-                                        } else if (window.localStorage.getItem('theme') === 'light') {
-                                            window.localStorage.setItem('theme', 'dark');
-                                            theme = darkTheme;
-                                        } else if (window.localStorage.getItem('theme') === 'dark') {
-                                            window.localStorage.setItem('theme', 'auto');
-                                            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? darkTheme : lightTheme;
-                                        }
-                                        updateTheme(theme);
-                                        this.update();
-                                    }, children: [
-                                        svg({
-                                            width: '2rem',
-                                            height: '2rem',
-                                            svg: window.localStorage.getItem('theme') === 'auto' ? icons.darkthemeauto : window.localStorage.getItem('theme') === 'light' ? icons.lighttheme : icons.darktheme
-                                        })
-                                    ]
-                                })),
+                                switchThemeButton(),
                                 button({
                                     ...styles.bluePanelFilledButton1,
                                     padding: 0,
@@ -1185,7 +1159,7 @@ export function notePage() {
                                     padding: '0 0.75rem 0.75rem 0.75rem',
                                     children: [
                                         text({
-                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux : styles[`${paragraph.color}PanelTextAux`]),
+                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux1 : styles[`${paragraph.color}PanelTextAux`]),
                                             fontWeight: 400,
                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                         }),
