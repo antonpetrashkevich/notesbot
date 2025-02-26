@@ -1251,7 +1251,7 @@ export function notePage() {
                                                                             borderWidth: '2px',
                                                                             borderStyle: 'solid',
                                                                             borderColor: color === 'default' ? 'var(--fg-1)' : `var(--panel-${color}-fg-1)`,
-                                                                            fill: color === 'default' ? 'var(--bg-1)' : `var(--panel-${color}-bg)`,
+                                                                            fill: color === 'default' ? 'var(--bg-1)' : `var(--panel-${color}-bg-1)`,
                                                                             svg: icons.circle
                                                                         }),
                                                                         text({
