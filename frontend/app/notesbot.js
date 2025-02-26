@@ -1185,8 +1185,8 @@ export function notePage() {
                                     padding: '0 0.75rem 0.75rem 0.75rem',
                                     children: [
                                         text({
-                                            fontSize: '0.875rem',
-                                            color: (!paragraph.color || paragraph.color === 'default') ? 'var(--fg-3)' : `var(--panel-${paragraph.color}-fg-3)`,
+                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.auxText : styles[`${paragraph.color}PanelAuxText`]),
+                                            fontWeight: 400,
                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                         }),
                                         row({
