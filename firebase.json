@@ -17,6 +17,34 @@
         "destination": "/icon.svg"
       },
       {
+        "source": "/icon.png",
+        "destination": "/icon.png"
+      },
+      {
+        "source": "/icon-1024.png",
+        "destination": "/icon.png"
+      },
+      {
+        "source": "/icon-512.png",
+        "destination": "/icon-512.png"
+      },
+      {
+        "source": "/icon-256.png",
+        "destination": "/icon-256.png"
+      },
+      {
+        "source": "/icon-180.png",
+        "destination": "/icon-180.png"
+      },
+      {
+        "source": "/icon-128.png",
+        "destination": "/icon-128.png"
+      },
+      {
+        "source": "/splash.png",
+        "destination": "/splash.png"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
