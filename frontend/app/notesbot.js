@@ -68,9 +68,12 @@ export function listenNotebook() {
     appState.stopListenNotebook?.();
     appState.stopListenNotebook = onSnapshot(doc(appState.firebase.firestore, 'notebooks', appState.user.uid),
         async (docSnap) => {
-            if (!docSnap.exists()) {
+            if (!appState.initialized && !docSnap.exists()) {
                 updatePage(setupTutorialPage());
-            } else {
+            } else if (appState.initialized && !docSnap.exists()) {
+                signOut(appState.firebase.auth);
+            }
+            else {
                 try {
                     const docData = docSnap.data();
                     if (docData.status === 'deleted' && !appState.initialized) {
@@ -440,7 +443,7 @@ export function folderPage() {
     return {
         widget: base(() => ({
             id: 'folder',
-            justifyContent:'center',
+            justifyContent: 'center',
             gap: '1rem',
             paddingTop: appState.folderId === 'root' ? undefined : '4rem',
             children: [
@@ -683,7 +686,7 @@ export function folderPage() {
                                         }
                                         else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length > 0) {
                                             modalOn(prompt({
-                                                ...styles.redPanel,
+                                                ...styles.panelRed,
                                                 title: 'Delete folder',
                                                 description: 'Before deleting, move or delete all the notes and folders inside',
                                             }))
@@ -758,6 +761,8 @@ export function folderPage() {
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 updatePage(loadingPage());
+                                                                appState.stopListenNotebook?.();
+                                                                appState.stopListenParagraphs?.();
                                                                 await updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
                                                                     status: 'deleted',
                                                                     orphanNoteIds: appState.orphanNoteIds.concat(Object.keys(appState.tree).filter(id => appState.tree[id].type === 'note')),
