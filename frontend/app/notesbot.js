@@ -1308,7 +1308,7 @@ export function notePage() {
                                     id: `edit-note-input-${paragraph.id}`,
                                     width: '100%',
                                     padding: '0.75rem',
-                                    ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}Panel`]),
+                                    ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}`]),
                                     attributes: { rows: 8 },
                                 }, paragraph.text),
                                 row({
