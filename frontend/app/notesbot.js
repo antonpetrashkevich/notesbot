@@ -64,6 +64,23 @@ function generateTreeId() {
 }
 
 
+function pathController(segments, params) {
+    if (segments.length === 2 && segments[0] === 'folder') {
+        appState.folderId = segments[1];
+        updatePage(folderPage());
+    }
+    else if (segments.length === 2 && segments[0] === 'note') {
+        appState.noteId = segments[1];
+        appState.paragraphs = [];
+        updatePage(notePage());
+        listenParagraphs(32);
+    } else {
+        appState.folderId = 'root';
+        updatePage(folderPage());
+    }
+}
+
+
 export function listenNotebook() {
     appState.stopListenNotebook?.();
     appState.stopListenNotebook = onSnapshot(doc(appState.firebase.firestore, 'notebooks', appState.user.uid),
@@ -87,21 +104,7 @@ export function listenNotebook() {
                         appState.orphanNoteIds = docData.orphanNoteIds;
                         if (!appState.initialized) {
                             appState.initialized = true;
-                            startPathController(function pathController(segments, params) {
-                                if (segments.length === 2 && segments[0] === 'folder') {
-                                    appState.folderId = segments[1];
-                                    updatePage(folderPage());
-                                }
-                                else if (segments.length === 2 && segments[0] === 'note') {
-                                    appState.noteId = segments[1];
-                                    appState.paragraphs = [];
-                                    updatePage(notePage());
-                                    listenParagraphs(32);
-                                } else {
-                                    appState.folderId = 'root';
-                                    updatePage(folderPage());
-                                }
-                            });
+                            startPathController(pathController);
                         } else {
                             widgets['folder']?.update();
                         }
@@ -154,7 +157,7 @@ export function loginPage() {
             children: [
                 button({
                     ...styles.buttonL,
-                    ...styles.buttonFlat,
+                    ...styles.buttonFlat2,
                     fontWeight: 400,
                     click: function (event) {
                         signInWithPopup(appState.firebase.auth, new GoogleAuthProvider());
@@ -202,7 +205,7 @@ export function setupTutorialPage() {
                             children: [
                                 button({
                                     ...styles.buttonL,
-                                    ...styles.buttonFilled1,
+                                    ...styles.buttonFilled2,
                                     click: function (event) {
                                         signOut(appState.firebase.auth);
                                     },
@@ -210,7 +213,7 @@ export function setupTutorialPage() {
                                 }),
                                 button({
                                     ...styles.buttonL,
-                                    ...styles.buttonFilledBlue,
+                                    ...styles.buttonFilledBlueDark,
                                     click: function (event) {
                                         updatePage(setupPage());
                                     },
@@ -289,7 +292,7 @@ export function setupPage() {
                             children: [
                                 button({
                                     ...styles.buttonL,
-                                    ...styles.buttonFilled1,
+                                    ...styles.buttonFilled2,
                                     click: function (event) {
                                         updatePage(setupTutorialPage());
                                     },
@@ -297,7 +300,7 @@ export function setupPage() {
                                 }),
                                 button({
                                     ...styles.buttonL,
-                                    ...styles.buttonFilledBlue,
+                                    ...styles.buttonFilledBlueDark,
                                     click: async function (event) {
                                         widgets['keyphrase-hint'].update(true);
                                         widgets['keyphrase-repeat-hint'].update(true);
@@ -403,7 +406,7 @@ export function keyphrasePage(invalidAttempt) {
                             children: [
                                 button({
                                     ...styles.buttonL,
-                                    ...styles.buttonFilled1,
+                                    ...styles.buttonFilled2,
                                     justifyContent: 'center',
                                     click: function (event) {
                                         signOut(appState.firebase.auth);
@@ -412,7 +415,7 @@ export function keyphrasePage(invalidAttempt) {
                                 }),
                                 button({
                                     ...styles.buttonL,
-                                    ...styles.buttonFilledBlue,
+                                    ...styles.buttonFilledBlueDark,
                                     justifyContent: 'center',
                                     click: async function (event) {
                                         if (!widgets['keyphrase-input'].domElement.value) {
@@ -455,7 +458,7 @@ export function folderPage() {
                             children: [
                                 button({
                                     ...styles.buttonM,
-                                    ...styles.buttonFlat,
+                                    ...styles.buttonFlat1,
                                     click: function (event) {
                                         goTo(`/folder/${appState.tree[appState.folderId].parent}`);
                                     },
@@ -476,7 +479,7 @@ export function folderPage() {
                     ]
                 }),
                 ...appState.tree[appState.folderId].children.map(cid => button({
-                    ...styles.buttonFlat,
+                    ...styles.buttonFlat2,
                     width: '100%',
                     padding: '1rem',
                     justifyContent: 'center',
@@ -496,7 +499,7 @@ export function folderPage() {
                             children: [
                                 appState.tree[appState.folderId].children.indexOf(cid) > 0 ? button({
                                     ...styles.buttonMFullWidth,
-                                    ...styles.buttonFlat,
+                                    ...styles.buttonFlat2,
                                     click: async function (event) {
                                         event.stopPropagation();
                                         const arr = appState.tree[appState.folderId].children;
@@ -513,7 +516,7 @@ export function folderPage() {
                                 }) : null,
                                 appState.tree[appState.folderId].children.indexOf(cid) < appState.tree[appState.folderId].children.length - 1 ? button({
                                     ...styles.buttonMFullWidth,
-                                    ...styles.buttonFlat,
+                                    ...styles.buttonFlat2,
                                     click: async function (event) {
                                         event.stopPropagation();
                                         const arr = appState.tree[appState.folderId].children;
@@ -530,7 +533,7 @@ export function folderPage() {
                                 }) : null,
                                 button({
                                     ...styles.buttonMFullWidth,
-                                    ...styles.buttonFlat,
+                                    ...styles.buttonFlat2,
                                     click: function (event) {
                                         event.stopPropagation();
                                         modalOn(menu((value) => ({
@@ -544,7 +547,7 @@ export function folderPage() {
                                                 }),
                                                 value === 'root' ? null : button({
                                                     ...styles.buttonMFullWidth,
-                                                    ...styles.buttonFlat,
+                                                    ...styles.buttonFlat2,
                                                     justifyContent: 'start',
                                                     fontWeight: 400,
                                                     click: function (event) {
@@ -559,7 +562,7 @@ export function folderPage() {
                                                 }),
                                                 ...appState.tree[value].children.filter(id => appState.tree[id].type === 'folder').map(id => button({
                                                     ...styles.buttonMFullWidth,
-                                                    ...styles.buttonFlat,
+                                                    ...styles.buttonFlat2,
                                                     justifyContent: 'start',
                                                     fontWeight: 400,
                                                     click: function (event) {
@@ -574,7 +577,7 @@ export function folderPage() {
                                                 })),
                                                 button({
                                                     ...styles.buttonL,
-                                                    ...styles.buttonFilledBlue,
+                                                    ...styles.buttonFilledBlueDark,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     click: async function (event) {
@@ -604,7 +607,7 @@ export function folderPage() {
                                 }),
                                 button({
                                     ...styles.buttonMFullWidth,
-                                    ...styles.buttonFlat,
+                                    ...styles.buttonFlat2,
                                     click: function (event) {
                                         event.stopPropagation();
                                         modalOn(menu({
@@ -627,7 +630,7 @@ export function folderPage() {
                                                 }, appState.tree[cid].name),
                                                 button({
                                                     ...styles.buttonL,
-                                                    ...styles.buttonFilledBlue,
+                                                    ...styles.buttonFilledBlueDark,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     click: async function (event) {
@@ -665,7 +668,7 @@ export function folderPage() {
                                                 buttons: [
                                                     button({
                                                         ...styles.buttonL,
-                                                        ...styles.buttonFilledRed,
+                                                        ...styles.buttonFilledRedDark,
                                                         click: async function (event) {
                                                             event.stopPropagation();
                                                             delete appState.tree[cid];
@@ -697,7 +700,7 @@ export function folderPage() {
                                                 description: 'You won\'t be able to restore it',
                                                 buttons: [button({
                                                     ...styles.buttonL,
-                                                    ...styles.buttonFilledRed,
+                                                    ...styles.buttonFilledRedDark,
                                                     click: async function (event) {
                                                         event.stopPropagation();
                                                         delete appState.tree[cid];
@@ -739,7 +742,7 @@ export function folderPage() {
                     children: [
                         button({
                             ...styles.buttonM,
-                            ...styles.buttonFlat,
+                            ...styles.buttonFlat1,
                             margin: '1rem',
                             borderRadius: '2rem',
                             click: function (event) {
@@ -757,7 +760,7 @@ export function folderPage() {
                                                     buttons: [
                                                         button({
                                                             ...styles.buttonL,
-                                                            ...styles.buttonFilledRed,
+                                                            ...styles.buttonFilledRedDark,
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 updatePage(loadingPage());
@@ -818,7 +821,7 @@ export function folderPage() {
                                             children: [
                                                 button({
                                                     ...styles.buttonMFullWidth,
-                                                    ...styles.buttonFlat,
+                                                    ...styles.buttonFlat2,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         modalOn(menu({
@@ -841,7 +844,7 @@ export function folderPage() {
                                                                 }),
                                                                 button({
                                                                     ...styles.buttonL,
-                                                                    ...styles.buttonFilledBlue,
+                                                                    ...styles.buttonFilledBlueDark,
                                                                     marginTop: '0.5rem',
                                                                     alignSelf: 'end',
                                                                     click: async function (event) {
@@ -871,7 +874,7 @@ export function folderPage() {
                                                 }),
                                                 button({
                                                     ...styles.buttonMFullWidth,
-                                                    ...styles.buttonFlat,
+                                                    ...styles.buttonFlat2,
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         modalOn(menu({
@@ -894,7 +897,7 @@ export function folderPage() {
                                                                 }),
                                                                 button({
                                                                     ...styles.buttonL,
-                                                                    ...styles.buttonFilledBlue,
+                                                                    ...styles.buttonFilledBlueDark,
                                                                     marginTop: '0.5rem',
                                                                     alignSelf: 'end',
                                                                     click: async function (event) {
@@ -959,7 +962,7 @@ export function notePage() {
                             children: [
                                 button({
                                     ...styles.buttonM,
-                                    ...styles.buttonFlat,
+                                    ...styles.buttonFlat1,
                                     click: function (event) {
                                         goTo(`/folder/${appState.tree[appState.noteId].parent}`);
                                     },
@@ -1010,13 +1013,13 @@ export function notePage() {
                                             if (file.size > (1024 * 1024 - 8 * 1024)) {
                                                 modalOn(
                                                     prompt({
-                                                        ...styles.yellowPanel,
+                                                        ...styles.panelYellow,
                                                         title: 'Image Upload',
                                                         description: 'Image would be compressed to 1MB jpeg',
                                                         buttons: [
                                                             button({
                                                                 ...styles.buttonL,
-                                                                ...styles.yellowButton,
+                                                                ...styles.buttonFilledYellowDark,
                                                                 click: function (event) {
                                                                     modalOff();
                                                                     const reader = new FileReader();
@@ -1092,7 +1095,7 @@ export function notePage() {
                         ),
                         button({
                             ...styles.buttonL,
-                            ...styles.buttonFilled1,
+                            ...styles.buttonFilled2,
                             justifyContent: 'center',
                             alignItems: 'center',
                             gap: '0.5rem',
@@ -1113,7 +1116,7 @@ export function notePage() {
                         }),
                         button({
                             ...styles.buttonL,
-                            ...styles.buttonFilledBlue,
+                            ...styles.buttonFilledBlueDark,
                             click: async function (event) {
                                 event.stopPropagation();
                                 if (widgets['add-note-input'].domElement.value.trim()) {
@@ -1174,7 +1177,7 @@ export function notePage() {
                                             children: [
                                                 paragraph.text ? button({
                                                     ...styles.buttonM,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         navigator.clipboard.writeText(paragraph.text);
@@ -1189,7 +1192,7 @@ export function notePage() {
                                                 }) : null,
                                                 paragraph.text ? button({
                                                     ...styles.buttonM,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         modalOn(menu({
@@ -1202,7 +1205,7 @@ export function notePage() {
                                                                 }),
                                                                 ...['default', 'red', 'green', 'yellow', 'blue'].map(color => button({
                                                                     ...styles.buttonMFullWidth,
-                                                                    ...styles.buttonFlat,
+                                                                    ...styles.buttonFlat2,
                                                                     justifyContent: 'start',
                                                                     alignItems: 'center',
                                                                     gap: '1rem',
@@ -1243,7 +1246,7 @@ export function notePage() {
                                                 }) : null,
                                                 paragraph.text ? button({
                                                     ...styles.buttonM,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         this.parent.parent.parent.update('edit');
@@ -1259,7 +1262,7 @@ export function notePage() {
                                                 }) : null,
                                                 button({
                                                     ...styles.buttonM,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                     click: function (event) {
                                                         event.stopPropagation();
                                                         modalOn(prompt({
@@ -1267,7 +1270,7 @@ export function notePage() {
                                                             description: 'You won\'t be able to restore it',
                                                             buttons: [button({
                                                                 ...styles.buttonL,
-                                                                ...styles.buttonFilledRed,
+                                                                ...styles.buttonFilledRedDark,
                                                                 click: async function (event) {
                                                                     event.stopPropagation();
                                                                     deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
@@ -1318,7 +1321,7 @@ export function notePage() {
                                     children: [
                                         button({
                                             ...styles.buttonL,
-                                            ...styles.buttonFilled1,
+                                            ...styles.buttonFilled2,
                                             justifyContent: 'center',
                                             click: async function (event) {
                                                 event.stopPropagation();
@@ -1332,7 +1335,7 @@ export function notePage() {
                                         }),
                                         button({
                                             ...styles.buttonL,
-                                            ...styles.buttonFilledBlue,
+                                            ...styles.buttonFilledBlueDark,
                                             justifyContent: 'center',
                                             click: async function (event) {
                                                 event.stopPropagation();
@@ -1358,7 +1361,7 @@ export function notePage() {
                 }, 'view')),
                 value ? button({
                     ...styles.buttonLFullWidth,
-                    ...styles.buttonFilled1,
+                    ...styles.buttonFilled2,
                     justifyContent: 'center',
                     click: function (event) {
                         listenParagraphs(appState.paragraphs.length + 32);
