@@ -18,7 +18,7 @@
 <body>
     <script type="module">
         import { appName, appState, widgets, pageWidget, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { colors, icons, lightTheme, darkTheme, styles, initTheme, base, menu, prompt, fixedHeader, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+        import { colors, icons, lightTheme, darkTheme, styles, initTheme, updatePageWidgetOnResize, base, menu, prompt, fixedHeader, hint, notification, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
         import { listenNotebook, listenParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
@@ -49,6 +49,7 @@
 
         startApp('XPL');
         initTheme();
+        updatePageWidgetOnResize();
         updatePage(loadingPage());
         onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {

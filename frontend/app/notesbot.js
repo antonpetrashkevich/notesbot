@@ -1,5 +1,5 @@
 import { appName, appState, widgets, pageWidget, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, youtubeVideo, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-import { colors, icons, lightTheme, darkTheme, styles, initTheme, base, menu, prompt, fixedHeader, hint, notification, imageInput, switchThemeButton, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+import { colors, icons, lightTheme, darkTheme, styles, initTheme, base, menu, prompt, fixedHeader, hint, notification, imageInput, colorInput, switchThemeButton, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
