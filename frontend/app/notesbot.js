@@ -1,5 +1,5 @@
 import { appName, appState, widgets, pageWidget, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-import { colors, lightTheme, darkTheme, card, border, text, buttons, base, menu, prompt, fixedHeader, notification, switchThemeButton, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+import { colors, lightTheme, darkTheme, card, border, text, buttons, base, menu, prompt, fixedHeader, notification, switchThemeButton, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -48,7 +48,6 @@ async function decrypt(key, iv, data) {
     );
 }
 
-
 function generateTreeId() {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     while (true) {
@@ -62,7 +61,6 @@ function generateTreeId() {
         }
     }
 }
-
 
 export function listenNotebook() {
     appState.stopListenNotebook?.();
@@ -120,7 +118,6 @@ export function listenNotebook() {
         });
 }
 
-
 export function listenParagraphs(count) {
     appState.stopListenParagraphs?.();
     appState.paragraphs = [];
@@ -140,11 +137,20 @@ export function listenParagraphs(count) {
     );
 }
 
-
 export function loginPage() {
     return {
+        init: function () {
+
+        },
+        destroy: function () {
+
+        },
+        meta: () => ({
+            title: `Login | ${appName}`,
+            description: 'Login page.'
+        }),
         widget: {
-            ...row(),
+            ...row,
             width: '100%',
             height: '100%',
             justifyContent: 'center',
@@ -154,8 +160,8 @@ export function loginPage() {
                     ...button(function (event) {
                         signInWithPopup(appState.firebase.auth, new GoogleAuthProvider());
                     }),
-                    ...buttons.l(),
-                    ...buttons.flat(),
+                    ...buttons.l,
+                    ...buttons.flat,
                     fontWeight: 400,
                     children: [
                         {
@@ -171,20 +177,28 @@ export function loginPage() {
                 }
             ]
         },
-        meta: { title: `Login | ${appName}`, description: 'Login page.' }
     };
 }
 
-
 export function setupTutorialPage() {
     return {
+        init: function () {
+
+        },
+        destroy: function () {
+
+        },
+        meta: () => ({
+            title: `Setup | ${appName}`,
+            description: 'Setup page.'
+        }),
         widget: base({
             justifyContent: 'center',
             children: [
                 {
-                    ...column(),
+                    ...column,
                     ...card,
-                    ...border(),
+                    ...border,
                     width: '100%',
                     justifyContent: 'center',
                     gap: '2rem',
@@ -194,7 +208,7 @@ export function setupTutorialPage() {
                             text: 'Keyphrase'
                         },
                         {
-                            ...column(),
+                            ...column,
                             gap: '0.5rem',
                             children: [
                                 { text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.' },
@@ -203,7 +217,7 @@ export function setupTutorialPage() {
                             ]
                         },
                         {
-                            ...row(),
+                            ...row,
                             width: '100%',
                             justifyContent: 'end',
                             gap: '1rem',
@@ -212,16 +226,16 @@ export function setupTutorialPage() {
                                     ...button(function (event) {
                                         signOut(appState.firebase.auth);
                                     }),
-                                    ...buttons.l(),
-                                    ...buttons.filled(),
+                                    ...buttons.l,
+                                    ...buttons.filled,
                                     text: 'Log out'
                                 },
                                 {
                                     ...button(function (event) {
                                         updatePage(setupPage());
                                     }),
-                                    ...buttons.l(),
-                                    ...buttons.filledBlue(),
+                                    ...buttons.l,
+                                    ...buttons.filledBlue,
                                     text: 'Next'
                                 }
                             ]
@@ -230,20 +244,28 @@ export function setupTutorialPage() {
                 }
             ]
         }),
-        meta: { title: `Setup | ${appName}`, description: 'Setup page.' }
     };
 }
 
-
 export function setupPage() {
     return {
+        init: function () {
+
+        },
+        destroy: function () {
+
+        },
+        meta: () => ({
+            title: `Setup | ${appName}`,
+            description: 'Setup page.'
+        }),
         widget: base({
             justifyContent: 'center',
             children: [
                 {
-                    ...column(),
+                    ...column,
                     ...card,
-                    ...border(),
+                    ...border,
                     width: '100%',
                     justifyContent: 'center',
                     gap: '2rem',
@@ -253,7 +275,7 @@ export function setupPage() {
                             text: 'Keyphrase'
                         },
                         {
-                            ...column(),
+                            ...column,
                             width: '100%',
                             children: [
                                 {
@@ -261,14 +283,14 @@ export function setupPage() {
                                     text: 'Your keyphrase'
                                 },
                                 () => ({
-                                    ...text.aux(),
+                                    ...text.aux,
                                     id: 'keyphrase-hint',
                                     marginTop: '0.5rem',
                                     errorText: 'Required'
                                 }),
                                 {
-                                    ...input(),
-                                    ...border(),
+                                    ...input,
+                                    ...border,
                                     id: 'keyphrase-input',
                                     marginTop: '0.5rem',
                                     width: '100%',
@@ -281,14 +303,14 @@ export function setupPage() {
                                     text: 'Repeat keyphrase'
                                 },
                                 () => ({
-                                    ...text.aux(),
+                                    ...text.aux,
                                     id: 'keyphrase-repeat-hint',
                                     marginTop: '0.5rem',
                                     errorText: 'Invalid'
                                 }),
                                 {
-                                    ...input(),
-                                    ...border(),
+                                    ...input,
+                                    ...border,
                                     id: 'keyphrase-repeat-input',
                                     marginTop: '0.5rem',
                                     width: '100%',
@@ -298,7 +320,7 @@ export function setupPage() {
                             ]
                         },
                         {
-                            ...row(),
+                            ...row,
                             width: '100%',
                             justifyContent: 'end',
                             gap: '1rem',
@@ -307,8 +329,8 @@ export function setupPage() {
                                     ...button(function (event) {
                                         updatePage(setupTutorialPage());
                                     }),
-                                    ...buttons.l(),
-                                    ...buttons.filled(),
+                                    ...buttons.l,
+                                    ...buttons.filled,
                                     text: 'Back'
                                 },
                                 {
@@ -358,8 +380,8 @@ export function setupPage() {
                                             updatePage(generalErrorPage());
                                         }
                                     }),
-                                    ...buttons.l(),
-                                    ...buttons.filledBlue(),
+                                    ...buttons.l,
+                                    ...buttons.filledBlue,
                                     children: [
                                         { text: 'Save' }
                                     ]
@@ -369,20 +391,28 @@ export function setupPage() {
                     ]
                 }]
         }),
-        meta: { title: `Setup | ${appName}`, description: 'Setup page.' }
     };
 }
 
-
-export function keyphrasePage(invalidAttempt) {
+export function keyphrasePage() {
     return {
+        init: function () {
+
+        },
+        destroy: function () {
+
+        },
+        meta: () => ({
+            title: `Keyphrase | ${appName}`,
+            description: 'Keyphrase page.'
+        }),
         widget: base({
             justifyContent: 'center',
             children: [
                 {
-                    ...column(),
+                    ...column,
                     ...card,
-                    ...border(),
+                    ...border,
                     width: '100%',
                     justifyContent: 'center',
                     gap: '2rem',
@@ -392,7 +422,7 @@ export function keyphrasePage(invalidAttempt) {
                             text: 'Keyphrase'
                         },
                         {
-                            ...column(),
+                            ...column,
                             width: '100%',
                             justifyContent: 'center',
                             children: [
@@ -401,14 +431,14 @@ export function keyphrasePage(invalidAttempt) {
                                     text: 'Your keyphrase'
                                 },
                                 () => ({
-                                    ...text.aux(),
+                                    ...text.aux,
                                     id: 'keyphrase-hint',
                                     marginTop: '0.5rem',
                                     errorText: 'Invalid'
                                 }),
                                 {
-                                    ...input(),
-                                    ...border(),
+                                    ...input,
+                                    ...border,
                                     id: 'keyphrase-input',
                                     width: '100%',
                                     marginTop: '0.5rem',
@@ -418,7 +448,7 @@ export function keyphrasePage(invalidAttempt) {
                             ]
                         },
                         {
-                            ...row(),
+                            ...row,
                             width: '100%',
                             justifyContent: 'end',
                             gap: '1rem',
@@ -427,8 +457,8 @@ export function keyphrasePage(invalidAttempt) {
                                     ...button(function (event) {
                                         signOut(appState.firebase.auth);
                                     }),
-                                    ...buttons.l(),
-                                    ...buttons.filled(),
+                                    ...buttons.l,
+                                    ...buttons.filled,
                                     justifyContent: 'center',
                                     text: 'Log out'
                                 },
@@ -443,8 +473,8 @@ export function keyphrasePage(invalidAttempt) {
                                         window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
                                         listenNotebook();
                                     }),
-                                    ...buttons.l(),
-                                    ...buttons.filledBlue(),
+                                    ...buttons.l,
+                                    ...buttons.filledBlue,
                                     justifyContent: 'center',
                                     children: [
                                         { text: 'Save' }
@@ -456,13 +486,21 @@ export function keyphrasePage(invalidAttempt) {
                 }
             ]
         }),
-        meta: { title: `Keyphrase | ${appName}`, description: 'Keyphrase page.' }
     };
 }
 
-
 export function folderPage() {
     return {
+        init: function () {
+
+        },
+        destroy: function () {
+
+        },
+        meta: () => ({
+            title: `${appState.tree[appState.folderId]['name']} | ${appName}`,
+            description: 'Folder page.'
+        }),
         widget: base(() => ({
             id: 'folder',
             justifyContent: 'center',
@@ -472,7 +510,7 @@ export function folderPage() {
                 appState.folderId === 'root' ? null : fixedHeader({
                     children: [
                         {
-                            ...row(),
+                            ...row,
                             alignItems: 'center',
                             gap: '1rem',
                             children: [
@@ -480,8 +518,8 @@ export function folderPage() {
                                     ...button(function (event) {
                                         goTo(`/folder/${appState.tree[appState.folderId].parent}`);
                                     }),
-                                    ...buttons.m(),
-                                    ...buttons.flat(),
+                                    ...buttons.m,
+                                    ...buttons.flat,
                                     children: [
                                         {
                                             html: icons.up,
@@ -507,7 +545,7 @@ export function folderPage() {
                         }
                     }, function (event) {
                         modalOn({
-                            ...menu(),
+                            ...menu,
                             children: [
                                 appState.tree[appState.folderId].children.indexOf(cid) > 0 ? {
                                     ...button(async function (event) {
@@ -520,8 +558,8 @@ export function folderPage() {
                                         });
                                         modalOff();
                                     }),
-                                    ...buttons.mFullWidth(),
-                                    ...buttons.flat(),
+                                    ...buttons.mFullWidth,
+                                    ...buttons.flat,
                                     children: [{ text: 'Move Up' }]
                                 } : null,
                                 appState.tree[appState.folderId].children.indexOf(cid) < appState.tree[appState.folderId].children.length - 1 ? {
@@ -535,15 +573,15 @@ export function folderPage() {
                                         });
                                         modalOff();
                                     }),
-                                    ...buttons.mFullWidth(),
-                                    ...buttons.flat(),
+                                    ...buttons.mFullWidth,
+                                    ...buttons.flat,
                                     children: [{ text: 'Move Down' }]
                                 } : null,
                                 {
                                     ...button(function (event) {
                                         event.stopPropagation();
                                         modalOn(() => ({
-                                            ...menu(),
+                                            ...menu,
                                             alignItems: 'start',
                                             gap: '0.5rem',
                                             children: [
@@ -557,8 +595,8 @@ export function folderPage() {
                                                         event.stopPropagation();
                                                         this.parent.update(appState.tree[value].parent);
                                                     }),
-                                                    ...buttons.mFullWidth(),
-                                                    ...buttons.flat(),
+                                                    ...buttons.mFullWidth,
+                                                    ...buttons.flat,
                                                     justifyContent: 'start',
                                                     fontWeight: 400,
                                                     children: [
@@ -570,8 +608,8 @@ export function folderPage() {
                                                         event.stopPropagation();
                                                         this.parent.update(id);
                                                     }),
-                                                    ...buttons.mFullWidth(),
-                                                    ...buttons.flat(),
+                                                    ...buttons.mFullWidth,
+                                                    ...buttons.flat,
                                                     justifyContent: 'start',
                                                     fontWeight: 400,
                                                     children: [
@@ -591,8 +629,8 @@ export function folderPage() {
                                                         });
                                                         modalOff();
                                                     }),
-                                                    ...buttons.l(),
-                                                    ...buttons.filledBlue(),
+                                                    ...buttons.l,
+                                                    ...buttons.filledBlue,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     children: [
@@ -602,15 +640,15 @@ export function folderPage() {
                                             ],
                                         }));
                                     }),
-                                    ...buttons.mFullWidth(),
-                                    ...buttons.flat(),
+                                    ...buttons.mFullWidth,
+                                    ...buttons.flat,
                                     children: [{ text: 'Move to Folder' }]
                                 },
                                 {
                                     ...button(function (event) {
                                         event.stopPropagation();
                                         modalOn({
-                                            ...menu(),
+                                            ...menu,
                                             alignItems: 'start',
                                             gap: '0.5rem',
                                             children: [
@@ -619,13 +657,13 @@ export function folderPage() {
                                                     text: 'New Name'
                                                 },
                                                 {
-                                                    ...text.aux(),
+                                                    ...text.aux,
                                                     id: 'new-folder-name-hint',
                                                     errorText: 'Required'
                                                 },
                                                 {
-                                                    ...input(),
-                                                    ...border(),
+                                                    ...input,
+                                                    ...border,
                                                     id: 'new-folder-name-input',
                                                     width: '100%',
                                                     type: 'text',
@@ -645,8 +683,8 @@ export function folderPage() {
                                                         });
                                                         modalOff();
                                                     }),
-                                                    ...buttons.l(),
-                                                    ...buttons.filledBlue(),
+                                                    ...buttons.l,
+                                                    ...buttons.filledBlue,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     children: [
@@ -656,8 +694,8 @@ export function folderPage() {
                                             ]
                                         })
                                     }),
-                                    ...buttons.mFullWidth(),
-                                    ...buttons.flat(),
+                                    ...buttons.mFullWidth,
+                                    ...buttons.flat,
                                     children: [{ text: 'Rename' }]
                                 },
                                 {
@@ -677,8 +715,8 @@ export function folderPage() {
                                                             });
                                                             modalOff();
                                                         }),
-                                                        ...buttons.l(),
-                                                        ...buttons.filledRed(),
+                                                        ...buttons.l,
+                                                        ...buttons.filledRed,
                                                         children: [
                                                             { text: 'Delete' }]
                                                     }
@@ -703,22 +741,22 @@ export function folderPage() {
                                                         });
                                                         modalOff();
                                                     }),
-                                                    ...buttons.l(),
-                                                    ...buttons.filledRed(),
+                                                    ...buttons.l,
+                                                    ...buttons.filledRed,
                                                     children: [
                                                         { text: 'Delete' }]
                                                 }]),
                                             })
                                         }
                                     }),
-                                    ...buttons.mFullWidth(),
-                                    ...buttons.flatRed(),
+                                    ...buttons.mFullWidth,
+                                    ...buttons.flatRed,
                                     children: [{ text: 'Delete' }]
                                 },
                             ]
                         })
                     }),
-                    ...buttons.flat(),
+                    ...buttons.flat,
                     width: '100%',
                     padding: '1rem',
                     justifyContent: 'center',
@@ -731,7 +769,7 @@ export function folderPage() {
                     ]
                 })),
                 {
-                    ...row(),
+                    ...row,
                     position: 'fixed',
                     bottom: 0,
                     left: 0,
@@ -744,7 +782,7 @@ export function folderPage() {
                             ...button(function (event) {
                                 event.stopPropagation();
                                 modalOn({
-                                    ...menu(),
+                                    ...menu,
                                     children: [
                                         {
                                             ...button(function (event) {
@@ -753,8 +791,8 @@ export function folderPage() {
                                                     ...prompt('Delete account', 'You won\'t be able to restore it', [
                                                         {
                                                             ...button(),
-                                                            ...buttons.l(),
-                                                            ...buttons.filledRed(),
+                                                            ...buttons.l,
+                                                            ...buttons.filledRed,
                                                             click: async function (event) {
                                                                 event.stopPropagation();
                                                                 updatePage(loadingPage());
@@ -770,8 +808,8 @@ export function folderPage() {
                                                     ]),
                                                 });
                                             }),
-                                            ...buttons.mFullWidth(),
-                                            ...buttons.flatRed(),
+                                            ...buttons.mFullWidth,
+                                            ...buttons.flatRed,
                                             children: [{ text: 'Delete account' }]
                                         },
                                         {
@@ -779,15 +817,15 @@ export function folderPage() {
                                                 event.stopPropagation();
                                                 signOut(appState.firebase.auth);
                                             }),
-                                            ...buttons.mFullWidth(),
-                                            ...buttons.flatRed(),
+                                            ...buttons.mFullWidth,
+                                            ...buttons.flatRed,
                                             children: [{ text: 'Log out' }]
                                         }
                                     ]
                                 })
                             }),
-                            ...buttons.m(),
-                            ...buttons.flat(),
+                            ...buttons.m,
+                            ...buttons.flat,
                             margin: '1rem',
                             borderRadius: '2rem',
                             children: [
@@ -799,7 +837,7 @@ export function folderPage() {
                             ]
                         },
                         {
-                            ...column(),
+                            ...column,
                             margin: '1rem',
                             gap: '1rem',
                             children: [
@@ -808,13 +846,13 @@ export function folderPage() {
                                     ...button(function (event) {
                                         event.stopPropagation();
                                         modalOn({
-                                            ...menu(),
+                                            ...menu,
                                             children: [
                                                 {
                                                     ...button(function (event) {
                                                         event.stopPropagation();
                                                         modalOn({
-                                                            ...menu(),
+                                                            ...menu,
                                                             alignItems: 'start',
                                                             gap: '0.5rem',
                                                             children: [
@@ -823,13 +861,13 @@ export function folderPage() {
                                                                     text: 'Name'
                                                                 },
                                                                 {
-                                                                    ...text.aux(),
+                                                                    ...text.aux,
                                                                     id: 'new-folder-name-hint',
                                                                     errorText: 'Required'
                                                                 },
                                                                 {
-                                                                    ...input(),
-                                                                    ...border(),
+                                                                    ...input,
+                                                                    ...border,
                                                                     id: 'new-folder-name-input',
                                                                     width: '100%',
                                                                     type: 'text',
@@ -837,8 +875,8 @@ export function folderPage() {
                                                                 },
                                                                 {
                                                                     ...button(),
-                                                                    ...buttons.l(),
-                                                                    ...buttons.filledBlue(),
+                                                                    ...buttons.l,
+                                                                    ...buttons.filledBlue,
                                                                     marginTop: '0.5rem',
                                                                     alignSelf: 'end',
                                                                     click: async function (event) {
@@ -862,15 +900,15 @@ export function folderPage() {
                                                             ]
                                                         })
                                                     }),
-                                                    ...buttons.mFullWidth(),
-                                                    ...buttons.flat(),
+                                                    ...buttons.mFullWidth,
+                                                    ...buttons.flat,
                                                     children: [{ text: 'New Folder' }]
                                                 },
                                                 {
                                                     ...button(function (event) {
                                                         event.stopPropagation();
                                                         modalOn({
-                                                            ...menu(),
+                                                            ...menu,
                                                             alignItems: 'start',
                                                             gap: '0.5rem',
                                                             children: [
@@ -879,13 +917,13 @@ export function folderPage() {
                                                                     text: 'Name'
                                                                 },
                                                                 {
-                                                                    ...text.aux(),
+                                                                    ...text.aux,
                                                                     id: 'new-note-name-hint',
                                                                     errorText: 'Required'
                                                                 },
                                                                 {
-                                                                    ...input(),
-                                                                    ...border(),
+                                                                    ...input,
+                                                                    ...border,
                                                                     id: 'new-note-name-input',
                                                                     width: '100%',
                                                                     type: 'text',
@@ -893,8 +931,8 @@ export function folderPage() {
                                                                 },
                                                                 {
                                                                     ...button(),
-                                                                    ...buttons.l(),
-                                                                    ...buttons.filledBlue(),
+                                                                    ...buttons.l,
+                                                                    ...buttons.filledBlue,
                                                                     marginTop: '0.5rem',
                                                                     alignSelf: 'end',
                                                                     click: async function (event) {
@@ -918,8 +956,8 @@ export function folderPage() {
                                                             ]
                                                         })
                                                     }),
-                                                    ...buttons.mFullWidth(),
-                                                    ...buttons.flat(),
+                                                    ...buttons.mFullWidth,
+                                                    ...buttons.flat,
                                                     children: [{ text: 'New Note' }]
                                                 },
                                             ]
@@ -942,13 +980,21 @@ export function folderPage() {
                 }
             ]
         })),
-        meta: { title: `${appState.tree[appState.folderId]['name']} | ${appName}`, description: 'Folder page.' }
     };
 }
 
-
 export function notePage() {
     return {
+        init: function () {
+
+        },
+        destroy: function () {
+
+        },
+        meta: () => ({
+            title: `${appState.tree[appState.noteId]['name']} | ${appName}`,
+            description: 'Note page.'
+        }),
         widget: base((value) => ({
             id: 'note',
             paddingTop: '4.5rem',
@@ -957,7 +1003,7 @@ export function notePage() {
                 fixedHeader({
                     children: [
                         {
-                            ...row(),
+                            ...row,
                             alignItems: 'center',
                             gap: '1rem',
                             children: [
@@ -965,8 +1011,8 @@ export function notePage() {
                                     ...button(function (event) {
                                         goTo(`/folder/${appState.tree[appState.noteId].parent}`);
                                     }),
-                                    ...buttons.m(),
-                                    ...buttons.flat(),
+                                    ...buttons.m,
+                                    ...buttons.flat,
                                     children: [
                                         {
                                             html: icons.up,
@@ -984,19 +1030,19 @@ export function notePage() {
                     ]
                 }),
                 {
-                    ...text.aux(),
+                    ...text.aux,
                     id: 'add-note-hint',
                     errorText: 'Required'
                 },
                 {
-                    ...textArea(),
-                    ...border(),
+                    ...textArea,
+                    ...border,
                     id: 'add-note-input',
                     width: '100%',
                     rows: 8
                 },
                 {
-                    ...row(),
+                    ...row,
                     width: '100%',
                     justifyContent: 'end',
                     gap: '1rem',
@@ -1064,7 +1110,7 @@ export function notePage() {
                                                                         };
                                                                     };
                                                                 }),
-                                                                ...buttons.l(),
+                                                                ...buttons.l,
                                                                 ...yellowButton,
                                                                 children: [
                                                                     { text: 'OK' }
@@ -1098,8 +1144,8 @@ export function notePage() {
                                 event.stopPropagation();
                                 widgets['image-input'].domElement.click();
                             }),
-                            ...buttons.l(),
-                            ...buttons.filled(),
+                            ...buttons.l,
+                            ...buttons.filled,
                             justifyContent: 'center',
                             alignItems: 'center',
                             gap: '0.5rem',
@@ -1126,8 +1172,8 @@ export function notePage() {
                                     widgets['add-note-hint'].update(false);
                                 }
                             }),
-                            ...buttons.l(),
-                            ...buttons.filledBlue(),
+                            ...buttons.l,
+                            ...buttons.filledBlue,
                             children: [
                                 { text: 'Add' }
                             ]
@@ -1140,7 +1186,7 @@ export function notePage() {
                             if (value === 'view') {
                                 return {
                                     ...card,
-                                    ...border(),
+                                    ...border,
                                     ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}`]),
                                     width: '100%',
                                     gap: '1rem',
@@ -1159,7 +1205,7 @@ export function notePage() {
                                             src: paragraph.image
                                         } : null,
                                         {
-                                            ...row(),
+                                            ...row,
                                             width: '100%',
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
@@ -1172,7 +1218,7 @@ export function notePage() {
                                                     text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                 },
                                                 {
-                                                    ...row(),
+                                                    ...row,
                                                     gap: '0.5rem',
                                                     children: [
                                                         paragraph.text ? {
@@ -1180,7 +1226,7 @@ export function notePage() {
                                                                 event.stopPropagation();
                                                                 navigator.clipboard.writeText(paragraph.text);
                                                             }),
-                                                            ...buttons.m(),
+                                                            ...buttons.m,
                                                             ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                             children: [
                                                                 {
@@ -1194,7 +1240,7 @@ export function notePage() {
                                                             ...button(function (event) {
                                                                 event.stopPropagation();
                                                                 modalOn({
-                                                                    ...menu(),
+                                                                    ...menu,
                                                                     alignItems: 'start',
                                                                     gap: '0.5rem',
                                                                     children: [
@@ -1210,8 +1256,8 @@ export function notePage() {
                                                                                 });
                                                                                 modalOff();
                                                                             }),
-                                                                            ...buttons.mFullWidth(),
-                                                                            ...buttons.flat(),
+                                                                            ...buttons.mFullWidth,
+                                                                            ...buttons.flat,
                                                                             justifyContent: 'start',
                                                                             alignItems: 'center',
                                                                             gap: '1rem',
@@ -1225,7 +1271,7 @@ export function notePage() {
                                                                                     borderWidth: '2px',
                                                                                     borderStyle: 'solid',
                                                                                     borderColor: color === 'default' ? 'var(--fg-1)' : `var(--panel-${color}-fg-1)`,
-                                                                                    fill: color === 'default' ? 'var(--bg-1)' : `var(--panel-${color}-bg-1)`,
+                                                                                    fill: color === 'default' ? 'var(--background-color)' : `var(--panel-${color}-bg-1)`,
                                                                                 },
                                                                                 { text: color.charAt(0).toUpperCase() + color.slice(1) }
                                                                             ]
@@ -1233,7 +1279,7 @@ export function notePage() {
                                                                     ]
                                                                 });
                                                             }),
-                                                            ...buttons.m(),
+                                                            ...buttons.m,
                                                             ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                             children: [
                                                                 {
@@ -1249,7 +1295,7 @@ export function notePage() {
                                                                 this.parent.parent.parent.update('edit');
                                                                 widgets[`edit-note-input-${paragraph.id}`].domElement.focus();
                                                             }),
-                                                            ...buttons.m(),
+                                                            ...buttons.m,
                                                             ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                             children: [
                                                                 {
@@ -1269,14 +1315,14 @@ export function notePage() {
                                                                             deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
                                                                             modalOff();
                                                                         }),
-                                                                        ...buttons.l(),
-                                                                        ...buttons.filledRed(),
+                                                                        ...buttons.l,
+                                                                        ...buttons.filledRed,
                                                                         children: [
                                                                             { text: 'Delete' }]
                                                                     }]),
                                                                 })
                                                             }),
-                                                            ...buttons.m(),
+                                                            ...buttons.m,
                                                             ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                                             children: [
                                                                 {
@@ -1298,13 +1344,13 @@ export function notePage() {
                                     gap: '1rem',
                                     children: [
                                         {
-                                            ...text.aux(),
+                                            ...text.aux,
                                             id: `edit-note-hint-${paragraph.id}`,
                                             errorText: 'Required'
                                         },
                                         {
-                                            ...textArea(),
-                                            ...border(),
+                                            ...textArea,
+                                            ...border,
                                             id: `edit-note-input-${paragraph.id}`,
                                             width: '100%',
                                             padding: '0.75rem',
@@ -1313,7 +1359,7 @@ export function notePage() {
                                             value: paragraph.text
                                         },
                                         {
-                                            ...row(),
+                                            ...row,
                                             width: '100%',
                                             justifyContent: 'end',
                                             gap: '1rem',
@@ -1323,8 +1369,8 @@ export function notePage() {
                                                         event.stopPropagation();
                                                         this.parent.parent.update('view');
                                                     }),
-                                                    ...buttons.l(),
-                                                    ...buttons.filled(),
+                                                    ...buttons.l,
+                                                    ...buttons.filled,
                                                     justifyContent: 'center',
                                                     children: [
                                                         { text: 'Cancel' }
@@ -1341,8 +1387,8 @@ export function notePage() {
                                                             widgets[`edit-note-hint-${paragraph.id}`].update(false);
                                                         }
                                                     }),
-                                                    ...buttons.l(),
-                                                    ...buttons.filledBlue(),
+                                                    ...buttons.l,
+                                                    ...buttons.filledBlue,
                                                     justifyContent: 'center',
                                                     children: [
                                                         { text: 'Save' }
@@ -1360,8 +1406,8 @@ export function notePage() {
                     ...button(function (event) {
                         listenParagraphs(appState.paragraphs.length + 32);
                     }),
-                    ...buttons.lFullWidth(),
-                    ...buttons.filled(),
+                    ...buttons.lFullWidth,
+                    ...buttons.filled,
                     justifyContent: 'center',
                     children: [
                         { text: 'More' }
@@ -1369,6 +1415,5 @@ export function notePage() {
                 } : null
             ]
         }), false),
-        meta: { title: `${appState.tree[appState.noteId]['name']} | ${appName}`, description: 'Note page.' }
     };
 }
