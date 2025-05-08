@@ -3,6 +3,17 @@ import { colors, lightTheme, darkTheme, card, border, text, buttons, base, menu,
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
+const icons = {
+    menu: '<svg viewBox="0 -960 960 960"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>',
+    circle: '<svg viewBox="0 -960 960 960"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
+    up: '<svg viewBox="0 -960 960 960"><path d="M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z"/></svg>',
+    add: '<svg viewBox="0 -960 960 960"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>',
+    copy: '<svg viewBox="0 -960 960 960"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>',
+    upload: '<svg viewBox="0 -960 960 960"><path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg>',
+    edit: '<svg viewBox="0 -960 960 960"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>',
+    delete: '<svg viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>',
+    color: '<svg viewBox="0 -960 960 960"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-220 40q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120-160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm200 0q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120 160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></svg>',
+}
 
 async function generateKey(keyphrase, salt) {
     const keyMaterial = await window.crypto.subtle.importKey(
@@ -56,7 +67,7 @@ function generateTreeId() {
         for (let i = 0; i < 8; i++) {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
-        if (!appState.tree.hasOwnProperty(result) && appState.orphanNoteIds.indexOf(result) === -1) {
+        if (!appState.session.tree.hasOwnProperty(result) && appState.session.orphanNoteIds.indexOf(result) === -1) {
             return result;
         }
     }
@@ -71,29 +82,28 @@ export function listenNotebook() {
             } else {
                 try {
                     const docData = docSnap.data();
-                    if (docData.status === 'deleted' && !appState.initialized) {
+                    if (docData.status === 'deleted' && !appState.session.initialized) {
                         updatePage(setupTutorialPage());
                     } else if (docData.status === 'active' && !window.localStorage.getItem('keyphrase')) {
-                        updatePage(keyphrasePage(false));
+                        updatePage(keyphrasePage());
                     }
                     else if (docData.status === 'active' && window.localStorage.getItem('keyphrase')) {
                         appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
-                        appState.tree = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
-                        appState.orphanNoteIds = docData.orphanNoteIds;
-                        if (!appState.initialized) {
-                            appState.initialized = true;
+                        appState.session.tree = JSON.parse(appState.textDecoder.decode(await decrypt(appState.key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
+                        appState.session.orphanNoteIds = docData.orphanNoteIds;
+                        if (!appState.session.initialized) {
+                            appState.session.initialized = true;
                             startPathController(function pathController(segments, params) {
                                 if (segments.length === 2 && segments[0] === 'folder') {
-                                    appState.folderId = segments[1];
+                                    appState.session.folderId = segments[1];
                                     updatePage(folderPage());
                                 }
                                 else if (segments.length === 2 && segments[0] === 'note') {
-                                    appState.noteId = segments[1];
-                                    appState.paragraphs = [];
+                                    appState.session.noteId = segments[1];
                                     updatePage(notePage());
-                                    listenParagraphs(32);
+                                    listenParagraphs();
                                 } else {
-                                    appState.folderId = 'root';
+                                    appState.session.folderId = 'root';
                                     updatePage(folderPage());
                                 }
                             });
@@ -104,7 +114,8 @@ export function listenNotebook() {
                 } catch (error) {
                     if (error instanceof DOMException && error.name === "OperationError") {
                         window.localStorage.removeItem('keyphrase');
-                        updatePage(keyphrasePage(true));
+                        appState.session.invalidKeyphraseAttempt = true;
+                        updatePage(keyphrasePage());
                     } else {
                         console.error(error);
                         updatePage(generalErrorPage());
@@ -118,17 +129,17 @@ export function listenNotebook() {
         });
 }
 
-export function listenParagraphs(count) {
+export function listenParagraphs() {
     appState.stopListenParagraphs?.();
-    appState.paragraphs = [];
-    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', appState.noteId), orderBy('timestamp', 'desc'), limit(count)),
+    appState.page.paragraphs = [];
+    appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', appState.session.noteId), orderBy('timestamp', 'desc'), limit(appState.page.paragraphsLimit)),
         async (querySnapshot) => {
-            appState.paragraphs = [];
             for (const docSnap of querySnapshot.docs) {
                 const docData = docSnap.data();
-                appState.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? appState.textDecoder.decode(await decrypt(appState.key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? appState.textDecoder.decode(await decrypt(appState.key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(appState.key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
+                appState.page.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? appState.textDecoder.decode(await decrypt(appState.key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? appState.textDecoder.decode(await decrypt(appState.key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(appState.key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
             }
-            widgets['note']?.update(appState.paragraphs.length === count);
+            appState.page.paragraphsAllFetched = appState.page.paragraphs.length < appState.page.paragraphsLimit;
+            widgets['note']?.update();
         },
         (error) => {
             console.error(error);
@@ -140,17 +151,15 @@ export function listenParagraphs(count) {
 export function loginPage() {
     return {
         init: function () {
-
         },
         destroy: function () {
-
         },
         meta: () => ({
             title: `Login | ${appName}`,
             description: 'Login page.'
         }),
-        widget: {
-            ...row,
+        config: () => ({
+            ...row(),
             width: '100%',
             height: '100%',
             justifyContent: 'center',
@@ -160,8 +169,8 @@ export function loginPage() {
                     ...button(function (event) {
                         signInWithPopup(appState.firebase.auth, new GoogleAuthProvider());
                     }),
-                    ...buttons.l,
-                    ...buttons.flat,
+                    ...buttons.l(),
+                    ...buttons.flat(),
                     fontWeight: 400,
                     children: [
                         {
@@ -176,48 +185,53 @@ export function loginPage() {
                     ]
                 }
             ]
-        },
+        }),
     };
 }
 
 export function setupTutorialPage() {
     return {
         init: function () {
-
         },
         destroy: function () {
-
         },
         meta: () => ({
             title: `Setup | ${appName}`,
             description: 'Setup page.'
         }),
-        widget: base({
+        config: () => ({
+            ...base(),
             justifyContent: 'center',
             children: [
                 {
-                    ...column,
-                    ...card,
-                    ...border,
+                    ...column(),
+                    ...card(),
+                    ...border(),
                     width: '100%',
                     justifyContent: 'center',
                     gap: '2rem',
                     children: [
                         {
-                            ...textPageTitle,
+                            ...text.h1(),
                             text: 'Keyphrase'
                         },
                         {
-                            ...column,
+                            ...column(),
                             gap: '0.5rem',
                             children: [
-                                { text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.' },
-                                { text: 'Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.' },
-                                { text: 'Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.' },
+                                {
+                                    text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.'
+                                },
+                                {
+                                    text: 'Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.'
+                                },
+                                {
+                                    text: 'Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.'
+                                },
                             ]
                         },
                         {
-                            ...row,
+                            ...row(),
                             width: '100%',
                             justifyContent: 'end',
                             gap: '1rem',
@@ -226,16 +240,16 @@ export function setupTutorialPage() {
                                     ...button(function (event) {
                                         signOut(appState.firebase.auth);
                                     }),
-                                    ...buttons.l,
-                                    ...buttons.filled,
+                                    ...buttons.l(),
+                                    ...buttons.filled(),
                                     text: 'Log out'
                                 },
                                 {
                                     ...button(function (event) {
                                         updatePage(setupPage());
                                     }),
-                                    ...buttons.l,
-                                    ...buttons.filledBlue,
+                                    ...buttons.l(),
+                                    ...buttons.filledBlue(),
                                     text: 'Next'
                                 }
                             ]
@@ -250,32 +264,35 @@ export function setupTutorialPage() {
 export function setupPage() {
     return {
         init: function () {
-
+            appState.page = {
+                keyphraseValid: true,
+                keyphraseRepeatValid: true,
+            }
         },
         destroy: function () {
-
         },
         meta: () => ({
             title: `Setup | ${appName}`,
             description: 'Setup page.'
         }),
-        widget: base({
+        config: () => ({
+            ...base(),
             justifyContent: 'center',
             children: [
                 {
-                    ...column,
-                    ...card,
-                    ...border,
+                    ...column(),
+                    ...card(),
+                    ...border(),
                     width: '100%',
                     justifyContent: 'center',
                     gap: '2rem',
                     children: [
                         {
-                            ...textPageTitle,
+                            ...text.h1(),
                             text: 'Keyphrase'
                         },
                         {
-                            ...column,
+                            ...column(),
                             width: '100%',
                             children: [
                                 {
@@ -283,14 +300,16 @@ export function setupPage() {
                                     text: 'Your keyphrase'
                                 },
                                 () => ({
-                                    ...text.aux,
+                                    ...text.aux(),
                                     id: 'keyphrase-hint',
+                                    display: appState.page.keyphraseValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
+                                    color: colors.red[500],
                                     errorText: 'Required'
                                 }),
                                 {
-                                    ...input,
-                                    ...border,
+                                    ...input(),
+                                    ...border(),
                                     id: 'keyphrase-input',
                                     marginTop: '0.5rem',
                                     width: '100%',
@@ -303,14 +322,16 @@ export function setupPage() {
                                     text: 'Repeat keyphrase'
                                 },
                                 () => ({
-                                    ...text.aux,
+                                    ...text.aux(),
                                     id: 'keyphrase-repeat-hint',
+                                    display: appState.page.keyphraseRepeatValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
+                                    color: colors.red[500],
                                     errorText: 'Invalid'
                                 }),
                                 {
-                                    ...input,
-                                    ...border,
+                                    ...input(),
+                                    ...border(),
                                     id: 'keyphrase-repeat-input',
                                     marginTop: '0.5rem',
                                     width: '100%',
@@ -320,7 +341,7 @@ export function setupPage() {
                             ]
                         },
                         {
-                            ...row,
+                            ...row(),
                             width: '100%',
                             justifyContent: 'end',
                             gap: '1rem',
@@ -329,29 +350,34 @@ export function setupPage() {
                                     ...button(function (event) {
                                         updatePage(setupTutorialPage());
                                     }),
-                                    ...buttons.l,
-                                    ...buttons.filled,
+                                    ...buttons.l(),
+                                    ...buttons.filled(),
                                     text: 'Back'
                                 },
                                 {
                                     ...button(async function (event) {
+                                        appState.page.keyphraseValid = true;
+                                        appState.page.keyphraseRepeatValid = true;
                                         widgets['keyphrase-hint'].update(true);
                                         widgets['keyphrase-repeat-hint'].update(true);
                                         if (!widgets['keyphrase-input'].domElement.value) {
-                                            widgets['keyphrase-hint'].update(false);
+                                            appState.page.keyphraseValid = true;
+                                        }
+                                        else if (!widgets['keyphrase-repeat-input'].domElement.value || widgets['keyphrase-input'].domElement.value != widgets['keyphrase-repeat-input'].domElement.value) {
+                                            appState.page.keyphraseRepeatValid = true;
+                                        }
+                                        widgets['keyphrase-hint'].update();
+                                        widgets['keyphrase-repeat-hint'].update();
+                                        if (!appState.page.keyphraseValid || !appState.page.keyphraseRepeatValid) {
                                             window.scrollTo(0, 0);
                                             return;
                                         }
-                                        if (!widgets['keyphrase-repeat-input'].domElement.value || widgets['keyphrase-input'].domElement.value != widgets['keyphrase-repeat-input'].domElement.value) {
-                                            widgets['keyphrase-repeat-hint'].update(false);
-                                            window.scrollTo(0, 0);
-                                            return;
-                                        }
+                                        const keyphrase = widgets['keyphrase-input'].domElement.value;
                                         updatePage(loadingPage());
                                         try {
-                                            window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                            window.localStorage.setItem('keyphrase', keyphrase);
                                             const salt = window.crypto.getRandomValues(new Uint8Array(16));
-                                            const key = await generateKey(widgets['keyphrase-input'].domElement.value, salt);
+                                            const key = await generateKey(keyphrase, salt);
                                             const tree = await encrypt(key, appState.textEncoder.encode(JSON.stringify({ root: { name: 'Home', type: 'folder', parent: null, children: [] } })));
                                             const notebookDocRef = doc(appState.firebase.firestore, 'notebooks', appState.user.uid);
                                             const txResult = await runTransaction(appState.firebase.firestore, async (transaction) => {
@@ -380,8 +406,8 @@ export function setupPage() {
                                             updatePage(generalErrorPage());
                                         }
                                     }),
-                                    ...buttons.l,
-                                    ...buttons.filledBlue,
+                                    ...buttons.l(),
+                                    ...buttons.filledBlue(),
                                     children: [
                                         { text: 'Save' }
                                     ]
@@ -397,32 +423,35 @@ export function setupPage() {
 export function keyphrasePage() {
     return {
         init: function () {
-
+            appState.page = {
+                keyphraseValid: true,
+            };
         },
         destroy: function () {
-
+            appState.session.invalidKeyphraseAttempt = false;
         },
         meta: () => ({
             title: `Keyphrase | ${appName}`,
             description: 'Keyphrase page.'
         }),
-        widget: base({
+        config: () => ({
+            ...base(),
             justifyContent: 'center',
             children: [
                 {
-                    ...column,
-                    ...card,
-                    ...border,
+                    ...column(),
+                    ...card(),
+                    ...border(),
                     width: '100%',
                     justifyContent: 'center',
                     gap: '2rem',
                     children: [
                         {
-                            ...textPageTitle,
+                            ...text.h1(),
                             text: 'Keyphrase'
                         },
                         {
-                            ...column,
+                            ...column(),
                             width: '100%',
                             justifyContent: 'center',
                             children: [
@@ -431,14 +460,16 @@ export function keyphrasePage() {
                                     text: 'Your keyphrase'
                                 },
                                 () => ({
-                                    ...text.aux,
+                                    ...text.aux(),
                                     id: 'keyphrase-hint',
+                                    display: appState.page.keyphraseValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
+                                    color: colors.red[500],
                                     errorText: 'Invalid'
                                 }),
                                 {
-                                    ...input,
-                                    ...border,
+                                    ...input(),
+                                    ...border(),
                                     id: 'keyphrase-input',
                                     width: '100%',
                                     marginTop: '0.5rem',
@@ -448,7 +479,7 @@ export function keyphrasePage() {
                             ]
                         },
                         {
-                            ...row,
+                            ...row(),
                             width: '100%',
                             justifyContent: 'end',
                             gap: '1rem',
@@ -457,24 +488,28 @@ export function keyphrasePage() {
                                     ...button(function (event) {
                                         signOut(appState.firebase.auth);
                                     }),
-                                    ...buttons.l,
-                                    ...buttons.filled,
+                                    ...buttons.l(),
+                                    ...buttons.filled(),
                                     justifyContent: 'center',
                                     text: 'Log out'
                                 },
                                 {
                                     ...button(async function (event) {
+                                        appState.page.keyphraseValid = true;
                                         if (!widgets['keyphrase-input'].domElement.value) {
-                                            widgets['keyphrase-hint'].update(false);
+                                            appState.page.keyphraseValid = false;
+                                        }
+                                        widgets['keyphrase-hint'].update();
+                                        if (!appState.page.keyphraseValid) {
                                             window.scrollTo(0, 0);
                                             return;
                                         }
-                                        updatePage(loadingPage());
                                         window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                        updatePage(loadingPage());
                                         listenNotebook();
                                     }),
-                                    ...buttons.l,
-                                    ...buttons.filledBlue,
+                                    ...buttons.l(),
+                                    ...buttons.filledBlue(),
                                     justifyContent: 'center',
                                     children: [
                                         { text: 'Save' }
@@ -492,34 +527,38 @@ export function keyphrasePage() {
 export function folderPage() {
     return {
         init: function () {
-
+            appState.page = {
+                nameValid: true,
+                moveToFolderId,
+            };
         },
         destroy: function () {
-
         },
         meta: () => ({
-            title: `${appState.tree[appState.folderId]['name']} | ${appName}`,
+            title: `${appState.session.tree[appState.session.folderId]['name']} | ${appName}`,
             description: 'Folder page.'
         }),
-        widget: base(() => ({
+        config: () => ({
+            ...base(),
             id: 'folder',
             justifyContent: 'center',
             gap: '1rem',
-            paddingTop: appState.folderId === 'root' ? undefined : '4rem',
+            paddingTop: appState.session.folderId === 'root' ? undefined : '4rem',
             children: [
-                appState.folderId === 'root' ? null : fixedHeader({
+                appState.session.folderId === 'root' ? null : {
+                    ...fixedHeader(),
                     children: [
                         {
-                            ...row,
+                            ...row(),
                             alignItems: 'center',
                             gap: '1rem',
                             children: [
                                 {
                                     ...button(function (event) {
-                                        goTo(`/folder/${appState.tree[appState.folderId].parent}`);
+                                        goTo(`/folder/${appState.session.tree[appState.session.folderId].parent}`);
                                     }),
-                                    ...buttons.m,
-                                    ...buttons.flat,
+                                    ...buttons.m(),
+                                    ...buttons.flat(),
                                     children: [
                                         {
                                             html: icons.up,
@@ -529,59 +568,60 @@ export function folderPage() {
                                     ]
                                 },
                                 {
-                                    ...textHeaderTitle,
-                                    text: appState.tree[appState.folderId].name
+                                    ...text.h1(),
+                                    text: appState.session.tree[appState.session.folderId].name
                                 }
                             ]
                         }
                     ]
-                }),
-                ...appState.tree[appState.folderId].children.map(cid => ({
+                },
+                ...appState.session.tree[appState.session.folderId].children.map(cid => ({
                     ...button(function (event) {
-                        if (appState.tree[cid]['type'] === 'folder') {
+                        if (appState.session.tree[cid]['type'] === 'folder') {
                             goTo(`/folder/${cid}`);
-                        } else if (appState.tree[cid]['type'] === 'note') {
+                        } else if (appState.session.tree[cid]['type'] === 'note') {
                             goTo(`/note/${cid}`);
                         }
                     }, function (event) {
                         modalOn({
-                            ...menu,
+                            ...menu(),
                             children: [
-                                appState.tree[appState.folderId].children.indexOf(cid) > 0 ? {
+                                appState.session.tree[appState.session.folderId].children.indexOf(cid) > 0 ? {
                                     ...button(async function (event) {
                                         event.stopPropagation();
-                                        const arr = appState.tree[appState.folderId].children;
+                                        const arr = appState.session.tree[appState.session.folderId].children;
                                         const index = arr.indexOf(cid);
                                         [arr[index], arr[index - 1]] = [arr[index - 1], arr[index]];
                                         updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                         });
                                         modalOff();
                                     }),
-                                    ...buttons.mFullWidth,
-                                    ...buttons.flat,
+                                    ...buttons.mFullWidth(),
+                                    ...buttons.flat(),
                                     children: [{ text: 'Move Up' }]
                                 } : null,
-                                appState.tree[appState.folderId].children.indexOf(cid) < appState.tree[appState.folderId].children.length - 1 ? {
+                                appState.session.tree[appState.session.folderId].children.indexOf(cid) < appState.session.tree[appState.session.folderId].children.length - 1 ? {
                                     ...button(async function (event) {
                                         event.stopPropagation();
-                                        const arr = appState.tree[appState.folderId].children;
+                                        const arr = appState.session.tree[appState.session.folderId].children;
                                         const index = arr.indexOf(cid);
                                         [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
                                         updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                         });
                                         modalOff();
                                     }),
-                                    ...buttons.mFullWidth,
-                                    ...buttons.flat,
+                                    ...buttons.mFullWidth(),
+                                    ...buttons.flat(),
                                     children: [{ text: 'Move Down' }]
                                 } : null,
                                 {
                                     ...button(function (event) {
                                         event.stopPropagation();
+                                        appState.page.moveToFolderId = 'root';
                                         modalOn(() => ({
-                                            ...menu,
+                                            ...menu(),
                                             alignItems: 'start',
                                             gap: '0.5rem',
                                             children: [
@@ -590,65 +630,67 @@ export function folderPage() {
                                                     fontWeight: 600,
                                                     text: 'Move to Folder'
                                                 },
-                                                value === 'root' ? null : {
+                                                appState.page.moveToFolderId === 'root' ? null : {
                                                     ...button(function (event) {
                                                         event.stopPropagation();
-                                                        this.parent.update(appState.tree[value].parent);
+                                                        appState.page.moveToFolderId = appState.session.tree[appState.page.moveToFolderId].parent;
+                                                        this.parent.update();
                                                     }),
-                                                    ...buttons.mFullWidth,
-                                                    ...buttons.flat,
+                                                    ...buttons.mFullWidth(),
+                                                    ...buttons.flat(),
                                                     justifyContent: 'start',
                                                     fontWeight: 400,
                                                     children: [
                                                         { text: '...' }
                                                     ]
                                                 },
-                                                ...appState.tree[value].children.filter(id => appState.tree[id].type === 'folder').map(id => ({
+                                                ...appState.session.tree[appState.page.moveToFolderId].children.filter(id => appState.session.tree[id].type === 'folder').map(id => ({
                                                     ...button(function (event) {
                                                         event.stopPropagation();
-                                                        this.parent.update(id);
+                                                        appState.page.moveToFolderId = id;
+                                                        this.parent.update();
                                                     }),
-                                                    ...buttons.mFullWidth,
-                                                    ...buttons.flat,
+                                                    ...buttons.mFullWidth(),
+                                                    ...buttons.flat(),
                                                     justifyContent: 'start',
                                                     fontWeight: 400,
                                                     children: [
-                                                        { text: appState.tree[id].name }
+                                                        { text: appState.session.tree[id].name }
                                                     ]
                                                 })),
                                                 {
                                                     ...button(async function (event) {
                                                         event.stopPropagation();
-                                                        const oldParent = appState.tree[appState.tree[cid].parent];
-                                                        const newParent = appState.tree[value];
+                                                        const oldParent = appState.session.tree[appState.session.tree[cid].parent];
+                                                        const newParent = appState.session.tree[appState.page.moveToFolderId];
                                                         oldParent.children = oldParent.children.filter(id => id !== cid);
                                                         newParent.children.push(cid);
-                                                        appState.tree[cid].parent = value;
+                                                        appState.session.tree[cid].parent = appState.page.moveToFolderId;
                                                         updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                                         });
                                                         modalOff();
                                                     }),
-                                                    ...buttons.l,
-                                                    ...buttons.filledBlue,
+                                                    ...buttons.l(),
+                                                    ...buttons.filledBlue(),
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     children: [
-                                                        { text: `Move to ${appState.tree[value].name}` }
+                                                        { text: `Move to ${appState.session.tree[appState.page.moveToFolderId].name}` }
                                                     ]
                                                 }
                                             ],
                                         }));
                                     }),
-                                    ...buttons.mFullWidth,
-                                    ...buttons.flat,
+                                    ...buttons.mFullWidth(),
+                                    ...buttons.flat(),
                                     children: [{ text: 'Move to Folder' }]
                                 },
                                 {
                                     ...button(function (event) {
                                         event.stopPropagation();
                                         modalOn({
-                                            ...menu,
+                                            ...menu(),
                                             alignItems: 'start',
                                             gap: '0.5rem',
                                             children: [
@@ -656,35 +698,41 @@ export function folderPage() {
                                                     fontWeight: 600,
                                                     text: 'New Name'
                                                 },
-                                                {
-                                                    ...text.aux,
-                                                    id: 'new-folder-name-hint',
+                                                () => ({
+                                                    ...text.aux(),
+                                                    id: 'new-name-hint',
+                                                    display: appState.page.nameValid ? 'none' : 'block',
+                                                    color: colors.red[500],
                                                     errorText: 'Required'
-                                                },
+                                                }),
                                                 {
-                                                    ...input,
-                                                    ...border,
-                                                    id: 'new-folder-name-input',
+                                                    ...input(),
+                                                    ...border(),
+                                                    id: 'new-name-input',
                                                     width: '100%',
                                                     type: 'text',
                                                     maxlength: '64',
-                                                    value: appState.tree[cid].name
+                                                    value: appState.session.tree[cid].name
                                                 },
                                                 {
                                                     ...button(async function (event) {
                                                         event.stopPropagation();
-                                                        if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                            widgets['new-folder-name-hint'].update(false);
+                                                        appState.page.nameValid = true;
+                                                        if (!widgets['new-name-input'].domElement.value?.trim()) {
+                                                            appState.page.nameValid = false;
+                                                        }
+                                                        widgets['new-name-hint'].update();
+                                                        if (!appState.page.nameValid) {
                                                             return;
                                                         }
-                                                        appState.tree[cid]['name'] = widgets['new-folder-name-input'].domElement.value.trim();
+                                                        appState.session.tree[cid]['name'] = widgets['new-name-input'].domElement.value.trim();
                                                         updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                                         });
                                                         modalOff();
                                                     }),
-                                                    ...buttons.l,
-                                                    ...buttons.filledBlue,
+                                                    ...buttons.l(),
+                                                    ...buttons.filledBlue(),
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     children: [
@@ -694,69 +742,69 @@ export function folderPage() {
                                             ]
                                         })
                                     }),
-                                    ...buttons.mFullWidth,
-                                    ...buttons.flat,
+                                    ...buttons.mFullWidth(),
+                                    ...buttons.flat(),
                                     children: [{ text: 'Rename' }]
                                 },
                                 {
                                     ...button(function (event) {
                                         event.stopPropagation();
-                                        if (appState.tree[cid].type === 'note') {
+                                        if (appState.session.tree[cid].type === 'note') {
                                             modalOn({
                                                 ...prompt('Delete note', 'You won\'t be able to restore it. Consider moving to "Archive" folder', [
                                                     {
                                                         ...button(async function (event) {
                                                             event.stopPropagation();
-                                                            delete appState.tree[cid];
-                                                            appState.tree[appState.folderId].children = appState.tree[appState.folderId].children.filter(id => id !== cid);
+                                                            delete appState.session.tree[cid];
+                                                            appState.session.tree[appState.session.folderId].children = appState.session.tree[appState.session.folderId].children.filter(id => id !== cid);
                                                             updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                                tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                                                 orphanNoteIds: arrayUnion(cid),
                                                             });
                                                             modalOff();
                                                         }),
-                                                        ...buttons.l,
-                                                        ...buttons.filledRed,
+                                                        ...buttons.l(),
+                                                        ...buttons.filledRed(),
                                                         children: [
                                                             { text: 'Delete' }]
                                                     }
                                                 ]),
                                             });
                                         }
-                                        else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length > 0) {
+                                        else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length > 0) {
                                             modalOn({
                                                 ...prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
                                                 ...redPanel,
                                             })
                                         }
-                                        else if (appState.tree[cid].type === 'folder' && appState.tree[cid].children.length === 0) {
+                                        else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length === 0) {
                                             modalOn({
                                                 ...prompt('Delete folder', 'You won\'t be able to restore it', [{
                                                     ...button(async function (event) {
                                                         event.stopPropagation();
-                                                        delete appState.tree[cid];
-                                                        appState.tree[appState.folderId].children = appState.tree[appState.folderId].children.filter(id => id !== cid);
+                                                        delete appState.session.tree[cid];
+                                                        appState.session.tree[appState.session.folderId].children = appState.session.tree[appState.session.folderId].children.filter(id => id !== cid);
                                                         updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                                         });
                                                         modalOff();
                                                     }),
-                                                    ...buttons.l,
-                                                    ...buttons.filledRed,
+                                                    ...buttons.l(),
+                                                    ...buttons.filledRed(),
                                                     children: [
                                                         { text: 'Delete' }]
                                                 }]),
                                             })
                                         }
                                     }),
-                                    ...buttons.mFullWidth,
-                                    ...buttons.flatRed,
+                                    ...buttons.mFullWidth(),
+                                    ...buttons.flatRed(),
                                     children: [{ text: 'Delete' }]
                                 },
                             ]
                         })
                     }),
-                    ...buttons.flat,
+                    ...buttons.flat(),
                     width: '100%',
                     padding: '1rem',
                     justifyContent: 'center',
@@ -765,11 +813,11 @@ export function folderPage() {
                     fontSize: '1.125rem',
                     fontWeight: 400,
                     children: [
-                        { text: appState.tree[cid]['name'] },
+                        { text: appState.session.tree[cid]['name'] },
                     ]
                 })),
                 {
-                    ...row,
+                    ...row(),
                     position: 'fixed',
                     bottom: 0,
                     left: 0,
@@ -782,7 +830,7 @@ export function folderPage() {
                             ...button(function (event) {
                                 event.stopPropagation();
                                 modalOn({
-                                    ...menu,
+                                    ...menu(),
                                     children: [
                                         {
                                             ...button(function (event) {
@@ -790,26 +838,25 @@ export function folderPage() {
                                                 modalOn({
                                                     ...prompt('Delete account', 'You won\'t be able to restore it', [
                                                         {
-                                                            ...button(),
-                                                            ...buttons.l,
-                                                            ...buttons.filledRed,
-                                                            click: async function (event) {
+                                                            ...button(async function (event) {
                                                                 event.stopPropagation();
                                                                 updatePage(loadingPage());
                                                                 await updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
                                                                     status: 'deleted',
-                                                                    orphanNoteIds: appState.orphanNoteIds.concat(Object.keys(appState.tree).filter(id => appState.tree[id].type === 'note')),
+                                                                    orphanNoteIds: appState.session.orphanNoteIds.concat(Object.keys(appState.session.tree).filter(id => appState.session.tree[id].type === 'note')),
                                                                 });
                                                                 signOut(appState.firebase.auth);
-                                                            },
+                                                            }),
+                                                            ...buttons.l(),
+                                                            ...buttons.filledRed(),
                                                             children: [
                                                                 { text: 'Delete' }]
                                                         }
                                                     ]),
                                                 });
                                             }),
-                                            ...buttons.mFullWidth,
-                                            ...buttons.flatRed,
+                                            ...buttons.mFullWidth(),
+                                            ...buttons.flatRed(),
                                             children: [{ text: 'Delete account' }]
                                         },
                                         {
@@ -817,15 +864,15 @@ export function folderPage() {
                                                 event.stopPropagation();
                                                 signOut(appState.firebase.auth);
                                             }),
-                                            ...buttons.mFullWidth,
-                                            ...buttons.flatRed,
+                                            ...buttons.mFullWidth(),
+                                            ...buttons.flatRed(),
                                             children: [{ text: 'Log out' }]
                                         }
                                     ]
                                 })
                             }),
-                            ...buttons.m,
-                            ...buttons.flat,
+                            ...buttons.m(),
+                            ...buttons.flat(),
                             margin: '1rem',
                             borderRadius: '2rem',
                             children: [
@@ -837,7 +884,7 @@ export function folderPage() {
                             ]
                         },
                         {
-                            ...column,
+                            ...column(),
                             margin: '1rem',
                             gap: '1rem',
                             children: [
@@ -846,13 +893,13 @@ export function folderPage() {
                                     ...button(function (event) {
                                         event.stopPropagation();
                                         modalOn({
-                                            ...menu,
+                                            ...menu(),
                                             children: [
                                                 {
                                                     ...button(function (event) {
                                                         event.stopPropagation();
                                                         modalOn({
-                                                            ...menu,
+                                                            ...menu(),
                                                             alignItems: 'start',
                                                             gap: '0.5rem',
                                                             children: [
@@ -860,14 +907,16 @@ export function folderPage() {
                                                                     fontWeight: 600,
                                                                     text: 'Name'
                                                                 },
-                                                                {
-                                                                    ...text.aux,
+                                                                () => ({
+                                                                    ...text.aux(),
                                                                     id: 'new-folder-name-hint',
+                                                                    display: appState.page.nameValid ? 'none' : 'block',
+                                                                    color: colors.red[500],
                                                                     errorText: 'Required'
-                                                                },
+                                                                }),
                                                                 {
-                                                                    ...input,
-                                                                    ...border,
+                                                                    ...input(),
+                                                                    ...border(),
                                                                     id: 'new-folder-name-input',
                                                                     width: '100%',
                                                                     type: 'text',
@@ -875,21 +924,25 @@ export function folderPage() {
                                                                 },
                                                                 {
                                                                     ...button(),
-                                                                    ...buttons.l,
-                                                                    ...buttons.filledBlue,
+                                                                    ...buttons.l(),
+                                                                    ...buttons.filledBlue(),
                                                                     marginTop: '0.5rem',
                                                                     alignSelf: 'end',
                                                                     click: async function (event) {
                                                                         event.stopPropagation();
+                                                                        appState.page.nameValid = true;
                                                                         if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                            widgets['new-folder-name-hint'].update(false);
+                                                                            appState.page.nameValid = true;
+                                                                        }
+                                                                        widgets['new-folder-name-hint'].update();
+                                                                        if (!appState.page.nameValid) {
                                                                             return;
                                                                         }
                                                                         const newFolderId = generateTreeId();
-                                                                        appState.tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: appState.folderId, children: [] }
-                                                                        appState.tree[appState.folderId].children.push(newFolderId);
+                                                                        appState.session.tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: appState.session.folderId, children: [] }
+                                                                        appState.session.tree[appState.session.folderId].children.push(newFolderId);
                                                                         updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                                                         });
                                                                         modalOff();
                                                                     },
@@ -900,15 +953,15 @@ export function folderPage() {
                                                             ]
                                                         })
                                                     }),
-                                                    ...buttons.mFullWidth,
-                                                    ...buttons.flat,
+                                                    ...buttons.mFullWidth(),
+                                                    ...buttons.flat(),
                                                     children: [{ text: 'New Folder' }]
                                                 },
                                                 {
                                                     ...button(function (event) {
                                                         event.stopPropagation();
                                                         modalOn({
-                                                            ...menu,
+                                                            ...menu(),
                                                             alignItems: 'start',
                                                             gap: '0.5rem',
                                                             children: [
@@ -916,14 +969,16 @@ export function folderPage() {
                                                                     fontWeight: 600,
                                                                     text: 'Name'
                                                                 },
-                                                                {
-                                                                    ...text.aux,
+                                                                () => ({
+                                                                    ...text.aux(),
                                                                     id: 'new-note-name-hint',
+                                                                    display: appState.page.nameValid ? 'none' : 'block',
+                                                                    color: colors.red[500],
                                                                     errorText: 'Required'
-                                                                },
+                                                                }),
                                                                 {
-                                                                    ...input,
-                                                                    ...border,
+                                                                    ...input(),
+                                                                    ...border(),
                                                                     id: 'new-note-name-input',
                                                                     width: '100%',
                                                                     type: 'text',
@@ -931,21 +986,25 @@ export function folderPage() {
                                                                 },
                                                                 {
                                                                     ...button(),
-                                                                    ...buttons.l,
-                                                                    ...buttons.filledBlue,
+                                                                    ...buttons.l(),
+                                                                    ...buttons.filledBlue(),
                                                                     marginTop: '0.5rem',
                                                                     alignSelf: 'end',
                                                                     click: async function (event) {
                                                                         event.stopPropagation();
+                                                                        appState.page.nameValid = true;
                                                                         if (!widgets['new-note-name-input'].domElement.value?.trim()) {
-                                                                            widgets['new-note-name-hint'].update(false);
+                                                                            appState.page.nameValid = false;
+                                                                        }
+                                                                        widgets['new-note-name-hint'].update();
+                                                                        if (!appState.page.nameValid) {
                                                                             return;
                                                                         }
                                                                         const newNoteId = generateTreeId();
-                                                                        appState.tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: appState.folderId }
-                                                                        appState.tree[appState.folderId].children.push(newNoteId);
+                                                                        appState.session.tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: appState.session.folderId }
+                                                                        appState.session.tree[appState.session.folderId].children.push(newNoteId);
                                                                         updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.tree))),
+                                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                                                         });
                                                                         modalOff();
                                                                     },
@@ -956,14 +1015,14 @@ export function folderPage() {
                                                             ]
                                                         })
                                                     }),
-                                                    ...buttons.mFullWidth,
-                                                    ...buttons.flat,
+                                                    ...buttons.mFullWidth(),
+                                                    ...buttons.flat(),
                                                     children: [{ text: 'New Note' }]
                                                 },
                                             ]
                                         })
                                     }),
-                                    ...panelBlueButtonFilled2,
+                                    ...buttons.filledBlue(),
                                     padding: 0,
                                     borderRadius: '2rem',
                                     children: [
@@ -979,40 +1038,47 @@ export function folderPage() {
                     ]
                 }
             ]
-        })),
+        }),
     };
 }
 
 export function notePage() {
     return {
         init: function () {
-
+            appState.page = {
+                paragraphsLimit: 32,
+                paragraphsAllFetched: true,
+                paragraphs: [],
+                paragraphValid: true,
+                editParagraphId,
+            }
         },
         destroy: function () {
-
         },
         meta: () => ({
-            title: `${appState.tree[appState.noteId]['name']} | ${appName}`,
+            title: `${appState.session.tree[appState.session.noteId]['name']} | ${appName}`,
             description: 'Note page.'
         }),
-        widget: base((value) => ({
+        config: () => ({
+            ...base(),
             id: 'note',
             paddingTop: '4.5rem',
             gap: '1rem',
             children: [
-                fixedHeader({
+                {
+                    ...fixedHeader(),
                     children: [
                         {
-                            ...row,
+                            ...row(),
                             alignItems: 'center',
                             gap: '1rem',
                             children: [
                                 {
                                     ...button(function (event) {
-                                        goTo(`/folder/${appState.tree[appState.noteId].parent}`);
+                                        goTo(`/folder/${appState.session.tree[appState.session.noteId].parent}`);
                                     }),
-                                    ...buttons.m,
-                                    ...buttons.flat,
+                                    ...buttons.m(),
+                                    ...buttons.flat(),
                                     children: [
                                         {
                                             html: icons.up,
@@ -1022,130 +1088,128 @@ export function notePage() {
                                     ]
                                 },
                                 {
-                                    ...textHeaderTitle,
-                                    text: appState.tree[appState.noteId].name
+                                    ...text.h1(),
+                                    text: appState.session.tree[appState.session.noteId].name
                                 }
                             ]
                         }
                     ]
+                },
+                () => ({
+                    ...text.aux(),
+                    id: 'add-paragraph-hint',
+                    display: appState.page.paragraphValid ? 'none' : 'block',
+                    color: colors.red[500],
+                    errorText: 'Required'
                 }),
                 {
-                    ...text.aux,
-                    id: 'add-note-hint',
-                    errorText: 'Required'
-                },
-                {
-                    ...textArea,
-                    ...border,
-                    id: 'add-note-input',
+                    ...textArea(),
+                    ...border(),
+                    id: 'add-paragraph-input',
                     width: '100%',
                     rows: 8
                 },
                 {
-                    ...row,
+                    ...row(),
                     width: '100%',
                     justifyContent: 'end',
                     gap: '1rem',
                     children: [
-                        widget(
-                            {
-                                id: 'image-input',
-                                tag: 'input',
-                                display: 'none',
-                                attributes: {
-                                    type: 'file',
-                                    accept: 'image/*'
-                                },
-                                handlers: {
-                                    change: function (event) {
-                                        const file = event.target.files[0];
-                                        if (file) {
-                                            if (file.size > (1024 * 1024 - 8 * 1024)) {
-                                                modalOn(
+                        {
+                            id: 'image-input',
+                            tag: 'input',
+                            display: 'none',
+                            attributes: {
+                                type: 'file',
+                                accept: 'image/*'
+                            },
+                            onchange: function (event) {
+                                const file = event.target.files[0];
+                                if (file) {
+                                    if (file.size > (1024 * 1024 - 8 * 1024)) {
+                                        modalOn(
+                                            {
+                                                ...prompt('Image Upload', 'Image would be compressed to 1MB jpeg', [
                                                     {
-                                                        ...prompt('Image Upload', 'Image would be compressed to 1MB jpeg', [
-                                                            {
-                                                                ...button(function (event) {
-                                                                    modalOff();
-                                                                    const reader = new FileReader();
-                                                                    reader.readAsDataURL(file);
-                                                                    reader.onload = (event) => {
-                                                                        const img = new Image();
-                                                                        img.src = event.target.result;
-                                                                        img.onload = () => {
-                                                                            const canvas = document.createElement("canvas");
-                                                                            const ctx = canvas.getContext("2d");
-                                                                            let width = img.width;
-                                                                            let height = img.height;
-                                                                            let quality = 1.0;
-                                                                            canvas.width = width;
-                                                                            canvas.height = height;
-                                                                            ctx.drawImage(img, 0, 0, width, height);
-                                                                            const compress = () => {
-                                                                                canvas.toBlob(
-                                                                                    (blob) => {
-                                                                                        if (blob.size > (1024 * 1024 - 8 * 1024)) {
-                                                                                            quality -= 0.05;
-                                                                                            compress();
-                                                                                        } else {
-                                                                                            let compressOutputReader = new FileReader();
-                                                                                            compressOutputReader.onload = async function (e) {
-                                                                                                addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
-                                                                                                    timestamp: Math.floor(Date.now() / 1000),
-                                                                                                    noteId: appState.noteId,
-                                                                                                    image: {
-                                                                                                        type: 'image/jpeg',
-                                                                                                        content: await encrypt(appState.key, e.target.result)
-                                                                                                    },
-                                                                                                })
-                                                                                            };
-                                                                                            compressOutputReader.readAsArrayBuffer(blob);
-                                                                                        }
-                                                                                    },
-                                                                                    'image/jpeg',
-                                                                                    quality
-                                                                                );
-                                                                            };
-                                                                            compress();
-                                                                        };
+                                                        ...button(function (event) {
+                                                            modalOff();
+                                                            const reader = new FileReader();
+                                                            reader.readAsDataURL(file);
+                                                            reader.onload = (event) => {
+                                                                const img = new Image();
+                                                                img.src = event.target.result;
+                                                                img.onload = () => {
+                                                                    const canvas = document.createElement("canvas");
+                                                                    const ctx = canvas.getContext("2d");
+                                                                    let width = img.width;
+                                                                    let height = img.height;
+                                                                    let quality = 1.0;
+                                                                    canvas.width = width;
+                                                                    canvas.height = height;
+                                                                    ctx.drawImage(img, 0, 0, width, height);
+                                                                    const compress = () => {
+                                                                        canvas.toBlob(
+                                                                            (blob) => {
+                                                                                if (blob.size > (1024 * 1024 - 8 * 1024)) {
+                                                                                    quality -= 0.05;
+                                                                                    compress();
+                                                                                } else {
+                                                                                    let compressOutputReader = new FileReader();
+                                                                                    compressOutputReader.onload = async function (e) {
+                                                                                        addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
+                                                                                            timestamp: Math.floor(Date.now() / 1000),
+                                                                                            noteId: appState.session.noteId,
+                                                                                            image: {
+                                                                                                type: 'image/jpeg',
+                                                                                                content: await encrypt(appState.key, e.target.result)
+                                                                                            },
+                                                                                        })
+                                                                                    };
+                                                                                    compressOutputReader.readAsArrayBuffer(blob);
+                                                                                }
+                                                                            },
+                                                                            'image/jpeg',
+                                                                            quality
+                                                                        );
                                                                     };
-                                                                }),
-                                                                ...buttons.l,
-                                                                ...yellowButton,
-                                                                children: [
-                                                                    { text: 'OK' }
-                                                                ]
-                                                            }
-                                                        ]),
-                                                        ...yellowPanel,
+                                                                    compress();
+                                                                };
+                                                            };
+                                                        }),
+                                                        ...buttons.l(),
+                                                        ...buttons.filledYellow(),
+                                                        children: [
+                                                            { text: 'OK' }
+                                                        ]
                                                     }
-                                                )
-                                            } else {
-                                                const reader = new FileReader();
-                                                reader.onload = async function (e) {
-                                                    addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
-                                                        timestamp: Math.floor(Date.now() / 1000),
-                                                        noteId: appState.noteId,
-                                                        image: {
-                                                            type: file.type,
-                                                            content: await encrypt(appState.key, e.target.result)
-                                                        },
-                                                    })
-                                                };
-                                                reader.readAsArrayBuffer(file);
+                                                ]),
+                                                ...yellowPanel,
                                             }
-                                        }
+                                        )
+                                    } else {
+                                        const reader = new FileReader();
+                                        reader.onload = async function (e) {
+                                            addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
+                                                timestamp: Math.floor(Date.now() / 1000),
+                                                noteId: appState.session.noteId,
+                                                image: {
+                                                    type: file.type,
+                                                    content: await encrypt(appState.key, e.target.result)
+                                                },
+                                            })
+                                        };
+                                        reader.readAsArrayBuffer(file);
                                     }
-                                },
+                                }
                             }
-                        ),
+                        },
                         {
                             ...button(async function (event) {
                                 event.stopPropagation();
                                 widgets['image-input'].domElement.click();
                             }),
-                            ...buttons.l,
-                            ...buttons.filled,
+                            ...buttons.l(),
+                            ...buttons.filled(),
                             justifyContent: 'center',
                             alignItems: 'center',
                             gap: '0.5rem',
@@ -1161,259 +1225,260 @@ export function notePage() {
                         {
                             ...button(async function (event) {
                                 event.stopPropagation();
-                                if (widgets['add-note-input'].domElement.value.trim()) {
-                                    widgets['add-note-hint'].update(true);
-                                    addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
-                                        timestamp: Math.floor(Date.now() / 1000),
-                                        noteId: appState.noteId,
-                                        text: await encrypt(appState.key, appState.textEncoder.encode(widgets['add-note-input'].domElement.value)),
-                                    });
-                                } else {
-                                    widgets['add-note-hint'].update(false);
+                                appState.page.paragraphValid = true;
+                                if (!widgets['add-paragraph-input'].domElement.value.trim()) {
+                                    appState.page.paragraphValid = false;
                                 }
+                                widgets['add-paragraph-hint'].update();
+                                if (!appState.page.paragraphValid) {
+                                    return;
+                                }
+                                addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
+                                    timestamp: Math.floor(Date.now() / 1000),
+                                    noteId: appState.session.noteId,
+                                    text: await encrypt(appState.key, appState.textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
+                                });
                             }),
-                            ...buttons.l,
-                            ...buttons.filledBlue,
+                            ...buttons.l(),
+                            ...buttons.filledBlue(),
                             children: [
                                 { text: 'Add' }
                             ]
                         }
                     ]
                 },
-                ...appState.paragraphs.map((paragraph, index) => {
-                    return {
-                        ...column(function (value) {
-                            if (value === 'view') {
-                                return {
-                                    ...card,
-                                    ...border,
-                                    ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}`]),
-                                    width: '100%',
-                                    gap: '1rem',
-                                    padding: 0,
-                                    overflow: 'hidden',
-                                    children: [
-                                        paragraph.text ? {
-                                            width: '100%',
-                                            padding: '0.75rem 0.75rem 0 0.75rem',
-                                            whiteSpace: 'pre-wrap',
-                                            lineHeight: '1.5rem',
-                                            text: paragraph.text
-                                        } : null,
-                                        paragraph.image ? {
-                                            width: '100%',
-                                            src: paragraph.image
-                                        } : null,
-                                        {
-                                            ...row,
-                                            width: '100%',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            gap: '1rem',
-                                            padding: '0 0.75rem 0.75rem 0.75rem',
-                                            children: [
-                                                {
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}TextAux`]),
-                                                    fontWeight: 400,
-                                                    text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                },
-                                                {
-                                                    ...row,
-                                                    gap: '0.5rem',
-                                                    children: [
-                                                        paragraph.text ? {
-                                                            ...button(function (event) {
+                ...appState.page.paragraphs.flatMap((paragraph, index) => [
+                    () => appState.page.editParagraphId === paragraph.id ? null : {
+                        ...card(),
+                        ...border(),
+                        ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}`]),
+                        id: `paragraph-${paragraph.id}`,
+                        width: '100%',
+                        gap: '1rem',
+                        padding: 0,
+                        overflow: 'hidden',
+                        children: [
+                            paragraph.text ? {
+                                width: '100%',
+                                padding: '0.75rem 0.75rem 0 0.75rem',
+                                whiteSpace: 'pre-wrap',
+                                lineHeight: '1.5rem',
+                                text: paragraph.text
+                            } : null,
+                            paragraph.image ? {
+                                width: '100%',
+                                src: paragraph.image
+                            } : null,
+                            {
+                                ...row(),
+                                width: '100%',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '1rem',
+                                padding: '0 0.75rem 0.75rem 0.75rem',
+                                children: [
+                                    {
+                                        ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}TextAux`]),
+                                        fontWeight: 400,
+                                        text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                    },
+                                    {
+                                        ...row(),
+                                        gap: '0.5rem',
+                                        children: [
+                                            paragraph.text ? {
+                                                ...button(function (event) {
+                                                    event.stopPropagation();
+                                                    navigator.clipboard.writeText(paragraph.text);
+                                                }),
+                                                ...buttons.m(),
+                                                ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                children: [
+                                                    {
+                                                        html: icons.copy,
+                                                        width: '1.25rem',
+                                                        height: '1.25rem',
+                                                    }
+                                                ]
+                                            } : null,
+                                            paragraph.text ? {
+                                                ...button(function (event) {
+                                                    event.stopPropagation();
+                                                    modalOn({
+                                                        ...menu(),
+                                                        alignItems: 'start',
+                                                        gap: '0.5rem',
+                                                        children: [
+                                                            {
+                                                                fontWeight: 600,
+                                                                text: 'Color'
+                                                            },
+                                                            ...['default', 'red', 'green', 'yellow', 'blue'].map(color => ({
+                                                                ...button(async function (event) {
+                                                                    event.stopPropagation();
+                                                                    updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
+                                                                        color: await encrypt(appState.key, appState.textEncoder.encode(color)),
+                                                                    });
+                                                                    modalOff();
+                                                                }),
+                                                                ...buttons.mFullWidth(),
+                                                                ...buttons.flat(),
+                                                                justifyContent: 'start',
+                                                                alignItems: 'center',
+                                                                gap: '1rem',
+                                                                fontWeight: 400,
+                                                                children: [
+                                                                    {
+                                                                        html: icons.circle,
+                                                                        width: '1rem',
+                                                                        height: '1rem',
+                                                                        borderRadius: '2rem',
+                                                                        borderWidth: '2px',
+                                                                        borderStyle: 'solid',
+                                                                        borderColor: color === 'default' ? 'var(--fg-1)' : `var(--panel-${color}-fg-1)`,
+                                                                        fill: color === 'default' ? 'var(--background-color)' : `var(--panel-${color}-bg-1)`,
+                                                                    },
+                                                                    { text: color.charAt(0).toUpperCase() + color.slice(1) }
+                                                                ]
+                                                            }))
+                                                        ]
+                                                    });
+                                                }),
+                                                ...buttons.m(),
+                                                ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                children: [
+                                                    {
+                                                        html: icons.color,
+                                                        width: '1.25rem',
+                                                        height: '1.25rem',
+                                                    }
+                                                ]
+                                            } : null,
+                                            paragraph.text ? {
+                                                ...button(function (event) {
+                                                    event.stopPropagation();
+                                                    appState.page.editParagraphId = paragraph.id;
+                                                    widgets[`paragraph-${paragraph.id}`].update();
+                                                    widgets[`paragraph-edit-${paragraph.id}`].update();
+                                                    // widgets[`edit-paragraph-input-${paragr aph.id}`].domElement.focus();
+                                                }),
+                                                ...buttons.m(),
+                                                ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                children: [
+                                                    {
+                                                        html: icons.edit,
+                                                        width: '1.25rem',
+                                                        height: '1.25rem',
+                                                    }
+                                                ]
+                                            } : null,
+                                            {
+                                                ...button(function (event) {
+                                                    event.stopPropagation();
+                                                    modalOn({
+                                                        ...prompt('Delete', 'You won\'t be able to restore it', [{
+                                                            ...button(async function (event) {
                                                                 event.stopPropagation();
-                                                                navigator.clipboard.writeText(paragraph.text);
+                                                                deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
+                                                                modalOff();
                                                             }),
-                                                            ...buttons.m,
-                                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                            ...buttons.l(),
+                                                            ...buttons.filledRed(),
                                                             children: [
-                                                                {
-                                                                    html: icons.copy,
-                                                                    width: '1.25rem',
-                                                                    height: '1.25rem',
-                                                                }
-                                                            ]
-                                                        } : null,
-                                                        paragraph.text ? {
-                                                            ...button(function (event) {
-                                                                event.stopPropagation();
-                                                                modalOn({
-                                                                    ...menu,
-                                                                    alignItems: 'start',
-                                                                    gap: '0.5rem',
-                                                                    children: [
-                                                                        {
-                                                                            fontWeight: 600,
-                                                                            text: 'Color'
-                                                                        },
-                                                                        ...['default', 'red', 'green', 'yellow', 'blue'].map(color => ({
-                                                                            ...button(async function (event) {
-                                                                                event.stopPropagation();
-                                                                                updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
-                                                                                    color: await encrypt(appState.key, appState.textEncoder.encode(color)),
-                                                                                });
-                                                                                modalOff();
-                                                                            }),
-                                                                            ...buttons.mFullWidth,
-                                                                            ...buttons.flat,
-                                                                            justifyContent: 'start',
-                                                                            alignItems: 'center',
-                                                                            gap: '1rem',
-                                                                            fontWeight: 400,
-                                                                            children: [
-                                                                                {
-                                                                                    html: icons.circle,
-                                                                                    width: '1rem',
-                                                                                    height: '1rem',
-                                                                                    borderRadius: '2rem',
-                                                                                    borderWidth: '2px',
-                                                                                    borderStyle: 'solid',
-                                                                                    borderColor: color === 'default' ? 'var(--fg-1)' : `var(--panel-${color}-fg-1)`,
-                                                                                    fill: color === 'default' ? 'var(--background-color)' : `var(--panel-${color}-bg-1)`,
-                                                                                },
-                                                                                { text: color.charAt(0).toUpperCase() + color.slice(1) }
-                                                                            ]
-                                                                        }))
-                                                                    ]
-                                                                });
-                                                            }),
-                                                            ...buttons.m,
-                                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
-                                                            children: [
-                                                                {
-                                                                    html: icons.color,
-                                                                    width: '1.25rem',
-                                                                    height: '1.25rem',
-                                                                }
-                                                            ]
-                                                        } : null,
-                                                        paragraph.text ? {
-                                                            ...button(function (event) {
-                                                                event.stopPropagation();
-                                                                this.parent.parent.parent.update('edit');
-                                                                widgets[`edit-note-input-${paragraph.id}`].domElement.focus();
-                                                            }),
-                                                            ...buttons.m,
-                                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
-                                                            children: [
-                                                                {
-                                                                    html: icons.edit,
-                                                                    width: '1.25rem',
-                                                                    height: '1.25rem',
-                                                                }
-                                                            ]
-                                                        } : null,
-                                                        {
-                                                            ...button(function (event) {
-                                                                event.stopPropagation();
-                                                                modalOn({
-                                                                    ...prompt('Delete', 'You won\'t be able to restore it', [{
-                                                                        ...button(async function (event) {
-                                                                            event.stopPropagation();
-                                                                            deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
-                                                                            modalOff();
-                                                                        }),
-                                                                        ...buttons.l,
-                                                                        ...buttons.filledRed,
-                                                                        children: [
-                                                                            { text: 'Delete' }]
-                                                                    }]),
-                                                                })
-                                                            }),
-                                                            ...buttons.m,
-                                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
-                                                            children: [
-                                                                {
-                                                                    html: icons.delete,
-                                                                    width: '1.25rem',
-                                                                    height: '1.25rem',
-                                                                }
-                                                            ]
-                                                        },
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                };
-                            } else if (value === 'edit') {
-                                return {
-                                    width: '100%',
-                                    gap: '1rem',
-                                    children: [
-                                        {
-                                            ...text.aux,
-                                            id: `edit-note-hint-${paragraph.id}`,
-                                            errorText: 'Required'
-                                        },
-                                        {
-                                            ...textArea,
-                                            ...border,
-                                            id: `edit-note-input-${paragraph.id}`,
-                                            width: '100%',
-                                            padding: '0.75rem',
-                                            rows: 8,
-                                            ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}Panel`]),
-                                            value: paragraph.text
-                                        },
-                                        {
-                                            ...row,
-                                            width: '100%',
-                                            justifyContent: 'end',
-                                            gap: '1rem',
-                                            children: [
-                                                {
-                                                    ...button(async function (event) {
-                                                        event.stopPropagation();
-                                                        this.parent.parent.update('view');
-                                                    }),
-                                                    ...buttons.l,
-                                                    ...buttons.filled,
-                                                    justifyContent: 'center',
-                                                    children: [
-                                                        { text: 'Cancel' }
-                                                    ]
-                                                },
-                                                {
-                                                    ...button(async function (event) {
-                                                        event.stopPropagation();
-                                                        if (widgets[`edit-note-input-${paragraph.id}`].domElement.value.trim()) {
-                                                            updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
-                                                                text: await encrypt(appState.key, appState.textEncoder.encode(widgets[`edit-note-input-${paragraph.id}`].domElement.value)),
-                                                            });
-                                                        } else {
-                                                            widgets[`edit-note-hint-${paragraph.id}`].update(false);
-                                                        }
-                                                    }),
-                                                    ...buttons.l,
-                                                    ...buttons.filledBlue,
-                                                    justifyContent: 'center',
-                                                    children: [
-                                                        { text: 'Save' }
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
+                                                                { text: 'Delete' }]
+                                                        }]),
+                                                    })
+                                                }),
+                                                ...buttons.m(),
+                                                ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                children: [
+                                                    {
+                                                        html: icons.delete,
+                                                        width: '1.25rem',
+                                                        height: '1.25rem',
+                                                    }
+                                                ]
+                                            },
+                                        ]
+                                    }
+                                ]
                             }
-                        }, 'view')
+                        ]
+                    },
+                    {
+                        id: `paragraph-edit-${paragraph.id}`,
+                        width: '100%',
+                        gap: '1rem',
+                        children: [
+                            {
+                                ...text.aux(),
+                                id: `edit-note-hint-${paragraph.id}`,
+                                errorText: 'Required'
+                            },
+                            {
+                                ...textArea(),
+                                ...border(),
+                                id: `edit-note-input-${paragraph.id}`,
+                                width: '100%',
+                                padding: '0.75rem',
+                                rows: 8,
+                                ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}Panel`]),
+                                value: paragraph.text
+                            },
+                            {
+                                ...row(),
+                                width: '100%',
+                                justifyContent: 'end',
+                                gap: '1rem',
+                                children: [
+                                    {
+                                        ...button(async function (event) {
+                                            event.stopPropagation();
+                                            this.parent.parent.update('view');
+                                        }),
+                                        ...buttons.l(),
+                                        ...buttons.filled(),
+                                        justifyContent: 'center',
+                                        children: [
+                                            { text: 'Cancel' }
+                                        ]
+                                    },
+                                    {
+                                        ...button(async function (event) {
+                                            event.stopPropagation();
+                                            if (widgets[`edit-note-input-${paragraph.id}`].domElement.value.trim()) {
+                                                updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
+                                                    text: await encrypt(appState.key, appState.textEncoder.encode(widgets[`edit-note-input-${paragraph.id}`].domElement.value)),
+                                                });
+                                            } else {
+                                                widgets[`edit-note-hint-${paragraph.id}`].update(false);
+                                            }
+                                        }),
+                                        ...buttons.l(),
+                                        ...buttons.filledBlue(),
+                                        justifyContent: 'center',
+                                        children: [
+                                            { text: 'Save' }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
                     }
-                }),
-                value ? {
+                ]),
+                appState.page.paragraphsAllFetched ? null : {
                     ...button(function (event) {
-                        listenParagraphs(appState.paragraphs.length + 32);
+                        appState.page.paragraphsLimit += 32;
+                        listenParagraphs();
                     }),
-                    ...buttons.lFullWidth,
-                    ...buttons.filled,
+                    ...buttons.lFullWidth(),
+                    ...buttons.filled(),
                     justifyContent: 'center',
                     children: [
                         { text: 'More' }
                     ]
-                } : null
+                }
             ]
-        }), false),
+        }),
     };
 }

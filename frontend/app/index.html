@@ -17,14 +17,13 @@
 
 <body>
     <script type="module">
-        import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateStyleProperties, updateMetaTags, updateBodyStyle, updateTheme, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid, unselectable, hover, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-        import { colors, lightTheme, darkTheme, card, border, text, buttons, base, menu, prompt, fixedHeader, notification, switchThemeButton, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+        import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateStyleProperties, updateMetaTags, updateBodyStyle, updateTheme, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid, unselectable, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { colors, lightTheme, darkTheme, card, border, text, buttons, base, menu, prompt, fixedHeader, notification, switchThemeButton, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
         import { listenNotebook, listenParagraphs, loginPage, setupTutorialPage, setupPage, keyphrasePage, folderPage, notePage } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
         import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
         // import { getAnalytics } from "firebase/analytics";
-
 
         const firebaseConfig = {
             apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
@@ -45,7 +44,7 @@
         // appState.firebase.analytics = getAnalytics(appState.firebase.app);
         appState.textEncoder = new TextEncoder();
         appState.textDecoder = new TextDecoder();
-
+        appState.session = {};
 
         startApp('XPL');
         startViewportSizeController();
@@ -54,20 +53,15 @@
         onAuthStateChanged(appState.firebase.auth, async (user) => {
             if (user) {
                 appState.user = user;
-                appState.folderId = 'root';
                 listenNotebook();
             } else {
                 try {
-                    updatePage(loadingPage());
+                    appState.user = null;
                     appState.key = null;
-                    appState.tree = null;
-                    appState.orphanNoteIds = null;
-                    appState.initialized = null;
-                    appState.folderId = null;
-                    appState.noteId = null;
-                    appState.paragraphs = null;
-                    appState.stopListenNotebook?.();
+                    appState.page = null;
+                    appState.session = {};
                     appState.stopListenParagraphs?.();
+                    appState.stopListenNotebook?.();
                     window.localStorage.removeItem('keyphrase');
                     updatePage(loginPage());
                 } catch (e) {
