@@ -138,7 +138,7 @@ export function listenParagraphs() {
                 appState.page.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? appState.textDecoder.decode(await decrypt(appState.key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? appState.textDecoder.decode(await decrypt(appState.key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(appState.key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
             }
             appState.page.paragraphsAllFetched = appState.page.paragraphs.length < appState.page.paragraphsLimit;
-            widgets['note']?.update();
+            widgets['note']?.update(['add-paragraph-input', 'edit-paragraph']);
         },
         (error) => {
             console.error(error);
@@ -1025,8 +1025,9 @@ export function notePage() {
         paragraphsLimit: 32,
         paragraphsAllFetched: true,
         paragraphs: [],
-        paragraphValid: true,
+        addParagraphValid: true,
         editParagraphId,
+        editParagraphValid,
     }
     return {
         meta: {
@@ -1072,7 +1073,7 @@ export function notePage() {
                 {
                     id: 'add-paragraph-hint',
                     ...text.aux,
-                    display: () => appState.page.paragraphValid ? 'none' : 'block',
+                    display: () => appState.page.addParagraphValid ? 'none' : 'block',
                     color: colors.red[500],
                     errorText: 'Required'
                 },
@@ -1199,12 +1200,12 @@ export function notePage() {
                         {
                             ...button(async function (event) {
                                 event.stopPropagation();
-                                appState.page.paragraphValid = true;
+                                appState.page.addParagraphValid = true;
                                 if (!widgets['add-paragraph-input'].domElement.value.trim()) {
-                                    appState.page.paragraphValid = false;
+                                    appState.page.addParagraphValid = false;
                                 }
                                 widgets['add-paragraph-hint'].update();
-                                if (!appState.page.paragraphValid) {
+                                if (!appState.page.addParagraphValid) {
                                     return;
                                 }
                                 addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
@@ -1221,223 +1222,230 @@ export function notePage() {
                         }
                     ]
                 },
-                ...appState.page.paragraphs.map((paragraph, index) => {
-                    if (paragraph.id == appState.page.editParagraphId) {
-                        return {
+                ...appState.page.paragraphs.map((paragraph, index) => paragraph.id in appState.page.editParagraphIds ? {
+                    id: 'edit-paragraph',
+                    width: '100%',
+                    gap: '1rem',
+                    children: [
+                        {
+                            id: 'edit-paragraph-hint',
+                            ...text.aux,
+                            errorText: 'Required'
+                        },
+                        {
+                            id: 'edit-paragraph-input',
+                            ...textArea,
+                            ...border,
                             width: '100%',
+                            padding: '0.75rem',
+                            rows: 8,
+                            ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}Panel`]),
+                            value: paragraph.text
+                        },
+                        {
+                            ...row,
+                            width: '100%',
+                            justifyContent: 'end',
                             gap: '1rem',
                             children: [
                                 {
-                                    id: `edit-note-hint-${paragraph.id}`,
-                                    ...text.aux,
-                                    errorText: 'Required'
-                                },
-                                {
-                                    id: `edit-note-input-${paragraph.id}`,
-                                    ...textArea,
-                                    ...border,
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    rows: 8,
-                                    ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}Panel`]),
-                                    value: paragraph.text
-                                },
-                                {
-                                    ...row,
-                                    width: '100%',
-                                    justifyContent: 'end',
-                                    gap: '1rem',
+                                    ...button(async function (event) {
+                                        event.stopPropagation();
+                                        appState.page.editParagraphId = undefined;
+                                        widgets['note'].update(['add-paragraph-input']);
+                                    }),
+                                    ...buttons.l,
+                                    ...buttons.filled,
+                                    justifyContent: 'center',
                                     children: [
-                                        {
-                                            ...button(async function (event) {
-                                                event.stopPropagation();
-                                                this.parent.parent.update('view');
-                                            }),
-                                            ...buttons.l,
-                                            ...buttons.filled,
-                                            justifyContent: 'center',
-                                            children: [
-                                                { text: 'Cancel' }
-                                            ]
-                                        },
-                                        {
-                                            ...button(async function (event) {
-                                                event.stopPropagation();
-                                                if (widgets[`edit-note-input-${paragraph.id}`].domElement.value.trim()) {
-                                                    updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
-                                                        text: await encrypt(appState.key, appState.textEncoder.encode(widgets[`edit-note-input-${paragraph.id}`].domElement.value)),
-                                                    });
-                                                } else {
-                                                    widgets[`edit-note-hint-${paragraph.id}`].update(false);
-                                                }
-                                            }),
-                                            ...buttons.l,
-                                            ...buttons.filledBlue,
-                                            justifyContent: 'center',
-                                            children: [
-                                                { text: 'Save' }
-                                            ]
+                                        { text: 'Cancel' }
+                                    ]
+                                },
+                                {
+                                    ...button(async function (event) {
+                                        event.stopPropagation();
+                                        appState.page.editParagraphValid = true;
+                                        if (!widgets['edit-paragraph-input'].domElement.value.trim()) {
+                                            appState.page.editParagraphValid = false;
                                         }
+                                        widgets['edit-paragraph-input'].update();
+                                        if (!appState.page.editParagraphValid) {
+                                            return;
+                                        }
+                                        appState.page.editParagraphId = undefined;
+                                        updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
+                                            text: await encrypt(appState.key, appState.textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
+                                        });
+                                    }),
+                                    ...buttons.l,
+                                    ...buttons.filledBlue,
+                                    justifyContent: 'center',
+                                    children: [
+                                        { text: 'Save' }
                                     ]
                                 }
                             ]
                         }
-                    } else {
-                        return {
-                            ...card,
-                            ...border,
-                            ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}`]),
+                    ]
+                } : {
+                    id: `paragraph-${paragraph.id}`,
+                    ...card,
+                    ...border,
+                    ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}`]),
+                    width: '100%',
+                    gap: '1rem',
+                    padding: 0,
+                    overflow: 'hidden',
+                    children: [
+                        paragraph.text ? {
                             width: '100%',
+                            padding: '0.75rem 0.75rem 0 0.75rem',
+                            whiteSpace: 'pre-wrap',
+                            lineHeight: '1.5rem',
+                            text: paragraph.text
+                        } : null,
+                        paragraph.image ? {
+                            width: '100%',
+                            src: paragraph.image
+                        } : null,
+                        {
+                            ...row,
+                            width: '100%',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
                             gap: '1rem',
-                            padding: 0,
-                            overflow: 'hidden',
+                            padding: '0 0.75rem 0.75rem 0.75rem',
                             children: [
-                                paragraph.text ? {
-                                    width: '100%',
-                                    padding: '0.75rem 0.75rem 0 0.75rem',
-                                    whiteSpace: 'pre-wrap',
-                                    lineHeight: '1.5rem',
-                                    text: paragraph.text
-                                } : null,
-                                paragraph.image ? {
-                                    width: '100%',
-                                    src: paragraph.image
-                                } : null,
+                                {
+                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}TextAux`]),
+                                    fontWeight: 400,
+                                    text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                },
                                 {
                                     ...row,
-                                    width: '100%',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    gap: '1rem',
-                                    padding: '0 0.75rem 0.75rem 0.75rem',
+                                    gap: '0.5rem',
                                     children: [
-                                        {
-                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}TextAux`]),
-                                            fontWeight: 400,
-                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-                                        },
-                                        {
-                                            ...row,
-                                            gap: '0.5rem',
+                                        paragraph.text ? {
+                                            ...button(function (event) {
+                                                event.stopPropagation();
+                                                navigator.clipboard.writeText(paragraph.text);
+                                            }),
+                                            ...buttons.m,
+                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                             children: [
-                                                paragraph.text ? {
-                                                    ...button(function (event) {
-                                                        event.stopPropagation();
-                                                        navigator.clipboard.writeText(paragraph.text);
-                                                    }),
-                                                    ...buttons.m,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                                {
+                                                    html: icons.copy,
+                                                    width: '1.25rem',
+                                                    height: '1.25rem',
+                                                }
+                                            ]
+                                        } : null,
+                                        paragraph.text ? {
+                                            ...button(function (event) {
+                                                event.stopPropagation();
+                                                modalOn({
+                                                    ...menu,
+                                                    alignItems: 'start',
+                                                    gap: '0.5rem',
                                                     children: [
                                                         {
-                                                            html: icons.copy,
-                                                            width: '1.25rem',
-                                                            height: '1.25rem',
-                                                        }
-                                                    ]
-                                                } : null,
-                                                paragraph.text ? {
-                                                    ...button(function (event) {
-                                                        event.stopPropagation();
-                                                        modalOn({
-                                                            ...menu,
-                                                            alignItems: 'start',
-                                                            gap: '0.5rem',
+                                                            fontWeight: 600,
+                                                            text: 'Color'
+                                                        },
+                                                        ...['default', 'red', 'green', 'yellow', 'blue'].map(color => ({
+                                                            ...button(async function (event) {
+                                                                event.stopPropagation();
+                                                                updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
+                                                                    color: await encrypt(appState.key, appState.textEncoder.encode(color)),
+                                                                });
+                                                                modalOff();
+                                                            }),
+                                                            ...buttons.mFullWidth,
+                                                            ...buttons.flat,
+                                                            justifyContent: 'start',
+                                                            alignItems: 'center',
+                                                            gap: '1rem',
+                                                            fontWeight: 400,
                                                             children: [
                                                                 {
-                                                                    fontWeight: 600,
-                                                                    text: 'Color'
+                                                                    html: icons.circle,
+                                                                    width: '1rem',
+                                                                    height: '1rem',
+                                                                    borderRadius: '2rem',
+                                                                    borderWidth: '2px',
+                                                                    borderStyle: 'solid',
+                                                                    borderColor: color === 'default' ? 'var(--fg-1)' : `var(--panel-${color}-fg-1)`,
+                                                                    fill: color === 'default' ? 'var(--background-color)' : `var(--panel-${color}-bg-1)`,
                                                                 },
-                                                                ...['default', 'red', 'green', 'yellow', 'blue'].map(color => ({
-                                                                    ...button(async function (event) {
-                                                                        event.stopPropagation();
-                                                                        updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
-                                                                            color: await encrypt(appState.key, appState.textEncoder.encode(color)),
-                                                                        });
-                                                                        modalOff();
-                                                                    }),
-                                                                    ...buttons.mFullWidth,
-                                                                    ...buttons.flat,
-                                                                    justifyContent: 'start',
-                                                                    alignItems: 'center',
-                                                                    gap: '1rem',
-                                                                    fontWeight: 400,
-                                                                    children: [
-                                                                        {
-                                                                            html: icons.circle,
-                                                                            width: '1rem',
-                                                                            height: '1rem',
-                                                                            borderRadius: '2rem',
-                                                                            borderWidth: '2px',
-                                                                            borderStyle: 'solid',
-                                                                            borderColor: color === 'default' ? 'var(--fg-1)' : `var(--panel-${color}-fg-1)`,
-                                                                            fill: color === 'default' ? 'var(--background-color)' : `var(--panel-${color}-bg-1)`,
-                                                                        },
-                                                                        { text: color.charAt(0).toUpperCase() + color.slice(1) }
-                                                                    ]
-                                                                }))
+                                                                { text: color.charAt(0).toUpperCase() + color.slice(1) }
                                                             ]
-                                                        });
-                                                    }),
-                                                    ...buttons.m,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
-                                                    children: [
-                                                        {
-                                                            html: icons.color,
-                                                            width: '1.25rem',
-                                                            height: '1.25rem',
-                                                        }
+                                                        }))
                                                     ]
-                                                } : null,
-                                                paragraph.text ? {
-                                                    ...button(function (event) {
-                                                        event.stopPropagation();
-                                                        this.parent.parent.parent.update('edit');
-                                                        widgets[`edit-note-input-${paragraph.id}`].domElement.focus();
-                                                    }),
-                                                    ...buttons.m,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
-                                                    children: [
-                                                        {
-                                                            html: icons.edit,
-                                                            width: '1.25rem',
-                                                            height: '1.25rem',
-                                                        }
-                                                    ]
-                                                } : null,
+                                                });
+                                            }),
+                                            ...buttons.m,
+                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                            children: [
                                                 {
-                                                    ...button(function (event) {
-                                                        event.stopPropagation();
-                                                        modalOn({
-                                                            ...prompt('Delete', 'You won\'t be able to restore it', [{
-                                                                ...button(async function (event) {
-                                                                    event.stopPropagation();
-                                                                    deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
-                                                                    modalOff();
-                                                                }),
-                                                                ...buttons.l,
-                                                                ...buttons.filledRed,
-                                                                children: [
-                                                                    { text: 'Delete' }]
-                                                            }]),
-                                                        })
-                                                    }),
-                                                    ...buttons.m,
-                                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
-                                                    children: [
-                                                        {
-                                                            html: icons.delete,
-                                                            width: '1.25rem',
-                                                            height: '1.25rem',
-                                                        }
-                                                    ]
-                                                },
+                                                    html: icons.color,
+                                                    width: '1.25rem',
+                                                    height: '1.25rem',
+                                                }
                                             ]
-                                        }
+                                        } : null,
+                                        paragraph.text ? {
+                                            ...button(function (event) {
+                                                event.stopPropagation();
+                                                if (!appState.page.editParagraphId) {
+                                                    appState.page.editParagraphId = paragraph.id;
+                                                    appState.page.editParagraphValid = true;
+                                                    widgets['note'].update(['add-paragraph-input']);
+                                                    // widgets['edit-paragraph-input'].domElement.focus();
+                                                }
+                                            }),
+                                            ...buttons.m,
+                                            ...(appState.page.editParagraphId ? buttons.disabled : {}),
+                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                            children: [
+                                                {
+                                                    html: icons.edit,
+                                                    width: '1.25rem',
+                                                    height: '1.25rem',
+                                                }
+                                            ]
+                                        } : null,
+                                        {
+                                            ...button(function (event) {
+                                                event.stopPropagation();
+                                                modalOn({
+                                                    ...prompt('Delete', 'You won\'t be able to restore it', [{
+                                                        ...button(async function (event) {
+                                                            event.stopPropagation();
+                                                            deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
+                                                            modalOff();
+                                                        }),
+                                                        ...buttons.l,
+                                                        ...buttons.filledRed,
+                                                        children: [
+                                                            { text: 'Delete' }]
+                                                    }]),
+                                                })
+                                            }),
+                                            ...buttons.m,
+                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                            children: [
+                                                {
+                                                    html: icons.delete,
+                                                    width: '1.25rem',
+                                                    height: '1.25rem',
+                                                }
+                                            ]
+                                        },
                                     ]
                                 }
                             ]
-                        };
-                    }
+                        }
+                    ]
                 }),
                 appState.page.paragraphsAllFetched ? null : {
                     ...button(function (event) {
