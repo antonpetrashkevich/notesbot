@@ -1,5 +1,5 @@
-import { appName, appState, widgets, pageWidget, updateStyleProperties, updateMetaTags, updateTheme, updateBodyStyle, updatePage, goTo, startApp, startPathController, modalOn, modalOff, widget, templateWidget, row, column, grid, text, image, svg, canvas, video, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-import { colors, lightTheme, darkTheme, card, border, text, buttons, base, menu, prompt, fixedHeader, notification, switchThemeButton, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateStyleProperties, updateMetaTags, updateBodyStyle, updateTheme, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid, unselectable, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
+import { colors, lightTheme, darkTheme, card, border, text, buttons, colored, base, menu, prompt, fixedHeader, notification, switchThemeButton, imageInput, loadingPage, notFoundPage, generalErrorPage } from '/home/n1/projects/profiler/frontend/apex-commons.js';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -133,6 +133,7 @@ export function listenParagraphs() {
     appState.page.paragraphs = [];
     appState.stopListenParagraphs = onSnapshot(query(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), where('noteId', '==', appState.session.noteId), orderBy('timestamp', 'desc'), limit(appState.page.paragraphsLimit)),
         async (querySnapshot) => {
+            appState.page.paragraphs = [];
             for (const docSnap of querySnapshot.docs) {
                 const docData = docSnap.data();
                 appState.page.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? appState.textDecoder.decode(await decrypt(appState.key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? appState.textDecoder.decode(await decrypt(appState.key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(appState.key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
@@ -203,7 +204,7 @@ export function setupTutorialPage() {
                     gap: '2rem',
                     children: [
                         {
-                            ...text.h1,
+                            ...text.h2,
                             text: 'Keyphrase'
                         },
                         {
@@ -275,7 +276,7 @@ export function setupPage() {
                     gap: '2rem',
                     children: [
                         {
-                            ...text.h1,
+                            ...text.h2,
                             text: 'Keyphrase'
                         },
                         {
@@ -292,7 +293,7 @@ export function setupPage() {
                                     display: () => appState.page.keyphraseValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
                                     color: colors.red[500],
-                                    errorText: 'Required'
+                                    text: 'Required'
                                 },
                                 {
                                     id: 'keyphrase-input',
@@ -314,7 +315,7 @@ export function setupPage() {
                                     display: () => appState.page.keyphraseRepeatValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
                                     color: colors.red[500],
-                                    errorText: 'Invalid'
+                                    text: 'Invalid'
                                 },
                                 {
                                     id: 'keyphrase-repeat-input',
@@ -429,7 +430,7 @@ export function keyphrasePage() {
                     gap: '2rem',
                     children: [
                         {
-                            ...text.h1,
+                            ...text.h2,
                             text: 'Keyphrase'
                         },
                         {
@@ -447,7 +448,7 @@ export function keyphrasePage() {
                                     display: () => appState.page.keyphraseValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
                                     color: colors.red[500],
-                                    errorText: 'Invalid'
+                                    text: 'Invalid'
                                 },
                                 {
                                     id: 'keyphrase-input',
@@ -509,7 +510,7 @@ export function keyphrasePage() {
 export function folderPage() {
     appState.page = {
         nameValid: true,
-        moveToFolderId,
+        moveToFolderId: undefined,
     };
     return {
         meta: {
@@ -546,7 +547,7 @@ export function folderPage() {
                                     ]
                                 },
                                 {
-                                    ...text.h1,
+                                    ...text.h5,
                                     text: appState.session.tree[appState.session.folderId].name
                                 }
                             ]
@@ -681,7 +682,7 @@ export function folderPage() {
                                                     ...text.aux,
                                                     display: () => appState.page.nameValid ? 'none' : 'block',
                                                     color: colors.red[500],
-                                                    errorText: 'Required'
+                                                    text: 'Required'
                                                 },
                                                 {
                                                     id: 'new-folder-name-input',
@@ -752,7 +753,7 @@ export function folderPage() {
                                         else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length > 0) {
                                             modalOn({
                                                 ...prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
-                                                ...redPanel,
+                                                ...colored('red').panel,
                                             })
                                         }
                                         else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length === 0) {
@@ -795,15 +796,76 @@ export function folderPage() {
                     ]
                 })),
                 {
-                    ...row,
                     position: 'fixed',
                     bottom: 0,
                     left: 0,
                     zIndex: 10,
-                    width: '100%',
-                    justifyContent: 'space-between',
-                    alignItems: 'end',
+                    ...button(function (event) {
+                        event.stopPropagation();
+                        modalOn({
+                            ...menu,
+                            children: [
+                                {
+                                    ...button(function (event) {
+                                        event.stopPropagation();
+                                        modalOn({
+                                            ...prompt('Delete account', 'You won\'t be able to restore it', [
+                                                {
+                                                    ...button(async function (event) {
+                                                        event.stopPropagation();
+                                                        updatePage(loadingPage());
+                                                        await updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                            status: 'deleted',
+                                                            orphanNoteIds: appState.session.orphanNoteIds.concat(Object.keys(appState.session.tree).filter(id => appState.session.tree[id].type === 'note')),
+                                                        });
+                                                        signOut(appState.firebase.auth);
+                                                    }),
+                                                    ...buttons.l,
+                                                    ...buttons.filledRed,
+                                                    children: [
+                                                        { text: 'Delete' }]
+                                                }
+                                            ]),
+                                        });
+                                    }),
+                                    ...buttons.mFullWidth,
+                                    ...buttons.flatRed,
+                                    children: [{ text: 'Delete account' }]
+                                },
+                                {
+                                    ...button(function (event) {
+                                        event.stopPropagation();
+                                        signOut(appState.firebase.auth);
+                                    }),
+                                    ...buttons.mFullWidth,
+                                    ...buttons.flatRed,
+                                    children: [{ text: 'Log out' }]
+                                }
+                            ]
+                        })
+                    }),
+                    ...buttons.m,
+                    ...buttons.filled,
+                    margin: '1rem',
+                    borderRadius: '2rem',
                     children: [
+                        {
+                            html: icons.menu,
+                            width: '2rem',
+                            height: '2rem',
+                        }
+                    ]
+                },
+                {
+                    ...column,
+                    position: 'fixed',
+                    bottom: 0,
+                    right: 0,
+                    zIndex: 10,
+                    margin: '1rem',
+                    gap: '1rem',
+                    children: [
+                        switchThemeButton,
                         {
                             ...button(function (event) {
                                 event.stopPropagation();
@@ -814,202 +876,135 @@ export function folderPage() {
                                             ...button(function (event) {
                                                 event.stopPropagation();
                                                 modalOn({
-                                                    ...prompt('Delete account', 'You won\'t be able to restore it', [
+                                                    ...menu,
+                                                    alignItems: 'start',
+                                                    gap: '0.5rem',
+                                                    children: [
+                                                        {
+                                                            fontWeight: 600,
+                                                            text: 'Name'
+                                                        },
+                                                        {
+                                                            id: 'new-folder-name-hint',
+                                                            ...text.aux,
+                                                            display: () => appState.page.nameValid ? 'none' : 'block',
+                                                            color: colors.red[500],
+                                                            text: 'Required'
+                                                        },
+                                                        {
+                                                            id: 'new-folder-name-input',
+                                                            ...input,
+                                                            ...border,
+                                                            width: '100%',
+                                                            type: 'text',
+                                                            maxlength: '64'
+                                                        },
                                                         {
                                                             ...button(async function (event) {
                                                                 event.stopPropagation();
-                                                                updatePage(loadingPage());
-                                                                await updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                                    status: 'deleted',
-                                                                    orphanNoteIds: appState.session.orphanNoteIds.concat(Object.keys(appState.session.tree).filter(id => appState.session.tree[id].type === 'note')),
+                                                                appState.page.nameValid = true;
+                                                                if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                    appState.page.nameValid = true;
+                                                                }
+                                                                widgets['new-folder-name-hint'].update();
+                                                                if (!appState.page.nameValid) {
+                                                                    return;
+                                                                }
+                                                                const newFolderId = generateTreeId();
+                                                                appState.session.tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: appState.session.folderId, children: [] }
+                                                                appState.session.tree[appState.session.folderId].children.push(newFolderId);
+                                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
                                                                 });
-                                                                signOut(appState.firebase.auth);
+                                                                modalOff();
                                                             }),
                                                             ...buttons.l,
-                                                            ...buttons.filledRed,
+                                                            ...buttons.filledBlue,
+                                                            marginTop: '0.5rem',
+                                                            alignSelf: 'end',
                                                             children: [
-                                                                { text: 'Delete' }]
+                                                                { text: 'Create' }
+                                                            ]
                                                         }
-                                                    ]),
-                                                });
+                                                    ]
+                                                })
                                             }),
                                             ...buttons.mFullWidth,
-                                            ...buttons.flatRed,
-                                            children: [{ text: 'Delete account' }]
+                                            ...buttons.flat,
+                                            children: [{ text: 'New Folder' }]
                                         },
                                         {
                                             ...button(function (event) {
                                                 event.stopPropagation();
-                                                signOut(appState.firebase.auth);
+                                                modalOn({
+                                                    ...menu,
+                                                    alignItems: 'start',
+                                                    gap: '0.5rem',
+                                                    children: [
+                                                        {
+                                                            fontWeight: 600,
+                                                            text: 'Name'
+                                                        },
+                                                        {
+                                                            id: 'new-note-name-hint',
+                                                            ...text.aux,
+                                                            display: () => appState.page.nameValid ? 'none' : 'block',
+                                                            color: colors.red[500],
+                                                            text: 'Required'
+                                                        },
+                                                        {
+                                                            id: 'new-note-name-input',
+                                                            ...input,
+                                                            ...border,
+                                                            width: '100%',
+                                                            type: 'text',
+                                                            maxlength: '64'
+                                                        },
+                                                        {
+                                                            ...button(async function (event) {
+                                                                event.stopPropagation();
+                                                                appState.page.nameValid = true;
+                                                                if (!widgets['new-note-name-input'].domElement.value?.trim()) {
+                                                                    appState.page.nameValid = false;
+                                                                }
+                                                                widgets['new-note-name-hint'].update();
+                                                                if (!appState.page.nameValid) {
+                                                                    return;
+                                                                }
+                                                                const newNoteId = generateTreeId();
+                                                                appState.session.tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: appState.session.folderId }
+                                                                appState.session.tree[appState.session.folderId].children.push(newNoteId);
+                                                                updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
+                                                                    tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
+                                                                });
+                                                                modalOff();
+                                                            }),
+                                                            ...buttons.l,
+                                                            ...buttons.filledBlue,
+                                                            marginTop: '0.5rem',
+                                                            alignSelf: 'end',
+                                                            children: [
+                                                                { text: 'Create' }
+                                                            ]
+                                                        }
+                                                    ]
+                                                })
                                             }),
                                             ...buttons.mFullWidth,
-                                            ...buttons.flatRed,
-                                            children: [{ text: 'Log out' }]
-                                        }
+                                            ...buttons.flat,
+                                            children: [{ text: 'New Note' }]
+                                        },
                                     ]
                                 })
                             }),
-                            ...buttons.m,
-                            ...buttons.flat,
-                            margin: '1rem',
+                            ...buttons.filledBlue,
+                            padding: 0,
                             borderRadius: '2rem',
                             children: [
                                 {
-                                    html: icons.menu,
-                                    width: '2rem',
-                                    height: '2rem',
-                                }
-                            ]
-                        },
-                        {
-                            ...column,
-                            margin: '1rem',
-                            gap: '1rem',
-                            children: [
-                                switchThemeButton(),
-                                {
-                                    ...button(function (event) {
-                                        event.stopPropagation();
-                                        modalOn({
-                                            ...menu,
-                                            children: [
-                                                {
-                                                    ...button(function (event) {
-                                                        event.stopPropagation();
-                                                        modalOn({
-                                                            ...menu,
-                                                            alignItems: 'start',
-                                                            gap: '0.5rem',
-                                                            children: [
-                                                                {
-                                                                    fontWeight: 600,
-                                                                    text: 'Name'
-                                                                },
-                                                                {
-                                                                    id: 'new-folder-name-hint',
-                                                                    ...text.aux,
-                                                                    display: () => appState.page.nameValid ? 'none' : 'block',
-                                                                    color: colors.red[500],
-                                                                    errorText: 'Required'
-                                                                },
-                                                                {
-                                                                    id: 'new-folder-name-input',
-                                                                    ...input,
-                                                                    ...border,
-                                                                    width: '100%',
-                                                                    type: 'text',
-                                                                    maxlength: '64'
-                                                                },
-                                                                {
-                                                                    ...button(),
-                                                                    ...buttons.l,
-                                                                    ...buttons.filledBlue,
-                                                                    marginTop: '0.5rem',
-                                                                    alignSelf: 'end',
-                                                                    click: async function (event) {
-                                                                        event.stopPropagation();
-                                                                        appState.page.nameValid = true;
-                                                                        if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                            appState.page.nameValid = true;
-                                                                        }
-                                                                        widgets['new-folder-name-hint'].update();
-                                                                        if (!appState.page.nameValid) {
-                                                                            return;
-                                                                        }
-                                                                        const newFolderId = generateTreeId();
-                                                                        appState.session.tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: appState.session.folderId, children: [] }
-                                                                        appState.session.tree[appState.session.folderId].children.push(newFolderId);
-                                                                        updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
-                                                                        });
-                                                                        modalOff();
-                                                                    },
-                                                                    children: [
-                                                                        { text: 'Create' }
-                                                                    ]
-                                                                }
-                                                            ]
-                                                        })
-                                                    }),
-                                                    ...buttons.mFullWidth,
-                                                    ...buttons.flat,
-                                                    children: [{ text: 'New Folder' }]
-                                                },
-                                                {
-                                                    ...button(function (event) {
-                                                        event.stopPropagation();
-                                                        modalOn({
-                                                            ...menu,
-                                                            alignItems: 'start',
-                                                            gap: '0.5rem',
-                                                            children: [
-                                                                {
-                                                                    fontWeight: 600,
-                                                                    text: 'Name'
-                                                                },
-                                                                {
-                                                                    id: 'new-note-name-hint',
-                                                                    ...text.aux,
-                                                                    display: () => appState.page.nameValid ? 'none' : 'block',
-                                                                    color: colors.red[500],
-                                                                    errorText: 'Required'
-                                                                },
-                                                                {
-                                                                    id: 'new-note-name-input',
-                                                                    ...input,
-                                                                    ...border,
-                                                                    width: '100%',
-                                                                    type: 'text',
-                                                                    maxlength: '64'
-                                                                },
-                                                                {
-                                                                    ...button(),
-                                                                    ...buttons.l,
-                                                                    ...buttons.filledBlue,
-                                                                    marginTop: '0.5rem',
-                                                                    alignSelf: 'end',
-                                                                    click: async function (event) {
-                                                                        event.stopPropagation();
-                                                                        appState.page.nameValid = true;
-                                                                        if (!widgets['new-note-name-input'].domElement.value?.trim()) {
-                                                                            appState.page.nameValid = false;
-                                                                        }
-                                                                        widgets['new-note-name-hint'].update();
-                                                                        if (!appState.page.nameValid) {
-                                                                            return;
-                                                                        }
-                                                                        const newNoteId = generateTreeId();
-                                                                        appState.session.tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: appState.session.folderId }
-                                                                        appState.session.tree[appState.session.folderId].children.push(newNoteId);
-                                                                        updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
-                                                                            tree: await encrypt(appState.key, appState.textEncoder.encode(JSON.stringify(appState.session.tree))),
-                                                                        });
-                                                                        modalOff();
-                                                                    },
-                                                                    children: [
-                                                                        { text: 'Create' }
-                                                                    ]
-                                                                }
-                                                            ]
-                                                        })
-                                                    }),
-                                                    ...buttons.mFullWidth,
-                                                    ...buttons.flat,
-                                                    children: [{ text: 'New Note' }]
-                                                },
-                                            ]
-                                        })
-                                    }),
-                                    ...buttons.filledBlue,
-                                    padding: 0,
-                                    borderRadius: '2rem',
-                                    children: [
-                                        {
-                                            html: icons.add,
-                                            width: '3rem',
-                                            height: '3rem',
-                                        }
-                                    ]
+                                    html: icons.add,
+                                    width: '3rem',
+                                    height: '3rem',
                                 }
                             ]
                         }
@@ -1026,8 +1021,8 @@ export function notePage() {
         paragraphsAllFetched: true,
         paragraphs: [],
         addParagraphValid: true,
-        editParagraphId,
-        editParagraphValid,
+        editParagraphId: undefined,
+        editParagraphValid: undefined,
     }
     return {
         meta: {
@@ -1063,7 +1058,7 @@ export function notePage() {
                                     ]
                                 },
                                 {
-                                    ...text.h1,
+                                    ...text.h5,
                                     text: appState.session.tree[appState.session.noteId].name
                                 }
                             ]
@@ -1075,7 +1070,7 @@ export function notePage() {
                     ...text.aux,
                     display: () => appState.page.addParagraphValid ? 'none' : 'block',
                     color: colors.red[500],
-                    errorText: 'Required'
+                    text: 'Required'
                 },
                 {
                     id: 'add-paragraph-input',
@@ -1094,10 +1089,8 @@ export function notePage() {
                             id: 'image-input',
                             tag: 'input',
                             display: 'none',
-                            attributes: {
-                                type: 'file',
-                                accept: 'image/*'
-                            },
+                            type: 'file',
+                            accept: 'image/*',
                             onchange: function (event) {
                                 const file = event.target.files[0];
                                 if (file) {
@@ -1158,7 +1151,7 @@ export function notePage() {
                                                         ]
                                                     }
                                                 ]),
-                                                ...yellowPanel,
+                                                ...colored('yellow').panel,
                                             }
                                         )
                                     } else {
@@ -1213,6 +1206,7 @@ export function notePage() {
                                     noteId: appState.session.noteId,
                                     text: await encrypt(appState.key, appState.textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
                                 });
+                                widgets['add-paragraph-input'].update();
                             }),
                             ...buttons.l,
                             ...buttons.filledBlue,
@@ -1222,25 +1216,28 @@ export function notePage() {
                         }
                     ]
                 },
-                ...appState.page.paragraphs.map((paragraph, index) => paragraph.id in appState.page.editParagraphIds ? {
+                ...appState.page.paragraphs.map((paragraph, index) => paragraph.id === appState.page.editParagraphId ? {
                     id: 'edit-paragraph',
+                    ...column,
                     width: '100%',
                     gap: '1rem',
                     children: [
                         {
                             id: 'edit-paragraph-hint',
+                            display: () => appState.page.editParagraphValid ? 'none' : 'block',
                             ...text.aux,
-                            errorText: 'Required'
+                            color: colors.red[500],
+                            text: 'Required'
                         },
                         {
                             id: 'edit-paragraph-input',
                             ...textArea,
                             ...border,
+                            ...(paragraph.color ? colored(paragraph.color).panel : {}),
                             width: '100%',
                             padding: '0.75rem',
                             rows: 8,
-                            ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}Panel`]),
-                            value: paragraph.text
+                            text: paragraph.text
                         },
                         {
                             ...row,
@@ -1268,7 +1265,7 @@ export function notePage() {
                                         if (!widgets['edit-paragraph-input'].domElement.value.trim()) {
                                             appState.page.editParagraphValid = false;
                                         }
-                                        widgets['edit-paragraph-input'].update();
+                                        widgets['edit-paragraph-hint'].update();
                                         if (!appState.page.editParagraphValid) {
                                             return;
                                         }
@@ -1289,9 +1286,10 @@ export function notePage() {
                     ]
                 } : {
                     id: `paragraph-${paragraph.id}`,
+                    ...column,
                     ...card,
                     ...border,
-                    ...((!paragraph.color || paragraph.color === 'default') ? undefined : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}`]),
+                    ...(paragraph.color ? colored(paragraph.color).panel : {}),
                     width: '100%',
                     gap: '1rem',
                     padding: 0,
@@ -1305,6 +1303,7 @@ export function notePage() {
                             text: paragraph.text
                         } : null,
                         paragraph.image ? {
+                            tag: 'img',
                             width: '100%',
                             src: paragraph.image
                         } : null,
@@ -1317,7 +1316,7 @@ export function notePage() {
                             padding: '0 0.75rem 0.75rem 0.75rem',
                             children: [
                                 {
-                                    ...((!paragraph.color || paragraph.color === 'default') ? styles.textAux1 : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}TextAux`]),
+                                    ...(paragraph.color ? colored(paragraph.color).text.aux : text.aux),
                                     fontWeight: 400,
                                     text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                 },
@@ -1331,7 +1330,7 @@ export function notePage() {
                                                 navigator.clipboard.writeText(paragraph.text);
                                             }),
                                             ...buttons.m,
-                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.copy,
@@ -1384,7 +1383,7 @@ export function notePage() {
                                                 });
                                             }),
                                             ...buttons.m,
-                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.color,
@@ -1404,8 +1403,8 @@ export function notePage() {
                                                 }
                                             }),
                                             ...buttons.m,
+                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             ...(appState.page.editParagraphId ? buttons.disabled : {}),
-                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
                                             children: [
                                                 {
                                                     html: icons.edit,
@@ -1432,7 +1431,7 @@ export function notePage() {
                                                 })
                                             }),
                                             ...buttons.m,
-                                            ...((!paragraph.color || paragraph.color === 'default') ? styles.buttonFlat : styles[`panel${paragraph.color.charAt(0).toUpperCase() + paragraph.color.slice(1)}ButtonFlat`]),
+                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.delete,
