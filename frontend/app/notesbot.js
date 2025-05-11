@@ -167,7 +167,6 @@ export function loginPage() {
                     }),
                     ...buttons.l,
                     ...buttons.flat,
-                    fontWeight: 400,
                     children: [
                         {
                             html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
@@ -234,6 +233,7 @@ export function setupTutorialPage() {
                                     }),
                                     ...buttons.l,
                                     ...buttons.filled,
+                                    fontWeight: 600,
                                     text: 'Log out'
                                 },
                                 {
@@ -242,6 +242,7 @@ export function setupTutorialPage() {
                                     }),
                                     ...buttons.l,
                                     ...buttons.filledBlue,
+                                    fontWeight: 600,
                                     text: 'Next'
                                 }
                             ]
@@ -292,6 +293,7 @@ export function setupPage() {
                                     ...text.aux,
                                     display: () => appState.page.keyphraseValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
+                                    fontWeight: 500,
                                     color: colors.red[500],
                                     text: 'Required'
                                 },
@@ -314,6 +316,7 @@ export function setupPage() {
                                     ...text.aux,
                                     display: () => appState.page.keyphraseRepeatValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
+                                    fontWeight: 500,
                                     color: colors.red[500],
                                     text: 'Invalid'
                                 },
@@ -340,6 +343,7 @@ export function setupPage() {
                                     }),
                                     ...buttons.l,
                                     ...buttons.filled,
+                                    fontWeight: 600,
                                     text: 'Back'
                                 },
                                 {
@@ -396,9 +400,8 @@ export function setupPage() {
                                     }),
                                     ...buttons.l,
                                     ...buttons.filledBlue,
-                                    children: [
-                                        { text: 'Save' }
-                                    ]
+                                    fontWeight: 600,
+                                    text: 'Save'
                                 }
                             ]
                         }
@@ -447,6 +450,7 @@ export function keyphrasePage() {
                                     ...text.aux,
                                     display: () => appState.page.keyphraseValid ? 'none' : 'block',
                                     marginTop: '0.5rem',
+                                    fontWeight: 500,
                                     color: colors.red[500],
                                     text: 'Invalid'
                                 },
@@ -474,6 +478,7 @@ export function keyphrasePage() {
                                     ...buttons.l,
                                     ...buttons.filled,
                                     justifyContent: 'center',
+                                    fontWeight: 600,
                                     text: 'Log out'
                                 },
                                 {
@@ -494,9 +499,8 @@ export function keyphrasePage() {
                                     ...buttons.l,
                                     ...buttons.filledBlue,
                                     justifyContent: 'center',
-                                    children: [
-                                        { text: 'Save' }
-                                    ]
+                                    fontWeight: 600,
+                                    text: 'Save',
                                 }
                             ]
                         }
@@ -541,8 +545,8 @@ export function folderPage() {
                                     children: [
                                         {
                                             html: icons.up,
-                                            width: '1.5rem',
-                                            height: '1.5rem',
+                                            width: '1.25rem',
+                                            height: '1.25rem',
                                         }
                                     ]
                                 },
@@ -578,7 +582,7 @@ export function folderPage() {
                                     }),
                                     ...buttons.mFullWidth,
                                     ...buttons.flat,
-                                    children: [{ text: 'Move Up' }]
+                                    text: 'Move Up'
                                 } : null,
                                 appState.session.tree[appState.session.folderId].children.indexOf(cid) < appState.session.tree[appState.session.folderId].children.length - 1 ? {
                                     ...button(async function (event) {
@@ -593,7 +597,7 @@ export function folderPage() {
                                     }),
                                     ...buttons.mFullWidth,
                                     ...buttons.flat,
-                                    children: [{ text: 'Move Down' }]
+                                    text: 'Move Down'
                                 } : null,
                                 {
                                     ...button(function (event) {
@@ -617,11 +621,7 @@ export function folderPage() {
                                                     }),
                                                     ...buttons.mFullWidth,
                                                     ...buttons.flat,
-                                                    justifyContent: 'start',
-                                                    fontWeight: 400,
-                                                    children: [
-                                                        { text: '...' }
-                                                    ]
+                                                    text: '...'
                                                 },
                                                 ...appState.session.tree[appState.page.moveToFolderId].children.filter(id => appState.session.tree[id].type === 'folder').map(id => ({
                                                     ...button(function (event) {
@@ -631,11 +631,7 @@ export function folderPage() {
                                                     }),
                                                     ...buttons.mFullWidth,
                                                     ...buttons.flat,
-                                                    justifyContent: 'start',
-                                                    fontWeight: 400,
-                                                    children: [
-                                                        { text: appState.session.tree[id].name }
-                                                    ]
+                                                    text: appState.session.tree[id].name
                                                 })),
                                                 {
                                                     ...button(async function (event) {
@@ -654,20 +650,20 @@ export function folderPage() {
                                                     ...buttons.filledBlue,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
-                                                    children: [
-                                                        { text: `Move to ${appState.session.tree[appState.page.moveToFolderId].name}` }
-                                                    ]
+                                                    fontWeight: 600,
+                                                    text: `Move to ${appState.session.tree[appState.page.moveToFolderId].name}`
                                                 }
                                             ],
                                         });
                                     }),
                                     ...buttons.mFullWidth,
                                     ...buttons.flat,
-                                    children: [{ text: 'Move to Folder' }]
+                                    text: 'Move to Folder'
                                 },
                                 {
                                     ...button(function (event) {
                                         event.stopPropagation();
+                                        appState.page.nameValid = true;
                                         modalOn({
                                             ...menu,
                                             alignItems: 'start',
@@ -681,6 +677,7 @@ export function folderPage() {
                                                     id: 'new-folder-name-hint',
                                                     ...text.aux,
                                                     display: () => appState.page.nameValid ? 'none' : 'block',
+                                                    fontWeight: 500,
                                                     color: colors.red[500],
                                                     text: 'Required'
                                                 },
@@ -714,16 +711,15 @@ export function folderPage() {
                                                     ...buttons.filledBlue,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
-                                                    children: [
-                                                        { text: 'Rename' }
-                                                    ]
+                                                    fontWeight: 600,
+                                                    text: 'Rename'
                                                 }
                                             ]
                                         })
                                     }),
                                     ...buttons.mFullWidth,
                                     ...buttons.flat,
-                                    children: [{ text: 'Rename' }]
+                                    text: 'Rename'
                                 },
                                 {
                                     ...button(function (event) {
@@ -744,8 +740,8 @@ export function folderPage() {
                                                         }),
                                                         ...buttons.l,
                                                         ...buttons.filledRed,
-                                                        children: [
-                                                            { text: 'Delete' }]
+                                                        fontWeight: 600,
+                                                        text: 'Delete'
                                                     }
                                                 ]),
                                             });
@@ -770,15 +766,15 @@ export function folderPage() {
                                                     }),
                                                     ...buttons.l,
                                                     ...buttons.filledRed,
-                                                    children: [
-                                                        { text: 'Delete' }]
+                                                    fontWeight: 600,
+                                                    text: 'Delete'
                                                 }]),
                                             })
                                         }
                                     }),
                                     ...buttons.mFullWidth,
                                     ...buttons.flatRed,
-                                    children: [{ text: 'Delete' }]
+                                    text: 'Delete'
                                 },
                             ]
                         })
@@ -790,7 +786,6 @@ export function folderPage() {
                     alignItems: 'center',
                     borderRadius: '0.5rem',
                     fontSize: '1.125rem',
-                    fontWeight: 400,
                     children: [
                         { text: appState.session.tree[cid]['name'] },
                     ]
@@ -822,15 +817,15 @@ export function folderPage() {
                                                     }),
                                                     ...buttons.l,
                                                     ...buttons.filledRed,
-                                                    children: [
-                                                        { text: 'Delete' }]
+                                                    fontWeight: 600,
+                                                    text: 'Delete'
                                                 }
                                             ]),
                                         });
                                     }),
                                     ...buttons.mFullWidth,
                                     ...buttons.flatRed,
-                                    children: [{ text: 'Delete account' }]
+                                    text: 'Delete account'
                                 },
                                 {
                                     ...button(function (event) {
@@ -839,7 +834,7 @@ export function folderPage() {
                                     }),
                                     ...buttons.mFullWidth,
                                     ...buttons.flatRed,
-                                    children: [{ text: 'Log out' }]
+                                    text: 'Log out'
                                 }
                             ]
                         })
@@ -875,6 +870,7 @@ export function folderPage() {
                                         {
                                             ...button(function (event) {
                                                 event.stopPropagation();
+                                                appState.page.nameValid = true;
                                                 modalOn({
                                                     ...menu,
                                                     alignItems: 'start',
@@ -888,6 +884,7 @@ export function folderPage() {
                                                             id: 'new-folder-name-hint',
                                                             ...text.aux,
                                                             display: () => appState.page.nameValid ? 'none' : 'block',
+                                                            fontWeight: 500,
                                                             color: colors.red[500],
                                                             text: 'Required'
                                                         },
@@ -922,20 +919,20 @@ export function folderPage() {
                                                             ...buttons.filledBlue,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            children: [
-                                                                { text: 'Create' }
-                                                            ]
+                                                            fontWeight: 600,
+                                                            text: 'Create'
                                                         }
                                                     ]
                                                 })
                                             }),
                                             ...buttons.mFullWidth,
                                             ...buttons.flat,
-                                            children: [{ text: 'New Folder' }]
+                                            text: 'New Folder'
                                         },
                                         {
                                             ...button(function (event) {
                                                 event.stopPropagation();
+                                                appState.page.nameValid = true;
                                                 modalOn({
                                                     ...menu,
                                                     alignItems: 'start',
@@ -949,6 +946,7 @@ export function folderPage() {
                                                             id: 'new-note-name-hint',
                                                             ...text.aux,
                                                             display: () => appState.page.nameValid ? 'none' : 'block',
+                                                            fontWeight: 500,
                                                             color: colors.red[500],
                                                             text: 'Required'
                                                         },
@@ -983,16 +981,15 @@ export function folderPage() {
                                                             ...buttons.filledBlue,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
-                                                            children: [
-                                                                { text: 'Create' }
-                                                            ]
+                                                            fontWeight: 600,
+                                                            text: 'Create'
                                                         }
                                                     ]
                                                 })
                                             }),
                                             ...buttons.mFullWidth,
                                             ...buttons.flat,
-                                            children: [{ text: 'New Note' }]
+                                            text: 'New Note'
                                         },
                                     ]
                                 })
@@ -1052,8 +1049,8 @@ export function notePage() {
                                     children: [
                                         {
                                             html: icons.up,
-                                            width: '1.5rem',
-                                            height: '1.5rem',
+                                            width: '1.25rem',
+                                            height: '1.25rem',
                                         }
                                     ]
                                 },
@@ -1069,6 +1066,7 @@ export function notePage() {
                     id: 'add-paragraph-hint',
                     ...text.aux,
                     display: () => appState.page.addParagraphValid ? 'none' : 'block',
+                    fontWeight: 500,
                     color: colors.red[500],
                     text: 'Required'
                 },
@@ -1146,9 +1144,8 @@ export function notePage() {
                                                         }),
                                                         ...buttons.l,
                                                         ...buttons.filledYellow,
-                                                        children: [
-                                                            { text: 'OK' }
-                                                        ]
+                                                        fontWeight: 600,
+                                                        text: 'OK'
                                                     }
                                                 ]),
                                                 ...colored('yellow').panel,
@@ -1187,7 +1184,10 @@ export function notePage() {
                                     width: '1.25rem',
                                     height: '1.25rem',
                                 },
-                                { text: 'Image' }
+                                {
+                                    fontWeight: 600,
+                                    text: 'Image'
+                                }
                             ]
                         },
                         {
@@ -1210,9 +1210,8 @@ export function notePage() {
                             }),
                             ...buttons.l,
                             ...buttons.filledBlue,
-                            children: [
-                                { text: 'Add' }
-                            ]
+                            fontWeight: 600,
+                            text: 'Add'
                         }
                     ]
                 },
@@ -1226,6 +1225,7 @@ export function notePage() {
                             id: 'edit-paragraph-hint',
                             display: () => appState.page.editParagraphValid ? 'none' : 'block',
                             ...text.aux,
+                            fontWeight: 500,
                             color: colors.red[500],
                             text: 'Required'
                         },
@@ -1254,9 +1254,8 @@ export function notePage() {
                                     ...buttons.l,
                                     ...buttons.filled,
                                     justifyContent: 'center',
-                                    children: [
-                                        { text: 'Cancel' }
-                                    ]
+                                    fontWeight: 600,
+                                    text: 'Cancel'
                                 },
                                 {
                                     ...button(async function (event) {
@@ -1277,9 +1276,8 @@ export function notePage() {
                                     ...buttons.l,
                                     ...buttons.filledBlue,
                                     justifyContent: 'center',
-                                    children: [
-                                        { text: 'Save' }
-                                    ]
+                                    fontWeight: 600,
+                                    text: 'Save'
                                 }
                             ]
                         }
@@ -1317,7 +1315,6 @@ export function notePage() {
                             children: [
                                 {
                                     ...(paragraph.color ? colored(paragraph.color).text.aux : text.aux),
-                                    fontWeight: 400,
                                     text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                 },
                                 {
@@ -1364,7 +1361,6 @@ export function notePage() {
                                                             justifyContent: 'start',
                                                             alignItems: 'center',
                                                             gap: '1rem',
-                                                            fontWeight: 400,
                                                             children: [
                                                                 {
                                                                     html: icons.circle,
@@ -1425,8 +1421,8 @@ export function notePage() {
                                                         }),
                                                         ...buttons.l,
                                                         ...buttons.filledRed,
-                                                        children: [
-                                                            { text: 'Delete' }]
+                                                        fontWeight: 600,
+                                                        text: 'Delete'
                                                     }]),
                                                 })
                                             }),
@@ -1454,9 +1450,8 @@ export function notePage() {
                     ...buttons.lFullWidth,
                     ...buttons.filled,
                     justifyContent: 'center',
-                    children: [
-                        { text: 'More' }
-                    ]
+                    fontWeight: 600,
+                    text: 'More'
                 }
             ]
         },
