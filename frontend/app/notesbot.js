@@ -232,7 +232,7 @@ export function setupTutorialPage() {
                                         signOut(appState.firebase.auth);
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filled,
+                                    ...buttons.filledLight,
                                     fontWeight: 600,
                                     text: 'Log out'
                                 },
@@ -241,7 +241,7 @@ export function setupTutorialPage() {
                                         updatePage(setupPage());
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filledBlue,
+                                    ...colored('blue').buttons.filledDark,
                                     fontWeight: 600,
                                     text: 'Next'
                                 }
@@ -342,7 +342,7 @@ export function setupPage() {
                                         updatePage(setupTutorialPage());
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filled,
+                                    ...buttons.filledLight,
                                     fontWeight: 600,
                                     text: 'Back'
                                 },
@@ -399,7 +399,7 @@ export function setupPage() {
                                         }
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filledBlue,
+                                    ...colored('blue').buttons.filledDark,
                                     fontWeight: 600,
                                     text: 'Save'
                                 }
@@ -476,7 +476,7 @@ export function keyphrasePage() {
                                         signOut(appState.firebase.auth);
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filled,
+                                    ...buttons.filledLight,
                                     justifyContent: 'center',
                                     fontWeight: 600,
                                     text: 'Log out'
@@ -497,7 +497,7 @@ export function keyphrasePage() {
                                         listenNotebook();
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filledBlue,
+                                    ...colored('blue').buttons.filledDark,
                                     justifyContent: 'center',
                                     fontWeight: 600,
                                     text: 'Save',
@@ -647,7 +647,7 @@ export function folderPage() {
                                                         modalOff();
                                                     }),
                                                     ...buttons.l,
-                                                    ...buttons.filledBlue,
+                                                    ...colored('blue').buttons.filledDark,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     fontWeight: 600,
@@ -708,7 +708,7 @@ export function folderPage() {
                                                         modalOff();
                                                     }),
                                                     ...buttons.l,
-                                                    ...buttons.filledBlue,
+                                                    ...colored('blue').buttons.filledDark,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     fontWeight: 600,
@@ -739,7 +739,7 @@ export function folderPage() {
                                                             modalOff();
                                                         }),
                                                         ...buttons.l,
-                                                        ...buttons.filledRed,
+                                                        ...colored('red').buttons.filledDark,
                                                         fontWeight: 600,
                                                         text: 'Delete'
                                                     }
@@ -765,7 +765,7 @@ export function folderPage() {
                                                         modalOff();
                                                     }),
                                                     ...buttons.l,
-                                                    ...buttons.filledRed,
+                                                    ...colored('red').buttons.filledDark,
                                                     fontWeight: 600,
                                                     text: 'Delete'
                                                 }]),
@@ -773,7 +773,7 @@ export function folderPage() {
                                         }
                                     }),
                                     ...buttons.mFullWidth,
-                                    ...buttons.flatRed,
+                                    ...colored('red').buttons.flat,
                                     text: 'Delete'
                                 },
                             ]
@@ -816,7 +816,7 @@ export function folderPage() {
                                                         signOut(appState.firebase.auth);
                                                     }),
                                                     ...buttons.l,
-                                                    ...buttons.filledRed,
+                                                    ...colored('red').buttons.filledDark,
                                                     fontWeight: 600,
                                                     text: 'Delete'
                                                 }
@@ -824,7 +824,7 @@ export function folderPage() {
                                         });
                                     }),
                                     ...buttons.mFullWidth,
-                                    ...buttons.flatRed,
+                                    ...colored('red').buttons.flat,
                                     text: 'Delete account'
                                 },
                                 {
@@ -833,14 +833,14 @@ export function folderPage() {
                                         signOut(appState.firebase.auth);
                                     }),
                                     ...buttons.mFullWidth,
-                                    ...buttons.flatRed,
+                                    ...colored('red').buttons.flat,
                                     text: 'Log out'
                                 }
                             ]
                         })
                     }),
                     ...buttons.m,
-                    ...buttons.filled,
+                    ...buttons.filledLight,
                     margin: '1rem',
                     borderRadius: '2rem',
                     children: [
@@ -916,7 +916,7 @@ export function folderPage() {
                                                                 modalOff();
                                                             }),
                                                             ...buttons.l,
-                                                            ...buttons.filledBlue,
+                                                            ...colored('blue').buttons.filledDark,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
                                                             fontWeight: 600,
@@ -978,7 +978,7 @@ export function folderPage() {
                                                                 modalOff();
                                                             }),
                                                             ...buttons.l,
-                                                            ...buttons.filledBlue,
+                                                            ...colored('blue').buttons.filledDark,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
                                                             fontWeight: 600,
@@ -994,7 +994,7 @@ export function folderPage() {
                                     ]
                                 })
                             }),
-                            ...buttons.filledBlue,
+                            ...colored('blue').buttons.filledDark,
                             padding: 0,
                             borderRadius: '2rem',
                             children: [
@@ -1143,7 +1143,7 @@ export function notePage() {
                                                             };
                                                         }),
                                                         ...buttons.l,
-                                                        ...buttons.filledYellow,
+                                                        ...colored('yellow').buttons.filledDark,
                                                         fontWeight: 600,
                                                         text: 'OK'
                                                     }
@@ -1174,7 +1174,7 @@ export function notePage() {
                                 widgets['image-input'].domElement.click();
                             }),
                             ...buttons.l,
-                            ...buttons.filled,
+                            ...buttons.filledLight,
                             justifyContent: 'center',
                             alignItems: 'center',
                             gap: '0.5rem',
@@ -1209,7 +1209,7 @@ export function notePage() {
                                 widgets['add-paragraph-input'].update();
                             }),
                             ...buttons.l,
-                            ...buttons.filledBlue,
+                            ...colored('blue').buttons.filledDark,
                             fontWeight: 600,
                             text: 'Add'
                         }
@@ -1252,7 +1252,7 @@ export function notePage() {
                                         widgets['note'].update(['add-paragraph-input']);
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filled,
+                                    ...buttons.filledLight,
                                     justifyContent: 'center',
                                     fontWeight: 600,
                                     text: 'Cancel'
@@ -1274,7 +1274,7 @@ export function notePage() {
                                         });
                                     }),
                                     ...buttons.l,
-                                    ...buttons.filledBlue,
+                                    ...colored('blue').buttons.filledDark,
                                     justifyContent: 'center',
                                     fontWeight: 600,
                                     text: 'Save'
@@ -1342,7 +1342,7 @@ export function notePage() {
                                                 modalOn({
                                                     ...menu,
                                                     alignItems: 'start',
-                                                    gap: '0.5rem',
+                                                    gap: '1rem',
                                                     children: [
                                                         {
                                                             fontWeight: 600,
@@ -1368,10 +1368,10 @@ export function notePage() {
                                                                 ...buttons.flat,
                                                                 children: [
                                                                     {
-                                                                        width: '1rem',
-                                                                        height: '1rem',
+                                                                        width: '1.75rem',
+                                                                        height: '1.75rem',
                                                                         borderRadius: '2rem',
-                                                                        borderWidth: '2px',
+                                                                        borderWidth: '4px',
                                                                         borderStyle: 'solid',
                                                                         borderColor: () => color === 'default' ? 'var(--fg-1)' : colors[color][500],
                                                                         backgroundColor: () => color === 'default' ? 'var(--background-color)' : colors[color][darkMode ? 900 : 100],
@@ -1424,7 +1424,7 @@ export function notePage() {
                                                             modalOff();
                                                         }),
                                                         ...buttons.l,
-                                                        ...buttons.filledRed,
+                                                        ...colored('red').buttons.filledDark,
                                                         fontWeight: 600,
                                                         text: 'Delete'
                                                     }]),
@@ -1452,7 +1452,7 @@ export function notePage() {
                         listenParagraphs();
                     }),
                     ...buttons.lFullWidth,
-                    ...buttons.filled,
+                    ...buttons.filledLight,
                     justifyContent: 'center',
                     fontWeight: 600,
                     text: 'More'
