@@ -241,7 +241,7 @@ export function setupTutorialPage() {
                                         updatePage(setupPage());
                                     }),
                                     ...buttons.l,
-                                    ...colored('blue').buttons.filledDark,
+                                    ...colored.blue.buttons.filledDark,
                                     fontWeight: 600,
                                     text: 'Next'
                                 }
@@ -399,7 +399,7 @@ export function setupPage() {
                                         }
                                     }),
                                     ...buttons.l,
-                                    ...colored('blue').buttons.filledDark,
+                                    ...colored.blue.buttons.filledDark,
                                     fontWeight: 600,
                                     text: 'Save'
                                 }
@@ -497,7 +497,7 @@ export function keyphrasePage() {
                                         listenNotebook();
                                     }),
                                     ...buttons.l,
-                                    ...colored('blue').buttons.filledDark,
+                                    ...colored.blue.buttons.filledDark,
                                     justifyContent: 'center',
                                     fontWeight: 600,
                                     text: 'Save',
@@ -542,6 +542,7 @@ export function folderPage() {
                                     }),
                                     ...buttons.m,
                                     ...buttons.flat,
+                                    fill: 'var(--fg-2)',
                                     children: [
                                         {
                                             html: icons.up,
@@ -647,7 +648,7 @@ export function folderPage() {
                                                         modalOff();
                                                     }),
                                                     ...buttons.l,
-                                                    ...colored('blue').buttons.filledDark,
+                                                    ...colored.blue.buttons.filledDark,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     fontWeight: 600,
@@ -708,7 +709,7 @@ export function folderPage() {
                                                         modalOff();
                                                     }),
                                                     ...buttons.l,
-                                                    ...colored('blue').buttons.filledDark,
+                                                    ...colored.blue.buttons.filledDark,
                                                     marginTop: '0.5rem',
                                                     alignSelf: 'end',
                                                     fontWeight: 600,
@@ -739,7 +740,7 @@ export function folderPage() {
                                                             modalOff();
                                                         }),
                                                         ...buttons.l,
-                                                        ...colored('red').buttons.filledDark,
+                                                        ...colored.red.buttons.filledDark,
                                                         fontWeight: 600,
                                                         text: 'Delete'
                                                     }
@@ -749,7 +750,7 @@ export function folderPage() {
                                         else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length > 0) {
                                             modalOn({
                                                 ...prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
-                                                ...colored('red').panel,
+                                                ...colored.red.panel,
                                             })
                                         }
                                         else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length === 0) {
@@ -765,7 +766,7 @@ export function folderPage() {
                                                         modalOff();
                                                     }),
                                                     ...buttons.l,
-                                                    ...colored('red').buttons.filledDark,
+                                                    ...colored.red.buttons.filledDark,
                                                     fontWeight: 600,
                                                     text: 'Delete'
                                                 }]),
@@ -773,7 +774,7 @@ export function folderPage() {
                                         }
                                     }),
                                     ...buttons.mFullWidth,
-                                    ...colored('red').buttons.flat,
+                                    ...colored.red.buttons.flat,
                                     text: 'Delete'
                                 },
                             ]
@@ -816,7 +817,7 @@ export function folderPage() {
                                                         signOut(appState.firebase.auth);
                                                     }),
                                                     ...buttons.l,
-                                                    ...colored('red').buttons.filledDark,
+                                                    ...colored.red.buttons.filledDark,
                                                     fontWeight: 600,
                                                     text: 'Delete'
                                                 }
@@ -824,7 +825,7 @@ export function folderPage() {
                                         });
                                     }),
                                     ...buttons.mFullWidth,
-                                    ...colored('red').buttons.flat,
+                                    ...colored.red.buttons.flat,
                                     text: 'Delete account'
                                 },
                                 {
@@ -833,7 +834,7 @@ export function folderPage() {
                                         signOut(appState.firebase.auth);
                                     }),
                                     ...buttons.mFullWidth,
-                                    ...colored('red').buttons.flat,
+                                    ...colored.red.buttons.flat,
                                     text: 'Log out'
                                 }
                             ]
@@ -916,7 +917,7 @@ export function folderPage() {
                                                                 modalOff();
                                                             }),
                                                             ...buttons.l,
-                                                            ...colored('blue').buttons.filledDark,
+                                                            ...colored.blue.buttons.filledDark,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
                                                             fontWeight: 600,
@@ -978,7 +979,7 @@ export function folderPage() {
                                                                 modalOff();
                                                             }),
                                                             ...buttons.l,
-                                                            ...colored('blue').buttons.filledDark,
+                                                            ...colored.blue.buttons.filledDark,
                                                             marginTop: '0.5rem',
                                                             alignSelf: 'end',
                                                             fontWeight: 600,
@@ -994,7 +995,7 @@ export function folderPage() {
                                     ]
                                 })
                             }),
-                            ...colored('blue').buttons.filledDark,
+                            ...colored.blue.buttons.filledLight,
                             padding: 0,
                             borderRadius: '2rem',
                             children: [
@@ -1046,6 +1047,7 @@ export function notePage() {
                                     }),
                                     ...buttons.m,
                                     ...buttons.flat,
+                                    fill: 'var(--fg-2)',
                                     children: [
                                         {
                                             html: icons.up,
@@ -1143,12 +1145,12 @@ export function notePage() {
                                                             };
                                                         }),
                                                         ...buttons.l,
-                                                        ...colored('yellow').buttons.filledDark,
+                                                        ...colored.yellow.buttons.filledDark,
                                                         fontWeight: 600,
                                                         text: 'OK'
                                                     }
                                                 ]),
-                                                ...colored('yellow').panel,
+                                                ...colored.yellow.panel,
                                             }
                                         )
                                     } else {
@@ -1209,7 +1211,7 @@ export function notePage() {
                                 widgets['add-paragraph-input'].update();
                             }),
                             ...buttons.l,
-                            ...colored('blue').buttons.filledDark,
+                            ...colored.blue.buttons.filledDark,
                             fontWeight: 600,
                             text: 'Add'
                         }
@@ -1233,7 +1235,7 @@ export function notePage() {
                             id: 'edit-paragraph-input',
                             ...textArea,
                             ...border,
-                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).panel : {}),
+                            ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
                             width: '100%',
                             padding: '0.75rem',
                             rows: 8,
@@ -1274,7 +1276,7 @@ export function notePage() {
                                         });
                                     }),
                                     ...buttons.l,
-                                    ...colored('blue').buttons.filledDark,
+                                    ...colored.blue.buttons.filledDark,
                                     justifyContent: 'center',
                                     fontWeight: 600,
                                     text: 'Save'
@@ -1287,7 +1289,7 @@ export function notePage() {
                     ...column,
                     ...card,
                     ...border,
-                    ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).panel : {}),
+                    ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
                     width: '100%',
                     gap: '1rem',
                     padding: 0,
@@ -1314,7 +1316,7 @@ export function notePage() {
                             padding: '0 0.75rem 0.75rem 0.75rem',
                             children: [
                                 {
-                                    ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).text.aux : text.aux),
+                                    ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].text.aux : text.aux),
                                     text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                 },
                                 {
@@ -1327,7 +1329,7 @@ export function notePage() {
                                                 navigator.clipboard.writeText(paragraph.text);
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.copy,
@@ -1383,7 +1385,7 @@ export function notePage() {
                                                 });
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.color,
@@ -1403,7 +1405,7 @@ export function notePage() {
                                                 }
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             ...(appState.page.editParagraphId ? buttons.disabled : {}),
                                             children: [
                                                 {
@@ -1424,14 +1426,14 @@ export function notePage() {
                                                             modalOff();
                                                         }),
                                                         ...buttons.l,
-                                                        ...colored('red').buttons.filledDark,
+                                                        ...colored.red.buttons.filledDark,
                                                         fontWeight: 600,
                                                         text: 'Delete'
                                                     }]),
                                                 })
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.delete,
