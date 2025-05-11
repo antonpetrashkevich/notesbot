@@ -1233,7 +1233,7 @@ export function notePage() {
                             id: 'edit-paragraph-input',
                             ...textArea,
                             ...border,
-                            ...(paragraph.color ? colored(paragraph.color).panel : {}),
+                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).panel : {}),
                             width: '100%',
                             padding: '0.75rem',
                             rows: 8,
@@ -1287,7 +1287,7 @@ export function notePage() {
                     ...column,
                     ...card,
                     ...border,
-                    ...(paragraph.color ? colored(paragraph.color).panel : {}),
+                    ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).panel : {}),
                     width: '100%',
                     gap: '1rem',
                     padding: 0,
@@ -1314,7 +1314,7 @@ export function notePage() {
                             padding: '0 0.75rem 0.75rem 0.75rem',
                             children: [
                                 {
-                                    ...(paragraph.color ? colored(paragraph.color).text.aux : text.aux),
+                                    ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).text.aux : text.aux),
                                     text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                 },
                                 {
@@ -1327,7 +1327,7 @@ export function notePage() {
                                                 navigator.clipboard.writeText(paragraph.text);
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.copy,
@@ -1348,38 +1348,42 @@ export function notePage() {
                                                             fontWeight: 600,
                                                             text: 'Color'
                                                         },
-                                                        ...['default', 'red', 'green', 'yellow', 'blue'].map(color => ({
-                                                            ...button(async function (event) {
-                                                                event.stopPropagation();
-                                                                updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
-                                                                    color: await encrypt(appState.key, appState.textEncoder.encode(color)),
-                                                                });
-                                                                modalOff();
-                                                            }),
-                                                            ...buttons.mFullWidth,
-                                                            ...buttons.flat,
-                                                            justifyContent: 'start',
-                                                            alignItems: 'center',
+                                                        {
+                                                            ...grid,
+                                                            width: '100%',
+                                                            alignSelf: 'center',
+                                                            gridTemplateColumns: 'repeat(auto-fill, 3rem)',
+                                                            justifyContent: 'center',
                                                             gap: '1rem',
-                                                            children: [
-                                                                {
-                                                                    html: icons.circle,
-                                                                    width: '1rem',
-                                                                    height: '1rem',
-                                                                    borderRadius: '2rem',
-                                                                    borderWidth: '2px',
-                                                                    borderStyle: 'solid',
-                                                                    borderColor: color === 'default' ? 'var(--fg-1)' : `var(--panel-${color}-fg-1)`,
-                                                                    fill: color === 'default' ? 'var(--background-color)' : `var(--panel-${color}-bg-1)`,
-                                                                },
-                                                                { text: color.charAt(0).toUpperCase() + color.slice(1) }
-                                                            ]
-                                                        }))
+                                                            children: ['default', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => ({
+                                                                ...button(async function (event) {
+                                                                    event.stopPropagation();
+                                                                    updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
+                                                                        color: await encrypt(appState.key, appState.textEncoder.encode(color)),
+                                                                    });
+                                                                    modalOff();
+                                                                }),
+                                                                width: '3rem',
+                                                                height: '3rem',
+                                                                ...buttons.flat,
+                                                                children: [
+                                                                    {
+                                                                        width: '1rem',
+                                                                        height: '1rem',
+                                                                        borderRadius: '2rem',
+                                                                        borderWidth: '2px',
+                                                                        borderStyle: 'solid',
+                                                                        borderColor: () => color === 'default' ? 'var(--fg-1)' : colors[color][500],
+                                                                        backgroundColor: () => color === 'default' ? 'var(--background-color)' : colors[color][darkMode ? 900 : 100],
+                                                                    },
+                                                                ]
+                                                            }))
+                                                        }
                                                     ]
                                                 });
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.color,
@@ -1399,7 +1403,7 @@ export function notePage() {
                                                 }
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             ...(appState.page.editParagraphId ? buttons.disabled : {}),
                                             children: [
                                                 {
@@ -1427,7 +1431,7 @@ export function notePage() {
                                                 })
                                             }),
                                             ...buttons.m,
-                                            ...(paragraph.color ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
+                                            ...(paragraph.color && paragraph.color !== 'default' ? colored(paragraph.color).buttons.flat : { ...buttons.flat, fill: 'var(--fg-2)' }),
                                             children: [
                                                 {
                                                     html: icons.delete,
