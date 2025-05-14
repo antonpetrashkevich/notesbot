@@ -861,7 +861,14 @@ export function folderPage() {
                     margin: '1rem',
                     gap: '1rem',
                     children: [
-                        switchThemeButton,
+                        {
+                            width: '3rem',
+                            height: '3rem',
+                            ...switchThemeButton,
+                            ...buttons.filledLight,
+                            padding: '0.5rem',
+                            borderRadius: '2rem',
+                        },
                         {
                             ...button(function (event) {
                                 event.stopPropagation();
