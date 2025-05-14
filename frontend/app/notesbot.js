@@ -862,10 +862,10 @@ export function folderPage() {
                     gap: '1rem',
                     children: [
                         {
-                            width: '3rem',
-                            height: '3rem',
                             ...switchThemeButton,
                             ...buttons.filledLight,
+                            width: '3rem',
+                            height: '3rem',
                             padding: '0.5rem',
                             borderRadius: '2rem',
                         },
@@ -1244,7 +1244,7 @@ export function notePage() {
                             ...border,
                             ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
                             width: '100%',
-                            padding: '0.75rem',
+                            padding: '0.5rem',
                             rows: 8,
                             text: paragraph.text
                         },
@@ -1299,12 +1299,10 @@ export function notePage() {
                     ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
                     width: '100%',
                     gap: '1rem',
-                    padding: 0,
                     overflow: 'hidden',
                     children: [
                         paragraph.text ? {
                             width: '100%',
-                            padding: '0.75rem 0.75rem 0 0.75rem',
                             whiteSpace: 'pre-wrap',
                             lineHeight: '1.5rem',
                             text: paragraph.text
@@ -1320,7 +1318,6 @@ export function notePage() {
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             gap: '1rem',
-                            padding: '0 0.75rem 0.75rem 0.75rem',
                             children: [
                                 {
                                     ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].text.aux : text.aux),
