@@ -139,7 +139,7 @@ export function listenParagraphs() {
                 appState.page.paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? appState.textDecoder.decode(await decrypt(appState.key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? appState.textDecoder.decode(await decrypt(appState.key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(appState.key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
             }
             appState.page.paragraphsAllFetched = appState.page.paragraphs.length < appState.page.paragraphsLimit;
-            widgets['note']?.update(['add-paragraph-input', 'edit-paragraph']);
+            widgets['note']?.update();
         },
         (error) => {
             console.error(error);
@@ -350,8 +350,6 @@ export function setupPage() {
                                     ...button(async function (event) {
                                         appState.page.keyphraseValid = true;
                                         appState.page.keyphraseRepeatValid = true;
-                                        widgets['keyphrase-hint'].update(true);
-                                        widgets['keyphrase-repeat-hint'].update(true);
                                         if (!widgets['keyphrase-input'].domElement.value) {
                                             appState.page.keyphraseValid = true;
                                         }
@@ -1026,8 +1024,10 @@ export function notePage() {
         paragraphsAllFetched: true,
         paragraphs: [],
         addParagraphValid: true,
+        addParagraphDraft: undefined,
         editParagraphId: undefined,
         editParagraphValid: undefined,
+        editParagraphDraft: undefined,
     }
     return {
         meta: {
@@ -1084,7 +1084,11 @@ export function notePage() {
                     ...textArea,
                     ...border,
                     width: '100%',
-                    rows: 8
+                    rows: 8,
+                    oninput: function (event) {
+                        appState.page.addParagraphDraft = this.domElement.value;
+                    },
+                    text: appState.page.addParagraphDraft,
                 },
                 {
                     ...row,
@@ -1210,12 +1214,12 @@ export function notePage() {
                                 if (!appState.page.addParagraphValid) {
                                     return;
                                 }
+                                appState.page.addParagraphDraft = undefined;
                                 addDoc(collection(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs'), {
                                     timestamp: Math.floor(Date.now() / 1000),
                                     noteId: appState.session.noteId,
                                     text: await encrypt(appState.key, appState.textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
                                 });
-                                widgets['add-paragraph-input'].update();
                             }),
                             ...buttons.l,
                             ...colored.blue.buttons.filledDark,
@@ -1246,7 +1250,10 @@ export function notePage() {
                             width: '100%',
                             padding: '0.5rem',
                             rows: 8,
-                            text: paragraph.text
+                            oninput: function (event) {
+                                appState.page.editParagraphDraft = this.domElement.value;
+                            },
+                            text: appState.page.editParagraphDraft,
                         },
                         {
                             ...row,
@@ -1258,7 +1265,8 @@ export function notePage() {
                                     ...button(async function (event) {
                                         event.stopPropagation();
                                         appState.page.editParagraphId = undefined;
-                                        widgets['note'].update(['add-paragraph-input']);
+                                        appState.page.editParagraphDraft = undefined;
+                                        widgets['note'].update();
                                     }),
                                     ...buttons.l,
                                     ...buttons.filledLight,
@@ -1278,6 +1286,7 @@ export function notePage() {
                                             return;
                                         }
                                         appState.page.editParagraphId = undefined;
+                                        appState.page.editParagraphDraft = undefined;
                                         updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
                                             text: await encrypt(appState.key, appState.textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
                                         });
@@ -1404,8 +1413,8 @@ export function notePage() {
                                                 if (!appState.page.editParagraphId) {
                                                     appState.page.editParagraphId = paragraph.id;
                                                     appState.page.editParagraphValid = true;
-                                                    widgets['note'].update(['add-paragraph-input']);
-                                                    // widgets['edit-paragraph-input'].domElement.focus();
+                                                    appState.page.editParagraphDraft = paragraph.text;
+                                                    widgets['note'].update();
                                                 }
                                             }),
                                             ...buttons.m,
