@@ -1084,7 +1084,7 @@ export function notePage() {
                     ...textArea,
                     ...border,
                     width: '100%',
-                    rows: 8,
+                    height: '256px',
                     oninput: function (event) {
                         appState.page.addParagraphDraft = this.domElement.value;
                     },
@@ -1248,8 +1248,8 @@ export function notePage() {
                             ...border,
                             ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
                             width: '100%',
+                            height: `max(${widgets[`paragraph-${appState.page.editParagraphId}`].domElement.getBoundingClientRect().height}px, 256px)`,
                             padding: '0.5rem',
-                            rows: 8,
                             oninput: function (event) {
                                 appState.page.editParagraphDraft = this.domElement.value;
                             },
