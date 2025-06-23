@@ -17,7 +17,7 @@
 
 <body>
     <script type="module">
-        import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid, unselectable, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
+        import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid } from '/home/n1/projects/xpl_kit/core.js';
         import { colors, styles, components, pages } from './notesbot.js';
         import { initializeApp as initializeFirebase } from "firebase/app";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
@@ -47,18 +47,18 @@
 
         startApp('XPL');
         updateBodyStyle({
-            ...styles.font.default,
-            backgroundColor: colors.background,
-            color: colors.foreground1,
+            ...styles.font.default(),
+            backgroundColor: colors.background(),
+            color: colors.foreground1(),
         });
         startViewportSizeController();
         startThemeController(function () {
             updateMetaTags({
-                'theme-color': colors.metaThemeColor
+                'theme-color': colors.metaThemeColor()
             });
             updateBodyStyle({
-                backgroundColor: colors.background,
-                color: colors.foreground1,
+                backgroundColor: colors.background(),
+                color: colors.foreground1(),
             });
         });
         updatePage(pages.loadingPage());

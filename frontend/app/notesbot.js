@@ -1,5 +1,5 @@
-import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid, unselectable, button, buttonLink, select, input, textArea } from '/home/n1/projects/profiler/frontend/apex.js';
-import { colors as baseColors, styles as baseStyles, components as baseComponents, pages as basePages } from '/home/n1/projects/profiler/frontend/apex-commons.js';
+import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid } from '/home/n1/projects/xpl_kit/core.js';
+import { colors as baseColors, styles as baseStyles, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -178,11 +178,11 @@ export const pages = {
                 alignItems: 'center',
                 children: [
                     {
-                        ...button(function (event) {
+                        ...components.button(function (event) {
                             signInWithPopup(appState.firebase.auth, new GoogleAuthProvider());
                         }),
-                        ...styles.button.l,
-                        ...styles.button.flat,
+                        ...styles.button.l(),
+                        ...styles.button.flat(),
                         children: [
                             {
                                 html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
@@ -218,7 +218,7 @@ export const pages = {
                         gap: '2rem',
                         children: [
                             {
-                                ...styles.text.h2,
+                                ...styles.text.h2(),
                                 text: 'Keyphrase'
                             },
                             {
@@ -243,20 +243,20 @@ export const pages = {
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             signOut(appState.firebase.auth);
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.button.filledLight,
+                                        ...styles.button.l(),
+                                        ...styles.button.filledLight(),
                                         fontWeight: 600,
                                         text: 'Log out'
                                     },
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             updatePage(pages.setupPage());
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.colored.blue.button.filledDark,
+                                        ...styles.button.l(),
+                                        ...styles.colored.blue.button.filledDark(),
                                         fontWeight: 600,
                                         text: 'Next'
                                     }
@@ -291,7 +291,7 @@ export const pages = {
                         gap: '2rem',
                         children: [
                             {
-                                ...styles.text.h2,
+                                ...styles.text.h2(),
                                 text: 'Keyphrase'
                             },
                             {
@@ -304,7 +304,7 @@ export const pages = {
                                     },
                                     {
                                         id: 'keyphrase-hint',
-                                        ...styles.text.aux,
+                                        ...styles.text.aux(),
                                         display: () => appState.page.keyphraseValid ? 'none' : 'block',
                                         marginTop: '0.5rem',
                                         fontWeight: 500,
@@ -313,7 +313,7 @@ export const pages = {
                                     },
                                     {
                                         id: 'keyphrase-input',
-                                        ...input,
+                                        ...components.input(),
                                         ...border,
                                         marginTop: '0.5rem',
                                         width: '100%',
@@ -327,7 +327,7 @@ export const pages = {
                                     },
                                     {
                                         id: 'keyphrase-repeat-hint',
-                                        ...styles.text.aux,
+                                        ...styles.text.aux(),
                                         display: () => appState.page.keyphraseRepeatValid ? 'none' : 'block',
                                         marginTop: '0.5rem',
                                         fontWeight: 500,
@@ -336,7 +336,7 @@ export const pages = {
                                     },
                                     {
                                         id: 'keyphrase-repeat-input',
-                                        ...input,
+                                        ...components.input(),
                                         ...border,
                                         marginTop: '0.5rem',
                                         width: '100%',
@@ -352,16 +352,16 @@ export const pages = {
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             updatePage(pages.setupTutorialPage());
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.button.filledLight,
+                                        ...styles.button.l(),
+                                        ...styles.button.filledLight(),
                                         fontWeight: 600,
                                         text: 'Back'
                                     },
                                     {
-                                        ...button(async function (event) {
+                                        ...components.button(async function (event) {
                                             appState.page.keyphraseValid = true;
                                             appState.page.keyphraseRepeatValid = true;
                                             if (!widgets['keyphrase-input'].domElement.value) {
@@ -410,8 +410,8 @@ export const pages = {
                                                 updatePage(pages.generalErrorPage());
                                             }
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.colored.blue.button.filledDark,
+                                        ...styles.button.l(),
+                                        ...styles.colored.blue.button.filledDark(),
                                         fontWeight: 600,
                                         text: 'Save'
                                     }
@@ -444,7 +444,7 @@ export const pages = {
                         gap: '2rem',
                         children: [
                             {
-                                ...styles.text.h2,
+                                ...styles.text.h2(),
                                 text: 'Keyphrase'
                             },
                             {
@@ -458,7 +458,7 @@ export const pages = {
                                     },
                                     {
                                         id: 'keyphrase-hint',
-                                        ...styles.text.aux,
+                                        ...styles.text.aux(),
                                         display: () => appState.page.keyphraseValid ? 'none' : 'block',
                                         marginTop: '0.5rem',
                                         fontWeight: 500,
@@ -467,7 +467,7 @@ export const pages = {
                                     },
                                     {
                                         id: 'keyphrase-input',
-                                        ...input,
+                                        ...components.input(),
                                         ...border,
                                         width: '100%',
                                         marginTop: '0.5rem',
@@ -483,17 +483,17 @@ export const pages = {
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             signOut(appState.firebase.auth);
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.button.filledLight,
+                                        ...styles.button.l(),
+                                        ...styles.button.filledLight(),
                                         justifyContent: 'center',
                                         fontWeight: 600,
                                         text: 'Log out'
                                     },
                                     {
-                                        ...button(async function (event) {
+                                        ...components.button(async function (event) {
                                             appState.page.keyphraseValid = true;
                                             if (!widgets['keyphrase-input'].domElement.value) {
                                                 appState.page.keyphraseValid = false;
@@ -507,8 +507,8 @@ export const pages = {
                                             updatePage(pages.loadingPage());
                                             listenNotebook();
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.colored.blue.button.filledDark,
+                                        ...styles.button.l(),
+                                        ...styles.colored.blue.button.filledDark(),
                                         justifyContent: 'center',
                                         fontWeight: 600,
                                         text: 'Save',
@@ -539,7 +539,7 @@ export const pages = {
                 paddingTop: () => appState.session.folderId === 'root' ? undefined : '4rem',
                 children: () => [
                     appState.session.folderId === 'root' ? null : {
-                        ...fixedHeader,
+                        ...components.fixedHeader,
                         children: [
                             {
                                 ...row,
@@ -547,11 +547,11 @@ export const pages = {
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             goTo(`/folder/${appState.session.tree[appState.session.folderId].parent}`);
                                         }),
-                                        ...styles.button.m,
-                                        ...styles.button.flat,
+                                        ...styles.button.m(),
+                                        ...styles.button.flat(),
                                         fill: 'var(--fg-2)',
                                         children: [
                                             {
@@ -562,7 +562,7 @@ export const pages = {
                                         ]
                                     },
                                     {
-                                        ...styles.text.h5,
+                                        ...styles.text.h5(),
                                         text: appState.session.tree[appState.session.folderId].name
                                     }
                                 ]
@@ -570,7 +570,7 @@ export const pages = {
                         ]
                     },
                     ...appState.session.tree[appState.session.folderId].children.map(cid => ({
-                        ...button(function (event) {
+                        ...components.button(function (event) {
                             if (appState.session.tree[cid]['type'] === 'folder') {
                                 goTo(`/folder/${cid}`);
                             } else if (appState.session.tree[cid]['type'] === 'note') {
@@ -578,10 +578,10 @@ export const pages = {
                             }
                         }, function (event) {
                             modalOn({
-                                ...menu,
+                                ...components.menu(),
                                 children: [
                                     appState.session.tree[appState.session.folderId].children.indexOf(cid) > 0 ? {
-                                        ...button(async function (event) {
+                                        ...components.button(async function (event) {
                                             event.stopPropagation();
                                             const arr = appState.session.tree[appState.session.folderId].children;
                                             const index = arr.indexOf(cid);
@@ -591,12 +591,12 @@ export const pages = {
                                             });
                                             modalOff();
                                         }),
-                                        ...styles.button.mFullWidth,
-                                        ...styles.button.flat,
+                                        ...styles.button.mFullWidth(),
+                                        ...styles.button.flat(),
                                         text: 'Move Up'
                                     } : null,
                                     appState.session.tree[appState.session.folderId].children.indexOf(cid) < appState.session.tree[appState.session.folderId].children.length - 1 ? {
-                                        ...button(async function (event) {
+                                        ...components.button(async function (event) {
                                             event.stopPropagation();
                                             const arr = appState.session.tree[appState.session.folderId].children;
                                             const index = arr.indexOf(cid);
@@ -606,16 +606,16 @@ export const pages = {
                                             });
                                             modalOff();
                                         }),
-                                        ...styles.button.mFullWidth,
-                                        ...styles.button.flat,
+                                        ...styles.button.mFullWidth(),
+                                        ...styles.button.flat(),
                                         text: 'Move Down'
                                     } : null,
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             event.stopPropagation();
                                             appState.page.moveToFolderId = 'root';
                                             modalOn({
-                                                ...menu,
+                                                ...components.menu(),
                                                 alignItems: 'start',
                                                 gap: '0.5rem',
                                                 children: () => [
@@ -625,27 +625,27 @@ export const pages = {
                                                         text: 'Move to Folder'
                                                     },
                                                     appState.page.moveToFolderId === 'root' ? null : {
-                                                        ...button(function (event) {
+                                                        ...components.button(function (event) {
                                                             event.stopPropagation();
                                                             appState.page.moveToFolderId = appState.session.tree[appState.page.moveToFolderId].parent;
                                                             this.parent.update();
                                                         }),
-                                                        ...styles.button.mFullWidth,
-                                                        ...styles.button.flat,
+                                                        ...styles.button.mFullWidth(),
+                                                        ...styles.button.flat(),
                                                         text: '...'
                                                     },
                                                     ...appState.session.tree[appState.page.moveToFolderId].children.filter(id => appState.session.tree[id].type === 'folder').map(id => ({
-                                                        ...button(function (event) {
+                                                        ...components.button(function (event) {
                                                             event.stopPropagation();
                                                             appState.page.moveToFolderId = id;
                                                             this.parent.update();
                                                         }),
-                                                        ...styles.button.mFullWidth,
-                                                        ...styles.button.flat,
+                                                        ...styles.button.mFullWidth(),
+                                                        ...styles.button.flat(),
                                                         text: appState.session.tree[id].name
                                                     })),
                                                     {
-                                                        ...button(async function (event) {
+                                                        ...components.button(async function (event) {
                                                             event.stopPropagation();
                                                             const oldParent = appState.session.tree[appState.session.tree[cid].parent];
                                                             const newParent = appState.session.tree[appState.page.moveToFolderId];
@@ -657,8 +657,8 @@ export const pages = {
                                                             });
                                                             modalOff();
                                                         }),
-                                                        ...styles.button.l,
-                                                        ...styles.colored.blue.button.filledDark,
+                                                        ...styles.button.l(),
+                                                        ...styles.colored.blue.button.filledDark(),
                                                         marginTop: '0.5rem',
                                                         alignSelf: 'end',
                                                         fontWeight: 600,
@@ -667,16 +667,16 @@ export const pages = {
                                                 ],
                                             });
                                         }),
-                                        ...styles.button.mFullWidth,
-                                        ...styles.button.flat,
+                                        ...styles.button.mFullWidth(),
+                                        ...styles.button.flat(),
                                         text: 'Move to Folder'
                                     },
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             event.stopPropagation();
                                             appState.page.nameValid = true;
                                             modalOn({
-                                                ...menu,
+                                                ...components.menu(),
                                                 alignItems: 'start',
                                                 gap: '0.5rem',
                                                 children: [
@@ -686,7 +686,7 @@ export const pages = {
                                                     },
                                                     {
                                                         id: 'new-folder-name-hint',
-                                                        ...styles.text.aux,
+                                                        ...styles.text.aux(),
                                                         display: () => appState.page.nameValid ? 'none' : 'block',
                                                         fontWeight: 500,
                                                         color: colors.red[500],
@@ -694,7 +694,7 @@ export const pages = {
                                                     },
                                                     {
                                                         id: 'new-folder-name-input',
-                                                        ...input,
+                                                        ...components.input(),
                                                         ...border,
                                                         width: '100%',
                                                         type: 'text',
@@ -702,7 +702,7 @@ export const pages = {
                                                         value: appState.session.tree[cid].name
                                                     },
                                                     {
-                                                        ...button(async function (event) {
+                                                        ...components.button(async function (event) {
                                                             event.stopPropagation();
                                                             appState.page.nameValid = true;
                                                             if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
@@ -718,8 +718,8 @@ export const pages = {
                                                             });
                                                             modalOff();
                                                         }),
-                                                        ...styles.button.l,
-                                                        ...styles.colored.blue.button.filledDark,
+                                                        ...styles.button.l(),
+                                                        ...styles.colored.blue.button.filledDark(),
                                                         marginTop: '0.5rem',
                                                         alignSelf: 'end',
                                                         fontWeight: 600,
@@ -728,18 +728,18 @@ export const pages = {
                                                 ]
                                             })
                                         }),
-                                        ...styles.button.mFullWidth,
-                                        ...styles.button.flat,
+                                        ...styles.button.mFullWidth(),
+                                        ...styles.button.flat(),
                                         text: 'Rename'
                                     },
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             event.stopPropagation();
                                             if (appState.session.tree[cid].type === 'note') {
                                                 modalOn({
-                                                    ...prompt('Delete note', 'You won\'t be able to restore it. Consider moving to "Archive" folder', [
+                                                    ...components.prompt('Delete note', 'You won\'t be able to restore it. Consider moving to "Archive" folder', [
                                                         {
-                                                            ...button(async function (event) {
+                                                            ...components.button(async function (event) {
                                                                 event.stopPropagation();
                                                                 delete appState.session.tree[cid];
                                                                 appState.session.tree[appState.session.folderId].children = appState.session.tree[appState.session.folderId].children.filter(id => id !== cid);
@@ -749,8 +749,8 @@ export const pages = {
                                                                 });
                                                                 modalOff();
                                                             }),
-                                                            ...styles.button.l,
-                                                            ...styles.colored.red.button.filledDark,
+                                                            ...styles.button.l(),
+                                                            ...styles.colored.red.button.filledDark(),
                                                             fontWeight: 600,
                                                             text: 'Delete'
                                                         }
@@ -759,14 +759,14 @@ export const pages = {
                                             }
                                             else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length > 0) {
                                                 modalOn({
-                                                    ...prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
-                                                    ...styles.colored.red.panel,
+                                                    ...components.prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
+                                                    ...styles.colored.red.panel(),
                                                 })
                                             }
                                             else if (appState.session.tree[cid].type === 'folder' && appState.session.tree[cid].children.length === 0) {
                                                 modalOn({
-                                                    ...prompt('Delete folder', 'You won\'t be able to restore it', [{
-                                                        ...button(async function (event) {
+                                                    ...components.prompt('Delete folder', 'You won\'t be able to restore it', [{
+                                                        ...components.button(async function (event) {
                                                             event.stopPropagation();
                                                             delete appState.session.tree[cid];
                                                             appState.session.tree[appState.session.folderId].children = appState.session.tree[appState.session.folderId].children.filter(id => id !== cid);
@@ -775,22 +775,22 @@ export const pages = {
                                                             });
                                                             modalOff();
                                                         }),
-                                                        ...styles.button.l,
-                                                        ...styles.colored.red.button.filledDark,
+                                                        ...styles.button.l(),
+                                                        ...styles.colored.red.button.filledDark(),
                                                         fontWeight: 600,
                                                         text: 'Delete'
                                                     }]),
                                                 })
                                             }
                                         }),
-                                        ...styles.button.mFullWidth,
-                                        ...styles.colored.red.button.flat,
+                                        ...styles.button.mFullWidth(),
+                                        ...styles.colored.red.button.flat(),
                                         text: 'Delete'
                                     },
                                 ]
                             })
                         }),
-                        ...styles.button.flat,
+                        ...styles.button.flat(),
                         width: '100%',
                         padding: '1rem',
                         justifyContent: 'center',
@@ -806,18 +806,18 @@ export const pages = {
                         bottom: 0,
                         left: 0,
                         zIndex: 10,
-                        ...button(function (event) {
+                        ...components.button(function (event) {
                             event.stopPropagation();
                             modalOn({
-                                ...menu,
+                                ...components.menu(),
                                 children: [
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             event.stopPropagation();
                                             modalOn({
-                                                ...prompt('Delete account', 'You won\'t be able to restore it', [
+                                                ...components.prompt('Delete account', 'You won\'t be able to restore it', [
                                                     {
-                                                        ...button(async function (event) {
+                                                        ...components.button(async function (event) {
                                                             event.stopPropagation();
                                                             updatePage(pages.loadingPage());
                                                             await updateDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), {
@@ -826,32 +826,32 @@ export const pages = {
                                                             });
                                                             signOut(appState.firebase.auth);
                                                         }),
-                                                        ...styles.button.l,
-                                                        ...styles.colored.red.button.filledDark,
+                                                        ...styles.button.l(),
+                                                        ...styles.colored.red.button.filledDark(),
                                                         fontWeight: 600,
                                                         text: 'Delete'
                                                     }
                                                 ]),
                                             });
                                         }),
-                                        ...styles.button.mFullWidth,
-                                        ...styles.colored.red.button.flat,
+                                        ...styles.button.mFullWidth(),
+                                        ...styles.colored.red.button.flat(),
                                         text: 'Delete account'
                                     },
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             event.stopPropagation();
                                             signOut(appState.firebase.auth);
                                         }),
-                                        ...styles.button.mFullWidth,
-                                        ...styles.colored.red.button.flat,
+                                        ...styles.button.mFullWidth(),
+                                        ...styles.colored.red.button.flat(),
                                         text: 'Log out'
                                     }
                                 ]
                             })
                         }),
-                        ...styles.button.m,
-                        ...styles.button.filledLight,
+                        ...styles.button.m(),
+                        ...styles.button.filledLight(),
                         margin: '1rem',
                         borderRadius: '2rem',
                         children: [
@@ -872,25 +872,25 @@ export const pages = {
                         gap: '1rem',
                         children: [
                             {
-                                ...switchThemeButton,
-                                ...styles.button.filledLight,
+                                ...components.switchThemeButton(),
+                                ...styles.button.filledLight(),
                                 width: '3rem',
                                 height: '3rem',
                                 padding: '0.5rem',
                                 borderRadius: '2rem',
                             },
                             {
-                                ...button(function (event) {
+                                ...components.button(function (event) {
                                     event.stopPropagation();
                                     modalOn({
-                                        ...menu,
+                                        ...components.menu(),
                                         children: [
                                             {
-                                                ...button(function (event) {
+                                                ...components.button(function (event) {
                                                     event.stopPropagation();
                                                     appState.page.nameValid = true;
                                                     modalOn({
-                                                        ...menu,
+                                                        ...components.menu(),
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
@@ -900,7 +900,7 @@ export const pages = {
                                                             },
                                                             {
                                                                 id: 'new-folder-name-hint',
-                                                                ...styles.text.aux,
+                                                                ...styles.text.aux(),
                                                                 display: () => appState.page.nameValid ? 'none' : 'block',
                                                                 fontWeight: 500,
                                                                 color: colors.red[500],
@@ -908,14 +908,14 @@ export const pages = {
                                                             },
                                                             {
                                                                 id: 'new-folder-name-input',
-                                                                ...input,
+                                                                ...components.input(),
                                                                 ...border,
                                                                 width: '100%',
                                                                 type: 'text',
                                                                 maxlength: '64'
                                                             },
                                                             {
-                                                                ...button(async function (event) {
+                                                                ...components.button(async function (event) {
                                                                     event.stopPropagation();
                                                                     appState.page.nameValid = true;
                                                                     if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
@@ -933,8 +933,8 @@ export const pages = {
                                                                     });
                                                                     modalOff();
                                                                 }),
-                                                                ...styles.button.l,
-                                                                ...styles.colored.blue.button.filledDark,
+                                                                ...styles.button.l(),
+                                                                ...styles.colored.blue.button.filledDark(),
                                                                 marginTop: '0.5rem',
                                                                 alignSelf: 'end',
                                                                 fontWeight: 600,
@@ -943,16 +943,16 @@ export const pages = {
                                                         ]
                                                     })
                                                 }),
-                                                ...styles.button.mFullWidth,
-                                                ...styles.button.flat,
+                                                ...styles.button.mFullWidth(),
+                                                ...styles.button.flat(),
                                                 text: 'New Folder'
                                             },
                                             {
-                                                ...button(function (event) {
+                                                ...components.button(function (event) {
                                                     event.stopPropagation();
                                                     appState.page.nameValid = true;
                                                     modalOn({
-                                                        ...menu,
+                                                        ...components.menu(),
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
@@ -962,7 +962,7 @@ export const pages = {
                                                             },
                                                             {
                                                                 id: 'new-note-name-hint',
-                                                                ...styles.text.aux,
+                                                                ...styles.text.aux(),
                                                                 display: () => appState.page.nameValid ? 'none' : 'block',
                                                                 fontWeight: 500,
                                                                 color: colors.red[500],
@@ -970,14 +970,14 @@ export const pages = {
                                                             },
                                                             {
                                                                 id: 'new-note-name-input',
-                                                                ...input,
+                                                                ...components.input(),
                                                                 ...border,
                                                                 width: '100%',
                                                                 type: 'text',
                                                                 maxlength: '64'
                                                             },
                                                             {
-                                                                ...button(async function (event) {
+                                                                ...components.button(async function (event) {
                                                                     event.stopPropagation();
                                                                     appState.page.nameValid = true;
                                                                     if (!widgets['new-note-name-input'].domElement.value?.trim()) {
@@ -995,8 +995,8 @@ export const pages = {
                                                                     });
                                                                     modalOff();
                                                                 }),
-                                                                ...styles.button.l,
-                                                                ...styles.colored.blue.button.filledDark,
+                                                                ...styles.button.l(),
+                                                                ...styles.colored.blue.button.filledDark(),
                                                                 marginTop: '0.5rem',
                                                                 alignSelf: 'end',
                                                                 fontWeight: 600,
@@ -1005,14 +1005,14 @@ export const pages = {
                                                         ]
                                                     })
                                                 }),
-                                                ...styles.button.mFullWidth,
-                                                ...styles.button.flat,
+                                                ...styles.button.mFullWidth(),
+                                                ...styles.button.flat(),
                                                 text: 'New Note'
                                             },
                                         ]
                                     })
                                 }),
-                                ...styles.colored.blue.button.filledLight,
+                                ...styles.colored.blue.button.filledLight(),
                                 padding: 0,
                                 borderRadius: '2rem',
                                 children: [
@@ -1052,7 +1052,7 @@ export const pages = {
                 gap: '1rem',
                 children: () => [
                     {
-                        ...fixedHeader,
+                        ...components.fixedHeader(),
                         children: [
                             {
                                 ...row,
@@ -1060,11 +1060,11 @@ export const pages = {
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...button(function (event) {
+                                        ...components.button(function (event) {
                                             goTo(`/folder/${appState.session.tree[appState.session.noteId].parent}`);
                                         }),
-                                        ...styles.button.m,
-                                        ...styles.button.flat,
+                                        ...styles.button.m(),
+                                        ...styles.button.flat(),
                                         fill: 'var(--fg-2)',
                                         children: [
                                             {
@@ -1075,7 +1075,7 @@ export const pages = {
                                         ]
                                     },
                                     {
-                                        ...styles.text.h5,
+                                        ...styles.text.h5(),
                                         text: appState.session.tree[appState.session.noteId].name
                                     }
                                 ]
@@ -1084,7 +1084,7 @@ export const pages = {
                     },
                     {
                         id: 'add-paragraph-hint',
-                        ...styles.text.aux,
+                        ...styles.text.aux(),
                         display: () => appState.page.addParagraphValid ? 'none' : 'block',
                         fontWeight: 500,
                         color: colors.red[500],
@@ -1092,7 +1092,7 @@ export const pages = {
                     },
                     {
                         id: 'add-paragraph-input',
-                        ...styles.textArea,
+                        ...components.textArea(),
                         ...border,
                         width: '100%',
                         height: '16rem',
@@ -1119,9 +1119,9 @@ export const pages = {
                                         if (file.size > (1024 * 1024 - 8 * 1024)) {
                                             modalOn(
                                                 {
-                                                    ...prompt('Image Upload', 'Image would be compressed to 1MB jpeg', [
+                                                    ...components.prompt('Image Upload', 'Image would be compressed to 1MB jpeg', [
                                                         {
-                                                            ...button(function (event) {
+                                                            ...components.button(function (event) {
                                                                 modalOff();
                                                                 const reader = new FileReader();
                                                                 reader.readAsDataURL(file);
@@ -1166,13 +1166,13 @@ export const pages = {
                                                                     };
                                                                 };
                                                             }),
-                                                            ...styles.button.l,
-                                                            ...styles.colored.yellow.button.filledDark,
+                                                            ...styles.button.l(),
+                                                            ...styles.colored.yellow.button.filledDark(),
                                                             fontWeight: 600,
                                                             text: 'OK'
                                                         }
                                                     ]),
-                                                    ...styles.colored.yellow.panel,
+                                                    ...styles.colored.yellow.panel(),
                                                 }
                                             )
                                         } else {
@@ -1193,12 +1193,12 @@ export const pages = {
                                 }
                             },
                             {
-                                ...button(async function (event) {
+                                ...components.button(async function (event) {
                                     event.stopPropagation();
                                     widgets['image-input'].domElement.click();
                                 }),
-                                ...styles.button.l,
-                                ...styles.button.filledLight,
+                                ...styles.button.l(),
+                                ...styles.button.filledLight(),
                                 justifyContent: 'center',
                                 alignItems: 'center',
                                 gap: '0.5rem',
@@ -1215,7 +1215,7 @@ export const pages = {
                                 ]
                             },
                             {
-                                ...button(async function (event) {
+                                ...components.button(async function (event) {
                                     event.stopPropagation();
                                     appState.page.addParagraphValid = true;
                                     if (!widgets['add-paragraph-input'].domElement.value.trim()) {
@@ -1232,8 +1232,8 @@ export const pages = {
                                         text: await encrypt(appState.key, appState.textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
                                     });
                                 }),
-                                ...styles.button.l,
-                                ...styles.colored.blue.button.filledDark,
+                                ...styles.button.l(),
+                                ...styles.colored.blue.button.filledDark(),
                                 fontWeight: 600,
                                 text: 'Add'
                             }
@@ -1248,14 +1248,14 @@ export const pages = {
                             {
                                 id: 'edit-paragraph-hint',
                                 display: () => appState.page.editParagraphValid ? 'none' : 'block',
-                                ...styles.text.aux,
+                                ...styles.text.aux(),
                                 fontWeight: 500,
                                 color: colors.red[500],
                                 text: 'Required'
                             },
                             {
                                 id: 'edit-paragraph-input',
-                                ...styles.textArea,
+                                ...components.textArea(),
                                 ...border,
                                 ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
                                 width: '100%',
@@ -1273,20 +1273,20 @@ export const pages = {
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...button(async function (event) {
+                                        ...components.button(async function (event) {
                                             event.stopPropagation();
                                             appState.page.editParagraphId = undefined;
                                             appState.page.editParagraphDraft = undefined;
                                             widgets['note'].update();
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.button.filledLight,
+                                        ...styles.button.l(),
+                                        ...styles.button.filledLight(),
                                         justifyContent: 'center',
                                         fontWeight: 600,
                                         text: 'Cancel'
                                     },
                                     {
-                                        ...button(async function (event) {
+                                        ...components.button(async function (event) {
                                             event.stopPropagation();
                                             appState.page.editParagraphValid = true;
                                             if (!widgets['edit-paragraph-input'].domElement.value.trim()) {
@@ -1302,8 +1302,8 @@ export const pages = {
                                                 text: await encrypt(appState.key, appState.textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
                                             });
                                         }),
-                                        ...styles.button.l,
-                                        ...styles.colored.blue.button.filledDark,
+                                        ...styles.button.l(),
+                                        ...styles.colored.blue.button.filledDark(),
                                         justifyContent: 'center',
                                         fontWeight: 600,
                                         text: 'Save'
@@ -1348,12 +1348,12 @@ export const pages = {
                                         gap: '0.5rem',
                                         children: [
                                             paragraph.text ? {
-                                                ...button(function (event) {
+                                                ...components.button(function (event) {
                                                     event.stopPropagation();
                                                     navigator.clipboard.writeText(paragraph.text);
                                                 }),
-                                                ...styles.button.m,
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat, fill: 'var(--fg-2)' }),
+                                                ...styles.button.m(),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
                                                 children: [
                                                     {
                                                         html: icons.copy,
@@ -1363,10 +1363,10 @@ export const pages = {
                                                 ]
                                             } : null,
                                             paragraph.text ? {
-                                                ...button(function (event) {
+                                                ...components.button(function (event) {
                                                     event.stopPropagation();
                                                     modalOn({
-                                                        ...menu,
+                                                        ...components.menu(),
                                                         alignItems: 'start',
                                                         gap: '1rem',
                                                         children: [
@@ -1382,7 +1382,7 @@ export const pages = {
                                                                 justifyContent: 'center',
                                                                 gap: '1rem',
                                                                 children: ['default', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => ({
-                                                                    ...button(async function (event) {
+                                                                    ...components.button(async function (event) {
                                                                         event.stopPropagation();
                                                                         updateDoc(doc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid), 'paragraphs', paragraph.id), {
                                                                             color: await encrypt(appState.key, appState.textEncoder.encode(color)),
@@ -1391,7 +1391,7 @@ export const pages = {
                                                                     }),
                                                                     width: '3rem',
                                                                     height: '3rem',
-                                                                    ...styles.button.flat,
+                                                                    ...styles.button.flat(),
                                                                     children: [
                                                                         {
                                                                             width: '1.75rem',
@@ -1408,8 +1408,8 @@ export const pages = {
                                                         ]
                                                     });
                                                 }),
-                                                ...styles.button.m,
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat, fill: 'var(--fg-2)' }),
+                                                ...styles.button.m(),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
                                                 children: [
                                                     {
                                                         html: icons.color,
@@ -1419,7 +1419,7 @@ export const pages = {
                                                 ]
                                             } : null,
                                             paragraph.text ? {
-                                                ...button(function (event) {
+                                                ...components.button(function (event) {
                                                     event.stopPropagation();
                                                     if (!appState.page.editParagraphId) {
                                                         appState.page.editParagraphId = paragraph.id;
@@ -1428,8 +1428,8 @@ export const pages = {
                                                         widgets['note'].update();
                                                     }
                                                 }),
-                                                ...styles.button.m,
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat, fill: 'var(--fg-2)' }),
+                                                ...styles.button.m(),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
                                                 ...(appState.page.editParagraphId ? button.disabled : {}),
                                                 children: [
                                                     {
@@ -1440,24 +1440,24 @@ export const pages = {
                                                 ]
                                             } : null,
                                             {
-                                                ...button(function (event) {
+                                                ...components.button(function (event) {
                                                     event.stopPropagation();
                                                     modalOn({
-                                                        ...prompt('Delete', 'You won\'t be able to restore it', [{
-                                                            ...button(async function (event) {
+                                                        ...components.prompt('Delete', 'You won\'t be able to restore it', [{
+                                                            ...components.button(async function (event) {
                                                                 event.stopPropagation();
                                                                 deleteDoc(doc(appState.firebase.firestore, 'notebooks', appState.user.uid, 'paragraphs', paragraph.id));
                                                                 modalOff();
                                                             }),
-                                                            ...styles.button.l,
-                                                            ...styles.colored.red.button.filledDark,
+                                                            ...styles.button.l(),
+                                                            ...styles.colored.red.button.filledDark(),
                                                             fontWeight: 600,
                                                             text: 'Delete'
                                                         }]),
                                                     })
                                                 }),
-                                                ...styles.button.m,
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat, fill: 'var(--fg-2)' }),
+                                                ...styles.button.m(),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
                                                 children: [
                                                     {
                                                         html: icons.delete,
@@ -1473,12 +1473,12 @@ export const pages = {
                         ]
                     }),
                     appState.page.paragraphsAllFetched ? null : {
-                        ...button(function (event) {
+                        ...components.button(function (event) {
                             appState.page.paragraphsLimit += 32;
                             listenParagraphs();
                         }),
-                        ...styles.button.lFullWidth,
-                        ...styles.button.filledLight,
+                        ...styles.button.lFullWidth(),
+                        ...styles.button.filledLight(),
                         justifyContent: 'center',
                         fontWeight: 600,
                         text: 'More'
