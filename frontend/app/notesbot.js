@@ -1,4 +1,4 @@
-import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, column, grid } from '/home/n1/projects/xpl_kit/core.js';
+import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, col, grid } from '/home/n1/projects/xpl_kit/core.js';
 import { colors as baseColors, styles as baseStyles, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
@@ -170,7 +170,7 @@ export const pages = {
                 title: `Login | ${appName}`,
                 description: 'Login page.'
             },
-            config: {
+            config: () => ({
                 ...row,
                 width: '100%',
                 height: '100%',
@@ -196,7 +196,7 @@ export const pages = {
                         ]
                     }
                 ]
-            },
+            }),
         };
     },
     setupTutorialPage() {
@@ -205,14 +205,14 @@ export const pages = {
                 title: `Setup | ${appName}`,
                 description: 'Setup page.'
             },
-            config: {
-                ...base,
+            config: () => ({
+                ...styles.base(),
                 justifyContent: 'center',
                 children: [
                     {
-                        ...column,
-                        ...card,
-                        ...border,
+                        ...col,
+                        ...styles.card.s(),
+                        ...styles.border.default(),
                         width: '100%',
                         justifyContent: 'center',
                         gap: '2rem',
@@ -222,7 +222,7 @@ export const pages = {
                                 text: 'Keyphrase'
                             },
                             {
-                                ...column,
+                                ...col,
                                 gap: '0.5rem',
                                 children: [
                                     {
@@ -265,7 +265,7 @@ export const pages = {
                         ]
                     }
                 ]
-            },
+            }),
         };
     },
     setupPage() {
@@ -278,14 +278,14 @@ export const pages = {
                 title: `Setup | ${appName}`,
                 description: 'Setup page.'
             },
-            config: {
-                ...base,
+            config: () => ({
+                ...styles.base(),
                 justifyContent: 'center',
                 children: [
                     {
-                        ...column,
-                        ...card,
-                        ...border,
+                        ...col,
+                        ...styles.card.s(),
+                        ...styles.border.default(),
                         width: '100%',
                         justifyContent: 'center',
                         gap: '2rem',
@@ -295,26 +295,26 @@ export const pages = {
                                 text: 'Keyphrase'
                             },
                             {
-                                ...column,
+                                ...col,
                                 width: '100%',
                                 children: [
                                     {
                                         fontWeight: 600,
                                         text: 'Your keyphrase'
                                     },
-                                    {
+                                    () => ({
                                         id: 'keyphrase-hint',
                                         ...styles.text.aux(),
-                                        display: () => appState.page.keyphraseValid ? 'none' : 'block',
+                                        display: appState.page.keyphraseValid ? 'none' : 'block',
                                         marginTop: '0.5rem',
                                         fontWeight: 500,
                                         color: colors.red[500],
                                         text: 'Required'
-                                    },
+                                    }),
                                     {
                                         id: 'keyphrase-input',
                                         ...components.input(),
-                                        ...border,
+                                        ...styles.border.default(),
                                         marginTop: '0.5rem',
                                         width: '100%',
                                         type: 'password',
@@ -325,19 +325,19 @@ export const pages = {
                                         fontWeight: 600,
                                         text: 'Repeat keyphrase'
                                     },
-                                    {
+                                    () => ({
                                         id: 'keyphrase-repeat-hint',
                                         ...styles.text.aux(),
-                                        display: () => appState.page.keyphraseRepeatValid ? 'none' : 'block',
+                                        display: appState.page.keyphraseRepeatValid ? 'none' : 'block',
                                         marginTop: '0.5rem',
                                         fontWeight: 500,
                                         color: colors.red[500],
                                         text: 'Invalid'
-                                    },
+                                    }),
                                     {
                                         id: 'keyphrase-repeat-input',
                                         ...components.input(),
-                                        ...border,
+                                        ...styles.border.default(),
                                         marginTop: '0.5rem',
                                         width: '100%',
                                         type: 'password',
@@ -419,7 +419,7 @@ export const pages = {
                             }
                         ]
                     }]
-            },
+            }),
         };
     },
     keyphrasePage() {
@@ -431,14 +431,14 @@ export const pages = {
                 title: `Keyphrase | ${appName}`,
                 description: 'Keyphrase page.'
             },
-            config: {
-                ...base,
+            config: () => ({
+                ...styles.base(),
                 justifyContent: 'center',
                 children: [
                     {
-                        ...column,
-                        ...card,
-                        ...border,
+                        ...col,
+                        ...styles.card.s(),
+                        ...styles.border.default(),
                         width: '100%',
                         justifyContent: 'center',
                         gap: '2rem',
@@ -448,7 +448,7 @@ export const pages = {
                                 text: 'Keyphrase'
                             },
                             {
-                                ...column,
+                                ...col,
                                 width: '100%',
                                 justifyContent: 'center',
                                 children: [
@@ -456,19 +456,19 @@ export const pages = {
                                         fontWeight: 600,
                                         text: 'Your keyphrase'
                                     },
-                                    {
+                                    () => ({
                                         id: 'keyphrase-hint',
                                         ...styles.text.aux(),
-                                        display: () => appState.page.keyphraseValid ? 'none' : 'block',
+                                        display: appState.page.keyphraseValid ? 'none' : 'block',
                                         marginTop: '0.5rem',
                                         fontWeight: 500,
                                         color: colors.red[500],
                                         text: 'Invalid'
-                                    },
+                                    }),
                                     {
                                         id: 'keyphrase-input',
                                         ...components.input(),
-                                        ...border,
+                                        ...styles.border.default(),
                                         width: '100%',
                                         marginTop: '0.5rem',
                                         type: 'password',
@@ -518,7 +518,7 @@ export const pages = {
                         ]
                     }
                 ]
-            },
+            }),
         };
     },
     folderPage() {
@@ -531,15 +531,15 @@ export const pages = {
                 title: `${appState.session.tree[appState.session.folderId]['name']} | ${appName}`,
                 description: 'Folder page.'
             },
-            config: {
+            config: () => ({
                 id: 'folder',
-                ...base,
+                ...styles.base(),
                 justifyContent: 'center',
                 gap: '1rem',
-                paddingTop: () => appState.session.folderId === 'root' ? undefined : '4rem',
-                children: () => [
+                paddingTop: appState.session.folderId === 'root' ? undefined : '4rem',
+                children: [
                     appState.session.folderId === 'root' ? null : {
-                        ...components.fixedHeader,
+                        ...components.fixedHeader(),
                         children: [
                             {
                                 ...row,
@@ -552,7 +552,7 @@ export const pages = {
                                         }),
                                         ...styles.button.m(),
                                         ...styles.button.flat(),
-                                        fill: 'var(--fg-2)',
+                                        fill: colors.foreground2(),
                                         children: [
                                             {
                                                 html: icons.up,
@@ -614,11 +614,11 @@ export const pages = {
                                         ...components.button(function (event) {
                                             event.stopPropagation();
                                             appState.page.moveToFolderId = 'root';
-                                            modalOn({
+                                            modalOn(() => ({
                                                 ...components.menu(),
                                                 alignItems: 'start',
                                                 gap: '0.5rem',
-                                                children: () => [
+                                                children: [
                                                     {
                                                         marginBottom: '0.5rem',
                                                         fontWeight: 600,
@@ -665,7 +665,7 @@ export const pages = {
                                                         text: `Move to ${appState.session.tree[appState.page.moveToFolderId].name}`
                                                     }
                                                 ],
-                                            });
+                                            }));
                                         }),
                                         ...styles.button.mFullWidth(),
                                         ...styles.button.flat(),
@@ -675,7 +675,7 @@ export const pages = {
                                         ...components.button(function (event) {
                                             event.stopPropagation();
                                             appState.page.nameValid = true;
-                                            modalOn({
+                                            modalOn(() => ({
                                                 ...components.menu(),
                                                 alignItems: 'start',
                                                 gap: '0.5rem',
@@ -684,18 +684,18 @@ export const pages = {
                                                         fontWeight: 600,
                                                         text: 'New Name'
                                                     },
-                                                    {
+                                                    () => ({
                                                         id: 'new-folder-name-hint',
                                                         ...styles.text.aux(),
-                                                        display: () => appState.page.nameValid ? 'none' : 'block',
+                                                        display: appState.page.nameValid ? 'none' : 'block',
                                                         fontWeight: 500,
                                                         color: colors.red[500],
                                                         text: 'Required'
-                                                    },
+                                                    }),
                                                     {
                                                         id: 'new-folder-name-input',
                                                         ...components.input(),
-                                                        ...border,
+                                                        ...styles.border.default(),
                                                         width: '100%',
                                                         type: 'text',
                                                         maxlength: '64',
@@ -726,7 +726,7 @@ export const pages = {
                                                         text: 'Rename'
                                                     }
                                                 ]
-                                            })
+                                            }))
                                         }),
                                         ...styles.button.mFullWidth(),
                                         ...styles.button.flat(),
@@ -863,7 +863,7 @@ export const pages = {
                         ]
                     },
                     {
-                        ...column,
+                        ...col,
                         position: 'fixed',
                         bottom: 0,
                         right: 0,
@@ -898,18 +898,18 @@ export const pages = {
                                                                 fontWeight: 600,
                                                                 text: 'Name'
                                                             },
-                                                            {
+                                                            () => ({
                                                                 id: 'new-folder-name-hint',
                                                                 ...styles.text.aux(),
-                                                                display: () => appState.page.nameValid ? 'none' : 'block',
+                                                                display: appState.page.nameValid ? 'none' : 'block',
                                                                 fontWeight: 500,
                                                                 color: colors.red[500],
                                                                 text: 'Required'
-                                                            },
+                                                            }),
                                                             {
                                                                 id: 'new-folder-name-input',
                                                                 ...components.input(),
-                                                                ...border,
+                                                                ...styles.border.default(),
                                                                 width: '100%',
                                                                 type: 'text',
                                                                 maxlength: '64'
@@ -919,7 +919,7 @@ export const pages = {
                                                                     event.stopPropagation();
                                                                     appState.page.nameValid = true;
                                                                     if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                        appState.page.nameValid = true;
+                                                                        appState.page.nameValid = false;
                                                                     }
                                                                     widgets['new-folder-name-hint'].update();
                                                                     if (!appState.page.nameValid) {
@@ -960,18 +960,18 @@ export const pages = {
                                                                 fontWeight: 600,
                                                                 text: 'Name'
                                                             },
-                                                            {
+                                                            () => ({
                                                                 id: 'new-note-name-hint',
                                                                 ...styles.text.aux(),
-                                                                display: () => appState.page.nameValid ? 'none' : 'block',
+                                                                display: appState.page.nameValid ? 'none' : 'block',
                                                                 fontWeight: 500,
                                                                 color: colors.red[500],
                                                                 text: 'Required'
-                                                            },
+                                                            }),
                                                             {
                                                                 id: 'new-note-name-input',
                                                                 ...components.input(),
-                                                                ...border,
+                                                                ...styles.border.default(),
                                                                 width: '100%',
                                                                 type: 'text',
                                                                 maxlength: '64'
@@ -1026,7 +1026,7 @@ export const pages = {
                         ]
                     }
                 ]
-            },
+            }),
         };
     },
     notePage() {
@@ -1045,12 +1045,12 @@ export const pages = {
                 title: `${appState.session.tree[appState.session.noteId]['name']} | ${appName}`,
                 description: 'Note page.'
             },
-            config: {
+            config: () => ({
                 id: 'note',
-                ...base,
+                ...styles.base(),
                 paddingTop: '4.5rem',
                 gap: '1rem',
-                children: () => [
+                children: [
                     {
                         ...components.fixedHeader(),
                         children: [
@@ -1065,7 +1065,7 @@ export const pages = {
                                         }),
                                         ...styles.button.m(),
                                         ...styles.button.flat(),
-                                        fill: 'var(--fg-2)',
+                                        fill: colors.foreground2(),
                                         children: [
                                             {
                                                 html: icons.up,
@@ -1082,18 +1082,18 @@ export const pages = {
                             }
                         ]
                     },
-                    {
+                    () => ({
                         id: 'add-paragraph-hint',
                         ...styles.text.aux(),
-                        display: () => appState.page.addParagraphValid ? 'none' : 'block',
+                        display: appState.page.addParagraphValid ? 'none' : 'block',
                         fontWeight: 500,
                         color: colors.red[500],
                         text: 'Required'
-                    },
+                    }),
                     {
                         id: 'add-paragraph-input',
                         ...components.textArea(),
-                        ...border,
+                        ...styles.border.default(),
                         width: '100%',
                         height: '16rem',
                         oninput: function (event) {
@@ -1241,23 +1241,23 @@ export const pages = {
                     },
                     ...appState.page.paragraphs.map((paragraph, index) => paragraph.id === appState.page.editParagraphId ? {
                         id: 'edit-paragraph',
-                        ...column,
+                        ...col,
                         width: '100%',
                         gap: '1rem',
                         children: [
-                            {
+                            () => ({
                                 id: 'edit-paragraph-hint',
-                                display: () => appState.page.editParagraphValid ? 'none' : 'block',
+                                display: appState.page.editParagraphValid ? 'none' : 'block',
                                 ...styles.text.aux(),
                                 fontWeight: 500,
                                 color: colors.red[500],
                                 text: 'Required'
-                            },
+                            }),
                             {
                                 id: 'edit-paragraph-input',
                                 ...components.textArea(),
-                                ...border,
-                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
+                                ...styles.border.default(),
+                                ...(paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].panel() : {}),
                                 width: '100%',
                                 height: `max(${widgets[`paragraph-${appState.page.editParagraphId}`].domElement.getBoundingClientRect().height}px, 16rem)`,
                                 padding: '0.5rem',
@@ -1313,16 +1313,18 @@ export const pages = {
                         ]
                     } : {
                         id: `paragraph-${paragraph.id}`,
-                        ...column,
-                        ...card,
-                        ...border,
-                        ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].panel : {}),
+                        ...col,
+                        ...styles.card.s(),
+                        ...styles.border.default(),
+                        ...(paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].panel() : {}),
                         width: '100%',
+                        padding: undefined,
                         gap: '1rem',
                         overflow: 'hidden',
                         children: [
                             paragraph.text ? {
                                 width: '100%',
+                                padding: '0.5rem 0.5rem 0 0.5rem',
                                 whiteSpace: 'pre-wrap',
                                 lineHeight: '1.5rem',
                                 text: paragraph.text
@@ -1335,12 +1337,13 @@ export const pages = {
                             {
                                 ...row,
                                 width: '100%',
+                                padding: '0 0.5rem 0.5rem 0.5rem',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].text.aux : text.aux),
+                                        ...(paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].text.aux() : styles.text.aux()),
                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                     },
                                     {
@@ -1353,7 +1356,7 @@ export const pages = {
                                                     navigator.clipboard.writeText(paragraph.text);
                                                 }),
                                                 ...styles.button.m(),
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].button.flat() : { ...styles.button.flat(), fill: colors.foreground2() }),
                                                 children: [
                                                     {
                                                         html: icons.copy,
@@ -1399,8 +1402,8 @@ export const pages = {
                                                                             borderRadius: '2rem',
                                                                             borderWidth: '4px',
                                                                             borderStyle: 'solid',
-                                                                            borderColor: () => color === 'default' ? 'var(--fg-1)' : colors[color][500],
-                                                                            backgroundColor: () => color === 'default' ? 'var(--background-color)' : colors[color][darkMode ? 900 : 100],
+                                                                            borderColor: color === 'default' ? colors.foreground1() : colors[color][500],
+                                                                            backgroundColor: color === 'default' ? colors.background() : colors[color][darkMode ? 900 : 100],
                                                                         },
                                                                     ]
                                                                 }))
@@ -1409,7 +1412,7 @@ export const pages = {
                                                     });
                                                 }),
                                                 ...styles.button.m(),
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].button.flat() : { ...styles.button.flat(), fill: colors.foreground2() }),
                                                 children: [
                                                     {
                                                         html: icons.color,
@@ -1429,8 +1432,8 @@ export const pages = {
                                                     }
                                                 }),
                                                 ...styles.button.m(),
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
-                                                ...(appState.page.editParagraphId ? button.disabled : {}),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].button.flat() : { ...styles.button.flat(), fill: colors.foreground2() }),
+                                                ...(appState.page.editParagraphId ? styles.button.disabled() : {}),
                                                 children: [
                                                     {
                                                         html: icons.edit,
@@ -1457,7 +1460,7 @@ export const pages = {
                                                     })
                                                 }),
                                                 ...styles.button.m(),
-                                                ...(paragraph.color && paragraph.color !== 'default' ? colored[paragraph.color].button.flat : { ...styles.button.flat(), fill: 'var(--fg-2)' })(),
+                                                ...(paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].button.flat() : { ...styles.button.flat(), fill: colors.foreground2() }),
                                                 children: [
                                                     {
                                                         html: icons.delete,
@@ -1484,7 +1487,7 @@ export const pages = {
                         text: 'More'
                     }
                 ]
-            },
+            }),
         };
     }
 }
