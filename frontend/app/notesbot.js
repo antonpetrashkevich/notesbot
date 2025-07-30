@@ -69,13 +69,16 @@ export function listenNotebook() {
         async (docSnap) => {
             if (!docSnap.exists()) {
                 updatePage(pages.setupTutorialPage());
+                window.scrollTo(0, 0);
             } else {
                 try {
                     const docData = docSnap.data();
                     if (docData.status === 'deleted' && !appState.session.initialized) {
                         updatePage(pages.setupTutorialPage());
+                        window.scrollTo(0, 0);
                     } else if (docData.status === 'active' && !window.localStorage.getItem('keyphrase')) {
                         updatePage(pages.keyphrasePage());
+                        window.scrollTo(0, 0);
                     }
                     else if (docData.status === 'active' && window.localStorage.getItem('keyphrase')) {
                         appState.key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
@@ -83,18 +86,21 @@ export function listenNotebook() {
                         appState.session.orphanNoteIds = docData.orphanNoteIds;
                         if (!appState.session.initialized) {
                             appState.session.initialized = true;
-                            startPathController(function pathController(segments, params) {
+                            startPathController(function pathController(segments, params, historyScroll) {
                                 if (segments.length === 2 && segments[0] === 'folder') {
                                     appState.session.folderId = segments[1];
                                     updatePage(pages.folderPage());
+                                    window.scrollTo(historyScroll || { left: 0, top: 0 });
                                 }
                                 else if (segments.length === 2 && segments[0] === 'note') {
                                     appState.session.noteId = segments[1];
                                     updatePage(pages.notePage());
+                                    window.scrollTo(historyScroll || { left: 0, top: 0 });
                                     listenParagraphs();
                                 } else {
                                     appState.session.folderId = 'root';
                                     updatePage(pages.folderPage());
+                                    window.scrollTo(historyScroll || { left: 0, top: 0 });
                                 }
                             });
                         } else {
@@ -105,9 +111,11 @@ export function listenNotebook() {
                     if (error instanceof DOMException && error.name === "OperationError") {
                         window.localStorage.removeItem('keyphrase');
                         updatePage(pages.keyphrasePage());
+                        window.scrollTo(0, 0);
                     } else {
                         console.error(error);
                         updatePage(pages.generalErrorPage());
+                        window.scrollTo(0, 0);
                     }
                 }
             }
@@ -115,6 +123,7 @@ export function listenNotebook() {
         (error) => {
             console.error(error);
             updatePage(pages.generalErrorPage());
+            window.scrollTo(0, 0);
         });
 }
 
@@ -134,6 +143,7 @@ export function listenParagraphs() {
         (error) => {
             console.error(error);
             updatePage(pages.generalErrorPage());
+            window.scrollTo(0, 0);
         }
     );
 }
@@ -254,6 +264,7 @@ export const pages = {
                                     {
                                         ...components.button(function (event) {
                                             updatePage(pages.setupPage());
+                                            window.scrollTo(0, 0);
                                         }),
                                         ...styles.button.l(),
                                         ...styles.colored.blue.button.filledDark(),
@@ -354,6 +365,7 @@ export const pages = {
                                     {
                                         ...components.button(function (event) {
                                             updatePage(pages.setupTutorialPage());
+                                            window.scrollTo(0, 0);
                                         }),
                                         ...styles.button.l(),
                                         ...styles.button.filledLight(),
@@ -408,6 +420,7 @@ export const pages = {
                                             } catch (error) {
                                                 console.error(error);
                                                 updatePage(pages.generalErrorPage());
+                                                window.scrollTo(0, 0);
                                             }
                                         }),
                                         ...styles.button.l(),

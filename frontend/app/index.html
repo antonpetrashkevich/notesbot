@@ -46,14 +46,6 @@
         appState.session = {};
 
         startApp('XPL');
-        updateMetaTags({
-            'theme-color': colors.metaThemeColor()
-        });
-        updateBodyStyle({
-            ...styles.font.default(),
-            backgroundColor: colors.background(),
-            color: colors.foreground1(),
-        });
         startViewportSizeController();
         startThemeController(function () {
             updateMetaTags({
@@ -63,6 +55,14 @@
                 backgroundColor: colors.background(),
                 color: colors.foreground1(),
             });
+        });
+        updateMetaTags({
+            'theme-color': colors.metaThemeColor()
+        });
+        updateBodyStyle({
+            ...styles.font.default(),
+            backgroundColor: colors.background(),
+            color: colors.foreground1(),
         });
         updatePage(pages.loadingPage());
         onAuthStateChanged(appState.firebase.auth, async (user) => {
@@ -79,9 +79,11 @@
                     appState.stopListenNotebook?.();
                     window.localStorage.removeItem('keyphrase');
                     updatePage(loginPage());
+                    window.scrollTo(0, 0);
                 } catch (e) {
                     console.error(e);
                     updatePage(pages.generalErrorPage());
+                    window.scrollTo(0, 0);
                 }
             }
         });
