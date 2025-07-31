@@ -217,6 +217,7 @@ export const pages = {
             },
             config: () => ({
                 ...styles.base(),
+                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 justifyContent: 'center',
                 children: [
                     {
@@ -291,6 +292,7 @@ export const pages = {
             },
             config: () => ({
                 ...styles.base(),
+                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 justifyContent: 'center',
                 children: [
                     {
@@ -446,6 +448,7 @@ export const pages = {
             },
             config: () => ({
                 ...styles.base(),
+                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 justifyContent: 'center',
                 children: [
                     {
@@ -547,6 +550,7 @@ export const pages = {
             config: () => ({
                 id: 'folder',
                 ...styles.base(),
+                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 justifyContent: 'center',
                 gap: '1rem',
                 paddingTop: appState.session.folderId === 'root' ? undefined : '4rem',
@@ -1061,6 +1065,7 @@ export const pages = {
             config: () => ({
                 id: 'note',
                 ...styles.base(),
+                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 paddingTop: '4.5rem',
                 gap: '1rem',
                 children: [
