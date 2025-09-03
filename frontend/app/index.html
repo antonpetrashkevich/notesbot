@@ -78,7 +78,7 @@
                     appState.stopListenParagraphs?.();
                     appState.stopListenNotebook?.();
                     window.localStorage.removeItem('keyphrase');
-                    updatePage(loginPage());
+                    updatePage(pages.loginPage());
                     window.scrollTo(0, 0);
                 } catch (e) {
                     console.error(e);
