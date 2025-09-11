@@ -1337,9 +1337,11 @@ export const pages = {
                     {
                         id: 'fiter-paragraphs',
                         width: 'min(640px, 100% - 1rem)',
+                        padding: '0 0.25rem 0 0.5rem',
+                        ...styles.border.default(),
+                        borderRadius: '0.5rem',
                         ...row,
                         alignItems: 'center',
-                        gap: '1rem',
                         children: [
                             {
                                 html: icons.search,
@@ -1350,7 +1352,6 @@ export const pages = {
                             {
                                 flexGrow: 1,
                                 ...components.input(),
-                                ...styles.border.default(),
                                 type: 'text',
                                 value: filterParagraphQuery,
                                 oninput: function (event) {
@@ -1362,6 +1363,23 @@ export const pages = {
                                     widgets['paragraphs']?.update();
                                 },
                             },
+                            {
+                                ...components.button(function (event) {
+                                    filterParagraphQuery = undefined;
+                                    widgets['fiter-paragraphs']?.update();
+                                    widgets['paragraphs']?.update();
+                                }),
+                                ...styles.button.flat(),
+                                padding: '0.25rem',
+                                children: [
+                                    {
+                                        html: icons.close,
+                                        width: '1.25rem',
+                                        height: '1.25rem',
+                                        fill: colors.foreground2(),
+                                    },
+                                ]
+                            }
                         ]
                     },
                     () => ({
