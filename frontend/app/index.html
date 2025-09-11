@@ -17,76 +17,8 @@
 
 <body>
     <script type="module">
-        import { appName, appState, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, col, grid } from '/home/n1/projects/xpl_kit/core.js';
-        import { listenNotebook, listenParagraphs, colors, styles, components, pages } from './notesbot.js';
-        import { initializeApp as initializeFirebase } from "firebase/app";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
-        // import { getAnalytics } from "firebase/analytics";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
-            authDomain: "notesbot-be271.firebaseapp.com",
-            projectId: "notesbot-be271",
-            storageBucket: "notesbot-be271.firebasestorage.app",
-            messagingSenderId: "408712122661",
-            appId: "1:408712122661:web:30fa210ad4a3dc73ec4acc",
-            measurementId: "G-85D3XP1ZM8"
-        };
-        appState.firebase = {};
-        appState.firebase.app = initializeFirebase(firebaseConfig);
-        appState.firebase.auth = getAuth(appState.firebase.app);
-        appState.firebase.firestore = initializeFirestore(appState.firebase.app, {
-            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-            cacheSize: CACHE_SIZE_UNLIMITED
-        });
-        // appState.firebase.analytics = getAnalytics(appState.firebase.app);
-        appState.textEncoder = new TextEncoder();
-        appState.textDecoder = new TextDecoder();
-        appState.session = {};
-
-        startApp('XPL');
-        startViewportSizeController();
-        startThemeController(function () {
-            updateMetaTags({
-                'theme-color': colors.metaThemeColor()
-            });
-            updateBodyStyle({
-                backgroundColor: colors.background(),
-                color: colors.foreground1(),
-            });
-        });
-        updateMetaTags({
-            'theme-color': colors.metaThemeColor()
-        });
-        updateBodyStyle({
-            ...styles.font.default(),
-            backgroundColor: colors.background(),
-            color: colors.foreground1(),
-        });
-        updatePage(pages.loadingPage());
-        onAuthStateChanged(appState.firebase.auth, async (user) => {
-            if (user) {
-                appState.user = user;
-                listenNotebook();
-            } else {
-                try {
-                    appState.user = null;
-                    appState.key = null;
-                    appState.page = null;
-                    appState.session = {};
-                    appState.stopListenParagraphs?.();
-                    appState.stopListenNotebook?.();
-                    window.localStorage.removeItem('keyphrase');
-                    updatePage(pages.loginPage());
-                    window.scrollTo(0, 0);
-                } catch (e) {
-                    console.error(e);
-                    updatePage(pages.generalErrorPage());
-                    window.scrollTo(0, 0);
-                }
-            }
-        });
+        import { init } from './notesbot.js';
+        init();
     </script>
 </body>
 
