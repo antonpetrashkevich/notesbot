@@ -1352,6 +1352,7 @@ export const pages = {
                                 ...components.input(),
                                 ...styles.border.default(),
                                 type: 'text',
+                                value: filterParagraphQuery,
                                 oninput: function (event) {
                                     filterParagraphQuery = event.target.value;
                                     if (filterParagraphQuery) {
