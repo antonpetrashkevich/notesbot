@@ -298,14 +298,15 @@ export const pages = {
             },
             config: () => ({
                 ...styles.base(),
-                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 justifyContent: 'center',
+                alignItems: 'center',
                 children: [
                     {
-                        ...col,
+                        width: 'min(640px, 100% - 1rem)',
+                        padding: '1rem 0',
                         ...styles.card.s(),
                         ...styles.border.default(),
-                        width: '100%',
+                        ...col,
                         justifyContent: 'center',
                         gap: '2rem',
                         children: [
@@ -371,14 +372,15 @@ export const pages = {
             },
             config: () => ({
                 ...styles.base(),
-                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 justifyContent: 'center',
+                alignItems: 'center',
                 children: [
                     {
-                        ...col,
+                        width: 'min(640px, 100% - 1rem)',
+                        padding: '1rem 0',
                         ...styles.card.s(),
                         ...styles.border.default(),
-                        width: '100%',
+                        ...col,
                         justifyContent: 'center',
                         gap: '2rem',
                         children: [
@@ -527,14 +529,15 @@ export const pages = {
             },
             config: () => ({
                 ...styles.base(),
-                padding: '0.5rem calc(max((100% - 800px)/2 , 0.5rem))',
                 justifyContent: 'center',
+                alignItems: 'center',
                 children: [
                     {
-                        ...col,
+                        width: 'min(640px, 100% - 1rem)',
+                        padding: '1rem 0',
                         ...styles.card.s(),
                         ...styles.border.default(),
-                        width: '100%',
+                        ...col,
                         justifyContent: 'center',
                         gap: '2rem',
                         children: [
@@ -627,6 +630,7 @@ export const pages = {
             config: () => ({
                 id: 'folder',
                 ...styles.base(),
+                alignItems: 'center',
                 children: [
                     folderId === 'root' ? null : {
                         ...components.stickyHeader(),
@@ -659,8 +663,8 @@ export const pages = {
                     },
                     {
                         flexGrow: 1,
-                        width: '100%',
-                        padding: '1rem calc(max((100% - 800px)/2 , 0.5rem))',
+                        width: 'min(640px, 100% - 1rem)',
+                        padding: '1rem 0',
                         ...col,
                         justifyContent: 'center',
                         alignItems: 'center',
@@ -1139,7 +1143,7 @@ export const pages = {
             config: () => ({
                 id: 'note',
                 ...styles.base(),
-                paddingBottom: '1rem',
+                alignItems: 'center',
                 gap: '1rem',
                 children: [
                     {
@@ -1172,8 +1176,7 @@ export const pages = {
                         ]
                     },
                     {
-                        width: '100%',
-                        padding: '0 calc(max((100% - 800px)/2 , 0.5rem))',
+                        width: 'min(640px, 100% - 1rem)',
                         ...col,
                         gap: '1rem',
                         children: [
@@ -1333,8 +1336,7 @@ export const pages = {
                     },
                     {
                         id: 'fiter-paragraphs',
-                        width: '100%',
-                        padding: '0 calc(max((100% - 800px)/2 , 0.5rem))',
+                        width: 'min(640px, 100% - 1rem)',
                         ...row,
                         alignItems: 'center',
                         gap: '1rem',
@@ -1363,11 +1365,11 @@ export const pages = {
                     },
                     () => ({
                         id: 'paragraphs',
-                        width: '100%',
-                        padding: '0 calc(max((100% - 800px)/2 , 0.5rem))',
+                        width: 'min(640px, 100% - 1rem)',
+                        paddingBottom: '1rem',
                         ...col,
                         gap: '1rem',
-                        children: paragraphs.filter(p => !filterParagraphQuery || p.text?.includes(filterParagraphQuery)).map((paragraph, index) => paragraph.id === editParagraphId ? {
+                        children: paragraphs.filter(p => !filterParagraphQuery || p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())).map((paragraph, index) => paragraph.id === editParagraphId ? {
                             id: 'edit-paragraph',
                             ...col,
                             width: '100%',
