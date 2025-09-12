@@ -13,7 +13,7 @@ let user;
 let key;
 let tree;
 let orphanNoteIds;
-let paragraphs;
+let paragraphs = [];
 let stopListenNotebook;
 let stopListenParagraphs;
 
@@ -179,7 +179,7 @@ function startNotebook() {
         }
         else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
             stopListenParagraphs?.();
-            paragraphs = undefined;
+            paragraphs = [];
             updatePage(pages.notePage(segments[1]));
             window.scrollTo(historyScroll || { left: 0, top: 0 });
             stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', user.uid, 'paragraphs'), where('noteId', '==', segments[1]), orderBy('timestamp', 'desc')),
@@ -1390,7 +1390,7 @@ export const pages = {
                         paddingBottom: '1rem',
                         ...col,
                         gap: '1rem',
-                        children: paragraphs ? [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
+                        children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
                             if (!filterParagraphQuery) {
                                 return true;
                             }
@@ -1649,15 +1649,7 @@ export const pages = {
                             justifyContent: 'center',
                             fontWeight: 600,
                             text: 'More'
-                        } : null] : [{
-                            html: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>',
-                            marginTop: '4rem',
-                            width: '8vh',
-                            height: '8vh',
-                            alignSelf: 'center',
-                            fill: 'none',
-                            stroke: (darkMode ? colors.gray[600] : colors.gray[300]),
-                        }]
+                        } : null]
                     }),
                 ]
             }),
