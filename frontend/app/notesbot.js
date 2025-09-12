@@ -1134,6 +1134,7 @@ export const pages = {
         let addParagraphValid = true;
         let editParagraphId;
         let editParagraphValid;
+        let editParagraphText;
         let filterParagraphQuery;
         return {
             meta: {
@@ -1356,10 +1357,6 @@ export const pages = {
                                 value: filterParagraphQuery,
                                 oninput: function (event) {
                                     filterParagraphQuery = event.target.value;
-                                    if (filterParagraphQuery) {
-                                        editParagraphId = undefined;
-                                        editParagraphValid = undefined;
-                                    }
                                     widgets['paragraphs']?.update();
                                 },
                             },
@@ -1388,7 +1385,18 @@ export const pages = {
                         paddingBottom: '1rem',
                         ...col,
                         gap: '1rem',
-                        children: paragraphs.filter(p => !filterParagraphQuery || p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())).map((paragraph, index) => paragraph.id === editParagraphId ? {
+                        children: paragraphs.filter(p => {
+                            if (!filterParagraphQuery) {
+                                return true;
+                            }
+                            if (p.id === editParagraphId) {
+                                return true;
+                            }
+                            if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                return true;
+                            }
+                            return false;
+                        }).map((paragraph, index) => paragraph.id === editParagraphId ? {
                             id: 'edit-paragraph',
                             ...col,
                             width: '100%',
@@ -1410,7 +1418,10 @@ export const pages = {
                                     width: '100%',
                                     height: `max(${widgets[`paragraph-${editParagraphId}`].domElement.getBoundingClientRect().height}px, 16rem)`,
                                     padding: '0.5rem',
-                                    text: paragraph.text
+                                    text: editParagraphText,
+                                    oninput: function (event) {
+                                        editParagraphText = event.target.value;
+                                    }
                                 },
                                 {
                                     ...row,
@@ -1423,6 +1434,7 @@ export const pages = {
                                                 event.stopPropagation();
                                                 editParagraphId = undefined;
                                                 editParagraphValid = undefined;
+                                                editParagraphText = undefined;
                                                 widgets['paragraphs'].update();
                                             }),
                                             ...styles.button.l(),
@@ -1444,6 +1456,7 @@ export const pages = {
                                                 }
                                                 editParagraphId = undefined;
                                                 editParagraphValid = undefined;
+                                                editParagraphText = undefined;
                                                 updateDoc(doc(doc(firebase.firestore, 'notebooks', user.uid), 'paragraphs', paragraph.id), {
                                                     text: await encrypt(key, textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
                                                 });
@@ -1573,6 +1586,7 @@ export const pages = {
                                                         if (!editParagraphId) {
                                                             editParagraphId = paragraph.id;
                                                             editParagraphValid = true;
+                                                            editParagraphText = paragraph.text;
                                                             widgets['paragraphs'].update();
                                                         }
                                                     }),
