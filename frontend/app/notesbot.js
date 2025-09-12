@@ -1131,6 +1131,7 @@ export const pages = {
         };
     },
     notePage(noteId) {
+        let limitParagraphs = true;
         let addParagraphValid = true;
         let editParagraphId;
         let editParagraphValid;
@@ -1385,7 +1386,7 @@ export const pages = {
                         paddingBottom: '1rem',
                         ...col,
                         gap: '1rem',
-                        children: paragraphs.filter(p => {
+                        children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
                             if (!filterParagraphQuery) {
                                 return true;
                             }
@@ -1633,7 +1634,18 @@ export const pages = {
                                     ]
                                 }
                             ]
-                        })
+                        }),
+                        !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? {
+                            ...components.button(function (event) {
+                                limitParagraphs = false;
+                                widgets['paragraphs']?.update();
+                            }),
+                            ...styles.button.lFullWidth(),
+                            ...styles.button.filledLight(),
+                            justifyContent: 'center',
+                            fontWeight: 600,
+                            text: 'More'
+                        } : null]
                     }),
                 ]
             }),
