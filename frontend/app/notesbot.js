@@ -115,10 +115,10 @@ export async function init() {
         color: colors.foreground1(),
     });
 
+    updatePage(pages.loadingPage());
     onAuthStateChanged(firebase.auth, async (u) => {
         if (u) {
             user = u;
-            updatePage(pages.loadingPage());
             tryFetchDecryptNotebook();
         } else {
             try {
