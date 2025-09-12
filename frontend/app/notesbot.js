@@ -155,62 +155,7 @@ async function tryFetchDecryptNotebook() {
                 key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
                 tree = JSON.parse(textDecoder.decode(await decrypt(key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
                 orphanNoteIds = docData.orphanNoteIds;
-                startPathController(async function pathController(segments, params, historyScroll) {
-                    if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
-                        updatePage(pages.folderPage(segments[1]));
-                        window.scrollTo(historyScroll || { left: 0, top: 0 });
-                    }
-                    else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
-                        stopListenParagraphs?.();
-                        paragraphs = [];
-                        updatePage(pages.notePage(segments[1]));
-                        window.scrollTo(historyScroll || { left: 0, top: 0 });
-                        stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', user.uid, 'paragraphs'), where('noteId', '==', segments[1]), orderBy('timestamp', 'desc')),
-                            async (querySnapshot) => {
-                                paragraphs = [];
-                                for (const docSnap of querySnapshot.docs) {
-                                    const docData = docSnap.data();
-                                    paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? textDecoder.decode(await decrypt(key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
-                                }
-                                widgets['paragraphs']?.update();
-                            },
-                            (error) => {
-                                console.error(error);
-                                updatePage(pages.generalErrorPage());
-                                window.scrollTo(0, 0);
-                            }
-                        );
-                    } else {
-                        updatePage(pages.folderPage('root'));
-                        window.scrollTo(historyScroll || { left: 0, top: 0 });
-                    }
-                });
-                stopListenNotebook = onSnapshot(doc(firebase.firestore, 'notebooks', user.uid),
-                    async (docSnap) => {
-                        if (!docSnap.exists()) {
-                            signOut(firebase.auth);
-                        } else {
-                            try {
-                                const docData = docSnap.data();
-                                if (docData.status === 'deleted') {
-                                    signOut(firebase.auth);
-                                }
-                                else if (docData.status === 'active') {
-                                    key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
-                                    tree = JSON.parse(textDecoder.decode(await decrypt(key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
-                                    orphanNoteIds = docData.orphanNoteIds;
-                                    widgets['folder']?.update();
-                                }
-                            } catch (error) {
-                                signOut(firebase.auth);
-                            }
-                        }
-                    },
-                    (error) => {
-                        console.error(error);
-                        updatePage(pages.generalErrorPage());
-                        window.scrollTo(0, 0);
-                    })
+                startNotebook();
             }
         } catch (error) {
             if (error instanceof DOMException && error.name === "OperationError") {
@@ -224,6 +169,65 @@ async function tryFetchDecryptNotebook() {
             }
         }
     }
+}
+
+function startNotebook() {
+    startPathController(async function pathController(segments, params, historyScroll) {
+        if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
+            updatePage(pages.folderPage(segments[1]));
+            window.scrollTo(historyScroll || { left: 0, top: 0 });
+        }
+        else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
+            stopListenParagraphs?.();
+            paragraphs = undefined;
+            updatePage(pages.notePage(segments[1]));
+            window.scrollTo(historyScroll || { left: 0, top: 0 });
+            stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', user.uid, 'paragraphs'), where('noteId', '==', segments[1]), orderBy('timestamp', 'desc')),
+                async (querySnapshot) => {
+                    paragraphs = [];
+                    for (const docSnap of querySnapshot.docs) {
+                        const docData = docSnap.data();
+                        paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? textDecoder.decode(await decrypt(key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
+                    }
+                    widgets['paragraphs']?.update();
+                },
+                (error) => {
+                    console.error(error);
+                    updatePage(pages.generalErrorPage());
+                    window.scrollTo(0, 0);
+                }
+            );
+        } else {
+            updatePage(pages.folderPage('root'));
+            window.scrollTo(historyScroll || { left: 0, top: 0 });
+        }
+    });
+    stopListenNotebook = onSnapshot(doc(firebase.firestore, 'notebooks', user.uid),
+        async (docSnap) => {
+            if (!docSnap.exists()) {
+                signOut(firebase.auth);
+            } else {
+                try {
+                    const docData = docSnap.data();
+                    if (docData.status === 'deleted') {
+                        signOut(firebase.auth);
+                    }
+                    else if (docData.status === 'active') {
+                        key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
+                        tree = JSON.parse(textDecoder.decode(await decrypt(key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
+                        orphanNoteIds = docData.orphanNoteIds;
+                        widgets['folder']?.update();
+                    }
+                } catch (error) {
+                    signOut(firebase.auth);
+                }
+            }
+        },
+        (error) => {
+            console.error(error);
+            updatePage(pages.generalErrorPage());
+            window.scrollTo(0, 0);
+        });
 }
 
 const icons = {
@@ -1358,14 +1362,14 @@ export const pages = {
                                 value: filterParagraphQuery,
                                 oninput: function (event) {
                                     filterParagraphQuery = event.target.value;
-                                    widgets['paragraphs']?.update();
+                                    widgets['paragraphs'].update();
                                 },
                             },
                             {
                                 ...components.button(function (event) {
                                     filterParagraphQuery = undefined;
-                                    widgets['fiter-paragraphs']?.update();
-                                    widgets['paragraphs']?.update();
+                                    widgets['fiter-paragraphs'].update();
+                                    widgets['paragraphs'].update();
                                 }),
                                 ...styles.button.flat(),
                                 padding: '0.25rem',
@@ -1386,7 +1390,7 @@ export const pages = {
                         paddingBottom: '1rem',
                         ...col,
                         gap: '1rem',
-                        children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
+                        children: paragraphs ? [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
                             if (!filterParagraphQuery) {
                                 return true;
                             }
@@ -1638,14 +1642,22 @@ export const pages = {
                         !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? {
                             ...components.button(function (event) {
                                 limitParagraphs = false;
-                                widgets['paragraphs']?.update();
+                                widgets['paragraphs'].update();
                             }),
                             ...styles.button.lFullWidth(),
                             ...styles.button.filledLight(),
                             justifyContent: 'center',
                             fontWeight: 600,
                             text: 'More'
-                        } : null]
+                        } : null] : [{
+                            html: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>',
+                            marginTop: '4rem',
+                            width: '8vh',
+                            height: '8vh',
+                            alignSelf: 'center',
+                            fill: 'none',
+                            stroke: (darkMode ? colors.gray[600] : colors.gray[300]),
+                        }]
                     }),
                 ]
             }),
