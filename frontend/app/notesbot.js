@@ -1330,6 +1330,7 @@ export const pages = {
                                                 noteId: noteId,
                                                 text: await encrypt(key, textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
                                             });
+                                            widgets['add-paragraph-input'].domElement.value = '';
                                         }),
                                         ...styles.button.l(),
                                         ...styles.colored.blue.button.filledDark(),
