@@ -1,19 +1,20 @@
-import { appName, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startPathController, startViewportSizeController, startThemeController, goTo, modalOn, modalOff, row, col, grid } from '/home/n1/projects/xpl_kit/core.js';
+import { appName, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startViewportSizeController, startThemeController, startPathController, resolveCurrentPath, goTo, modalOn, modalOff, row, col, grid } from '/home/n1/projects/xpl_kit/core.js';
 import { colors as baseColors, styles as baseStyles, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, increment } from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 
 
 const firebase = {};
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
-let user;
+let notebook;
 let key;
 let tree;
-let orphanNoteIds;
-let paragraphs = [];
+let folderId;
+let noteId;
+let paragraphs;
 let stopListenNotebook;
 let stopListenParagraphs;
 
@@ -115,119 +116,97 @@ export async function init() {
         color: colors.foreground1(),
     });
 
+    startPathController(pathController);
     updatePage(pages.loadingPage());
-    onAuthStateChanged(firebase.auth, async (u) => {
-        if (u) {
-            user = u;
-            tryFetchDecryptNotebook();
+    onAuthStateChanged(firebase.auth, async (user) => {
+        if (user) {
+            startListenNotebook();
         } else {
-            try {
-                stopListenNotebook?.();
-                stopListenParagraphs?.();
-                window.localStorage.removeItem('keyphrase');
-                updatePage(pages.loginPage());
-                window.scrollTo(0, 0);
-            } catch (e) {
-                console.error(e);
-                updatePage(pages.generalErrorPage());
-                window.scrollTo(0, 0);
-            }
+            stopListenParagraphs?.();
+            stopListenNotebook?.();
+            notebook = undefined;
+            key = undefined;
+            tree = undefined;
+            folderId = undefined;
+            noteId = undefined;
+            paragraphs = undefined;
+            window.localStorage.removeItem('keyphrase');
+            updatePage(pages.loginPage());
         }
     });
 }
 
-async function tryFetchDecryptNotebook() {
-    const docSnap = await getDoc(doc(firebase.firestore, 'notebooks', user.uid));
-    if (!docSnap.exists()) {
+async function pathController(segments, params, historyScroll) {
+    stopListenParagraphs?.();
+    folderId = undefined;
+    noteId = undefined;
+    paragraphs = undefined;
+    if (!firebase.auth.currentUser) {
+        updatePage(pages.loginPage());
+    } else if (notebook && notebook.status === 'deleted') {
+        updatePage(pages.notebookDeletedPage());
+    }
+    else if (!notebook) {
         updatePage(pages.setupTutorialPage());
-        window.scrollTo(0, 0);
+    }
+    else if (notebook && !window.localStorage.getItem('keyphrase')) {
+        updatePage(pages.keyphrasePage());
+    }
+    else if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
+        folderId = segments[1];
+        updatePage(pages.folderPage());
+    }
+    else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
+        noteId = segments[1];
+        paragraphs = [];
+        updatePage(pages.notePage());
+        startListenParagraphs();
     } else {
-        try {
-            const docData = docSnap.data();
-            if (docData.status === 'deleted') {
-                updatePage(pages.setupTutorialPage());
-                window.scrollTo(0, 0);
-            } else if (docData.status === 'active' && !window.localStorage.getItem('keyphrase')) {
-                updatePage(pages.keyphrasePage());
-                window.scrollTo(0, 0);
-            }
-            else if (docData.status === 'active' && window.localStorage.getItem('keyphrase')) {
-                key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
-                tree = JSON.parse(textDecoder.decode(await decrypt(key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
-                orphanNoteIds = docData.orphanNoteIds;
-                startNotebook();
-            }
-        } catch (error) {
-            if (error instanceof DOMException && error.name === "OperationError") {
-                window.localStorage.removeItem('keyphrase');
-                updatePage(pages.keyphrasePage());
-                window.scrollTo(0, 0);
-            } else {
-                console.error(error);
-                updatePage(pages.generalErrorPage());
-                window.scrollTo(0, 0);
-            }
-        }
+        folderId = 'root';
+        updatePage(pages.folderPage());
     }
 }
 
-function startNotebook() {
-    startPathController(async function pathController(segments, params, historyScroll) {
-        if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
-            updatePage(pages.folderPage(segments[1]));
-            window.scrollTo(historyScroll || { left: 0, top: 0 });
-        }
-        else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
-            stopListenParagraphs?.();
-            paragraphs = [];
-            updatePage(pages.notePage(segments[1]));
-            window.scrollTo(historyScroll || { left: 0, top: 0 });
-            stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', user.uid, 'paragraphs'), where('noteId', '==', segments[1]), orderBy('timestamp', 'desc')),
-                async (querySnapshot) => {
-                    paragraphs = [];
-                    for (const docSnap of querySnapshot.docs) {
-                        const docData = docSnap.data();
-                        paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color ? textDecoder.decode(await decrypt(key, docData.color.iv.toUint8Array(), docData.color.data.toUint8Array())) : undefined, text: docData.text ? textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
-                    }
-                    widgets['paragraphs']?.update();
-                },
-                (error) => {
-                    console.error(error);
-                    updatePage(pages.generalErrorPage());
-                    window.scrollTo(0, 0);
-                }
-            );
-        } else {
-            updatePage(pages.folderPage('root'));
-            window.scrollTo(historyScroll || { left: 0, top: 0 });
-        }
-    });
-    stopListenNotebook = onSnapshot(doc(firebase.firestore, 'notebooks', user.uid),
+function startListenNotebook() {
+    stopListenNotebook = onSnapshot(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid),
         async (docSnap) => {
-            if (!docSnap.exists()) {
-                signOut(firebase.auth);
+            if (docSnap.exists()) {
+                notebook = docSnap.data();
+                if (notebook.status === 'active' && window.localStorage.getItem('keyphrase')) {
+                    key = await generateKey(window.localStorage.getItem('keyphrase'), notebook.salt.toUint8Array());
+                    tree = Object.fromEntries(Object.entries(notebook.tree).map(async ([key, value]) => [key, { type: value.type, parent: value.parent, order: value.order, name: JSON.parse(textDecoder.decode(await decrypt(key, value.name.iv.toUint8Array(), value.name.data.toUint8Array()))) }]));
+                    if (noteId && tree[noteId] && tree[noteId].parent !== 'deleted') {
+                        widgets['note-header'].update();
+                    } else {
+                        resolveCurrentPath();
+                    }
+                } else {
+                    resolveCurrentPath();
+                }
             } else {
-                try {
-                    const docData = docSnap.data();
-                    if (docData.status === 'deleted') {
+                if (docSnap.metadata.fromCache) {
+                } else {
+                    if (notebook) {
                         signOut(firebase.auth);
+                    } else {
+                        resolveCurrentPath();
                     }
-                    else if (docData.status === 'active') {
-                        key = await generateKey(window.localStorage.getItem('keyphrase'), docData.salt.toUint8Array());
-                        tree = JSON.parse(textDecoder.decode(await decrypt(key, docData.tree.iv.toUint8Array(), docData.tree.data.toUint8Array())));
-                        orphanNoteIds = docData.orphanNoteIds;
-                        widgets['folder']?.update();
-                    }
-                } catch (error) {
-                    signOut(firebase.auth);
                 }
             }
-        },
-        (error) => {
-            console.error(error);
-            updatePage(pages.generalErrorPage());
-            window.scrollTo(0, 0);
         });
+}
+
+function startListenParagraphs() {
+    stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('noteId', '==', noteId), orderBy('timestamp', 'desc')),
+        async (querySnapshot) => {
+            paragraphs = [];
+            for (const docSnap of querySnapshot.docs) {
+                const docData = docSnap.data();
+                paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, color: docData.color, text: docData.text ? textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
+            }
+            widgets['paragraphs']?.update();
+        }
+    );
 }
 
 const icons = {
@@ -259,6 +238,57 @@ export const components = {
 
 export const pages = {
     ...basePages,
+    notebookDeletedPage() {
+        return {
+            meta: {
+                title: `Notebook Deleted | ${appName}`,
+                description: 'Notebook deleted.'
+            },
+            config: {
+                width: '100%',
+                height: '100%',
+                ...col,
+                alignItems: 'center',
+                gap: '1rem',
+                children: [
+                    {
+                        margin: '25vh 1rem',
+                        text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
+                    },
+                    {
+                        ...components.button(function (event) {
+                            signOut(firebase.auth);
+                        }),
+                        ...styles.button.l(),
+                        ...styles.button.filledLight(),
+                        fontWeight: 600,
+                        text: 'Log out'
+                    }
+                ]
+            },
+        };
+    },
+    notebookOutOfSyncPage() {
+        return {
+            meta: {
+                title: `Notebook Out of Sync | ${appName}`,
+                description: 'Notebook out of sync.'
+            },
+            config: {
+                width: '100%',
+                height: '100%',
+                ...col,
+                alignItems: 'center',
+                gap: '1rem',
+                children: [
+                    {
+                        margin: '25vh 1rem',
+                        text: 'Notebook is out of sync. Reload the page and try again.'
+                    },
+                ]
+            },
+        };
+    },
     loginPage() {
         return {
             meta: {
@@ -274,6 +304,7 @@ export const pages = {
                 children: [
                     {
                         ...components.button(function (event) {
+                            updatePage(pages.loadingPage());
                             signInWithPopup(firebase.auth, new GoogleAuthProvider());
                         }),
                         ...styles.button.l(),
@@ -351,7 +382,6 @@ export const pages = {
                                     {
                                         ...components.button(function (event) {
                                             updatePage(pages.setupPage());
-                                            window.scrollTo(0, 0);
                                         }),
                                         ...styles.button.l(),
                                         ...styles.colored.blue.button.filledDark(),
@@ -450,16 +480,6 @@ export const pages = {
                                 gap: '1rem',
                                 children: [
                                     {
-                                        ...components.button(function (event) {
-                                            updatePage(pages.setupTutorialPage());
-                                            window.scrollTo(0, 0);
-                                        }),
-                                        ...styles.button.l(),
-                                        ...styles.button.filledLight(),
-                                        fontWeight: 600,
-                                        text: 'Back'
-                                    },
-                                    {
                                         ...components.button(async function (event) {
                                             keyphraseValid = true;
                                             keyphraseRepeatValid = true;
@@ -479,37 +499,25 @@ export const pages = {
                                             updatePage(pages.loadingPage());
                                             try {
                                                 window.localStorage.setItem('keyphrase', keyphrase);
-                                                const salt = window.crypto.getRandomValues(new Uint8Array(16));
-                                                const key = await generateKey(keyphrase, salt);
-                                                const tree = await encrypt(key, textEncoder.encode(JSON.stringify({ root: { name: 'Home', type: 'folder', parent: null, children: [] } })));
-                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', user.uid);
+                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                 const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                     const notebookDoc = await transaction.get(notebookDocRef);
-                                                    if (notebookDoc.exists() && notebookDoc.data().status === 'active') {
-                                                        throw "User already exists";
-                                                    } else if (notebookDoc.exists() && notebookDoc.data().status === 'deleted') {
-                                                        transaction.update(notebookDocRef, {
-                                                            status: 'active',
-                                                            salt: Bytes.fromUint8Array(salt),
-                                                            tree,
-                                                        });
+                                                    if (notebookDoc.exists()) {
+                                                        throw "Notebook already exists";
                                                     }
                                                     else {
                                                         transaction.set(notebookDocRef, {
+                                                            timestamp: serverTimestamp(),
                                                             status: 'active',
-                                                            salt: Bytes.fromUint8Array(salt),
-                                                            tree,
-                                                            orphanNoteIds: []
+                                                            salt: Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(16))),
+                                                            tree: {}
                                                         });
                                                     }
                                                     return true;
                                                 });
-                                                updatePage(pages.loadingPage());
-                                                tryFetchDecryptNotebook();
                                             } catch (error) {
                                                 console.error(error);
                                                 updatePage(pages.generalErrorPage());
-                                                window.scrollTo(0, 0);
                                             }
                                         }),
                                         ...styles.button.l(),
@@ -567,7 +575,7 @@ export const pages = {
                                         color: colors.red[500],
                                         text: 'Invalid'
                                     }),
-                                    {
+                                    () => ({
                                         id: 'keyphrase-input',
                                         ...components.input(),
                                         ...styles.border.default(),
@@ -575,7 +583,7 @@ export const pages = {
                                         marginTop: '0.5rem',
                                         type: 'password',
                                         maxlength: '64'
-                                    },
+                                    }),
                                 ]
                             },
                             {
@@ -596,18 +604,19 @@ export const pages = {
                                     },
                                     {
                                         ...components.button(async function (event) {
-                                            keyphraseValid = true;
-                                            if (!widgets['keyphrase-input'].domElement.value) {
-                                                keyphraseValid = false;
+                                            if (widgets['keyphrase-input'].domElement.value) {
+                                                try {
+                                                    key = await generateKey(widgets['keyphrase-input'].domElement.value, notebook.salt.toUint8Array());
+                                                    tree = Object.fromEntries(Object.entries(notebook.tree).map(async ([key, value]) => [key, { type: value.type, parent: value.parent, order: value.order, name: JSON.parse(textDecoder.decode(await decrypt(key, value.name.iv.toUint8Array(), value.name.data.toUint8Array()))) }]));
+                                                    window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                                    resolveCurrentPath();
+                                                    return;
+                                                } catch (error) {
+                                                }
                                             }
-                                            widgets['keyphrase-hint'].update();
-                                            if (!keyphraseValid) {
-                                                window.scrollTo(0, 0);
-                                                return;
-                                            }
-                                            window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                            updatePage(pages.loadingPage());
-                                            tryFetchDecryptNotebook();
+                                            keyphraseValid = false;
+                                            widgets['keyphrase-input'].update();
+                                            window.scrollTo(0, 0);
                                         }),
                                         ...styles.button.l(),
                                         ...styles.colored.blue.button.filledDark(),
@@ -623,385 +632,206 @@ export const pages = {
             }),
         };
     },
-    folderPage(folderId) {
+    folderPage() {
+        let nodeModificationTimestamp;
         let nameValid = true;
-        let moveToFolderId = undefined;
+        let moveToFolderId;
         return {
             meta: {
-                title: `${tree[folderId]['name']} | ${appName}`,
+                title: `${folderId === 'root' ? 'Home' : tree[folderId].name} | ${appName}`,
                 description: 'Folder page.'
             },
-            config: () => ({
-                id: 'folder',
-                ...styles.base(),
-                alignItems: 'center',
-                children: [
-                    folderId === 'root' ? null : {
-                        ...components.stickyHeader(),
-                        children: [
-                            {
-                                ...row,
-                                alignItems: 'center',
-                                gap: '1rem',
-                                children: [
-                                    {
-                                        ...components.buttonLink(`/folder/${tree[folderId].parent}`),
-                                        ...styles.button.m(),
-                                        ...styles.button.flat(),
-                                        fill: colors.foreground2(),
-                                        children: [
-                                            {
-                                                html: icons.up,
-                                                width: '1.25rem',
-                                                height: '1.25rem',
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        ...styles.text.h5(),
-                                        text: tree[folderId].name
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        flexGrow: 1,
-                        width: 'min(640px, 100% - 1rem)',
-                        padding: '1rem 0',
-                        ...col,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        children: tree[folderId].children.map(cid => ({
-                            ...components.button(function (event) {
-                                if (tree[cid]['type'] === 'folder') {
-                                    goTo(`/folder/${cid}`);
-                                } else if (tree[cid]['type'] === 'note') {
-                                    goTo(`/note/${cid}`);
-                                }
-                            }, function (event) {
-                                modalOn({
-                                    ...components.menu(),
+            config: () => {
+                const children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                return {
+                    id: 'folder',
+                    ...styles.base(),
+                    alignItems: 'center',
+                    children: [
+                        folderId === 'root' ? null : {
+                            ...components.stickyHeader(),
+                            children: [
+                                {
+                                    ...row,
+                                    alignItems: 'center',
+                                    gap: '1rem',
                                     children: [
-                                        tree[folderId].children.indexOf(cid) > 0 ? {
-                                            ...components.button(async function (event) {
-                                                event.stopPropagation();
-                                                const arr = tree[folderId].children;
-                                                const index = arr.indexOf(cid);
-                                                [arr[index], arr[index - 1]] = [arr[index - 1], arr[index]];
-                                                updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
-                                                    tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                });
-                                                modalOff();
-                                            }),
-                                            ...styles.button.mFullWidth(),
-                                            ...styles.button.flat(),
-                                            text: 'Move Up'
-                                        } : null,
-                                        tree[folderId].children.indexOf(cid) < tree[folderId].children.length - 1 ? {
-                                            ...components.button(async function (event) {
-                                                event.stopPropagation();
-                                                const arr = tree[folderId].children;
-                                                const index = arr.indexOf(cid);
-                                                [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
-                                                updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
-                                                    tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                });
-                                                modalOff();
-                                            }),
-                                            ...styles.button.mFullWidth(),
-                                            ...styles.button.flat(),
-                                            text: 'Move Down'
-                                        } : null,
                                         {
-                                            ...components.button(function (event) {
-                                                event.stopPropagation();
-                                                moveToFolderId = 'root';
-                                                modalOn(() => ({
-                                                    ...components.menu(),
-                                                    alignItems: 'start',
-                                                    gap: '0.5rem',
-                                                    children: [
-                                                        {
-                                                            marginBottom: '0.5rem',
-                                                            fontWeight: 600,
-                                                            text: 'Move to Folder'
-                                                        },
-                                                        moveToFolderId === 'root' ? null : {
-                                                            ...components.button(function (event) {
-                                                                event.stopPropagation();
-                                                                moveToFolderId = tree[moveToFolderId].parent;
-                                                                this.parent.update();
-                                                            }),
-                                                            ...styles.button.mFullWidth(),
-                                                            ...styles.button.flat(),
-                                                            text: '...'
-                                                        },
-                                                        ...tree[moveToFolderId].children.filter(id => tree[id].type === 'folder').map(id => ({
-                                                            ...components.button(function (event) {
-                                                                event.stopPropagation();
-                                                                moveToFolderId = id;
-                                                                this.parent.update();
-                                                            }),
-                                                            ...styles.button.mFullWidth(),
-                                                            ...styles.button.flat(),
-                                                            text: tree[id].name
-                                                        })),
-                                                        {
-                                                            ...components.button(async function (event) {
-                                                                event.stopPropagation();
-                                                                const oldParent = tree[tree[cid].parent];
-                                                                const newParent = tree[moveToFolderId];
-                                                                oldParent.children = oldParent.children.filter(id => id !== cid);
-                                                                newParent.children.push(cid);
-                                                                tree[cid].parent = moveToFolderId;
-                                                                updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
-                                                                    tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                });
-                                                                modalOff();
-                                                            }),
-                                                            ...styles.button.l(),
-                                                            ...styles.colored.blue.button.filledDark(),
-                                                            marginTop: '0.5rem',
-                                                            alignSelf: 'end',
-                                                            fontWeight: 600,
-                                                            text: `Move to ${tree[moveToFolderId].name}`
-                                                        }
-                                                    ],
-                                                }));
-                                            }),
-                                            ...styles.button.mFullWidth(),
+                                            ...components.buttonLink(`/folder/${tree[folderId].parent}`),
+                                            ...styles.button.m(),
                                             ...styles.button.flat(),
-                                            text: 'Move to Folder'
+                                            fill: colors.foreground2(),
+                                            children: [
+                                                {
+                                                    html: icons.up,
+                                                    width: '1.25rem',
+                                                    height: '1.25rem',
+                                                }
+                                            ]
                                         },
                                         {
-                                            ...components.button(function (event) {
-                                                event.stopPropagation();
-                                                nameValid = true;
-                                                modalOn(() => ({
-                                                    ...components.menu(),
-                                                    alignItems: 'start',
-                                                    gap: '0.5rem',
-                                                    children: [
-                                                        {
-                                                            fontWeight: 600,
-                                                            text: 'New Name'
-                                                        },
-                                                        () => ({
-                                                            id: 'new-folder-name-hint',
-                                                            ...styles.text.aux(),
-                                                            display: nameValid ? 'none' : 'block',
-                                                            fontWeight: 500,
-                                                            color: colors.red[500],
-                                                            text: 'Required'
-                                                        }),
-                                                        {
-                                                            id: 'new-folder-name-input',
-                                                            ...components.input(),
-                                                            ...styles.border.default(),
-                                                            width: '100%',
-                                                            type: 'text',
-                                                            maxlength: '64',
-                                                            value: tree[cid].name
-                                                        },
-                                                        {
-                                                            ...components.button(async function (event) {
-                                                                event.stopPropagation();
-                                                                nameValid = true;
-                                                                if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                    nameValid = false;
-                                                                }
-                                                                widgets['new-folder-name-hint'].update();
-                                                                if (!nameValid) {
-                                                                    return;
-                                                                }
-                                                                tree[cid]['name'] = widgets['new-folder-name-input'].domElement.value.trim();
-                                                                updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
-                                                                    tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
+                                            ...styles.text.h5(),
+                                            text: tree[folderId].name
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            flexGrow: 1,
+                            width: 'min(640px, 100% - 1rem)',
+                            padding: '1rem 0',
+                            ...col,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            children: children.map(cid => ({
+                                ...components.button(function (event) {
+                                    if (tree[cid].type === 'folder') {
+                                        goTo(`/folder/${cid}`);
+                                    } else if (tree[cid].type === 'note') {
+                                        goTo(`/note/${cid}`);
+                                    }
+                                }, function (event) {
+                                    nodeModificationTimestamp = notebook.timestamp.toMillis();;
+                                    modalOn({
+                                        ...components.menu(),
+                                        children: [
+                                            tree[cid].order > 0 ? {
+                                                ...components.button(async function (event) {
+                                                    event.stopPropagation();
+                                                    updatePage(pages.loadingPage());
+                                                    const neighborId = children[children.indexOf(cid) - 1];
+                                                    try {
+                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                        const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                            if (notebookDoc.data().timestamp.toMillis() === nodeModificationTimestamp) {
+                                                                transaction.update(notebookDocRef, {
+                                                                    timestamp: serverTimestamp(),
+                                                                    [`tree.${cid}`.order]: increment(-1),
+                                                                    [`tree.${neighborId}`.order]: increment(1),
                                                                 });
-                                                                modalOff();
-                                                            }),
-                                                            ...styles.button.l(),
-                                                            ...styles.colored.blue.button.filledDark(),
-                                                            marginTop: '0.5rem',
-                                                            alignSelf: 'end',
-                                                            fontWeight: 600,
-                                                            text: 'Rename'
-                                                        }
-                                                    ]
-                                                }))
-                                            }),
-                                            ...styles.button.mFullWidth(),
-                                            ...styles.button.flat(),
-                                            text: 'Rename'
-                                        },
-                                        {
-                                            ...components.button(function (event) {
-                                                event.stopPropagation();
-                                                if (tree[cid].type === 'note') {
-                                                    modalOn({
-                                                        ...components.prompt('Delete note', 'You won\'t be able to restore it. Consider moving to "Archive" folder', [
+                                                                return true;
+                                                            }
+                                                            else {
+                                                                updatePage(pages.notebookOutOfSyncPage());
+                                                                return false;
+                                                            }
+                                                        });
+                                                    } catch (error) {
+                                                        console.error(error);
+                                                        updatePage(pages.generalErrorPage());
+                                                    }
+                                                }),
+                                                ...styles.button.mFullWidth(),
+                                                ...styles.button.flat(),
+                                                text: 'Move Up'
+                                            } : null,
+                                            tree[cid].order < children.length - 1 ? {
+                                                ...components.button(async function (event) {
+                                                    event.stopPropagation();
+                                                    updatePage(pages.loadingPage());
+                                                    const neighborId = children[children.indexOf(cid) + 1];
+                                                    try {
+                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                        const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                            if (notebookDoc.data().timestamp.toMillis() === nodeModificationTimestamp) {
+                                                                transaction.update(notebookDocRef, {
+                                                                    timestamp: serverTimestamp(),
+                                                                    [`tree.${cid}`.order]: increment(1),
+                                                                    [`tree.${neighborId}`.order]: increment(-1),
+                                                                });
+                                                                return true;
+                                                            }
+                                                            else {
+                                                                updatePage(pages.notebookOutOfSyncPage());
+                                                                return false;
+                                                            }
+                                                        });
+                                                    } catch (error) {
+                                                        console.error(error);
+                                                        updatePage(pages.generalErrorPage());
+                                                    }
+                                                }),
+                                                ...styles.button.mFullWidth(),
+                                                ...styles.button.flat(),
+                                                text: 'Move Down'
+                                            } : null,
+                                            {
+                                                ...components.button(function (event) {
+                                                    event.stopPropagation();
+                                                    moveToFolderId = 'root';
+                                                    modalOn(() => ({
+                                                        ...components.menu(),
+                                                        alignItems: 'start',
+                                                        gap: '0.5rem',
+                                                        children: [
+                                                            {
+                                                                marginBottom: '0.5rem',
+                                                                fontWeight: 600,
+                                                                text: 'Move to Folder'
+                                                            },
+                                                            moveToFolderId === 'root' ? null : {
+                                                                ...components.button(function (event) {
+                                                                    event.stopPropagation();
+                                                                    moveToFolderId = tree[moveToFolderId].parent;
+                                                                    this.parent.update();
+                                                                }),
+                                                                ...styles.button.mFullWidth(),
+                                                                ...styles.button.flat(),
+                                                                text: '...'
+                                                            },
+                                                            ...tree[moveToFolderId].children.filter(id => tree[id].type === 'folder').map(id => ({
+                                                                ...components.button(function (event) {
+                                                                    event.stopPropagation();
+                                                                    moveToFolderId = id;
+                                                                    this.parent.update();
+                                                                }),
+                                                                ...styles.button.mFullWidth(),
+                                                                ...styles.button.flat(),
+                                                                text: tree[id].name
+                                                            })),
                                                             {
                                                                 ...components.button(async function (event) {
                                                                     event.stopPropagation();
-                                                                    delete tree[cid];
-                                                                    tree[folderId].children = tree[folderId].children.filter(id => id !== cid);
-                                                                    updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
+                                                                    const oldParent = tree[tree[cid].parent];
+                                                                    const newParent = tree[moveToFolderId];
+                                                                    oldParent.children = oldParent.children.filter(id => id !== id);
+                                                                    newParent.children.push(cid);
+                                                                    tree[cid].parent = moveToFolderId;
+                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
                                                                         tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                        orphanNoteIds: arrayUnion(cid),
                                                                     });
                                                                     modalOff();
                                                                 }),
                                                                 ...styles.button.l(),
-                                                                ...styles.colored.red.button.filledDark(),
+                                                                ...styles.colored.blue.button.filledDark(),
+                                                                marginTop: '0.5rem',
+                                                                alignSelf: 'end',
                                                                 fontWeight: 600,
-                                                                text: 'Delete'
+                                                                text: `Move to ${tree[moveToFolderId].name}`
                                                             }
-                                                        ]),
-                                                    });
-                                                }
-                                                else if (tree[cid].type === 'folder' && tree[cid].children.length > 0) {
-                                                    modalOn({
-                                                        ...components.prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
-                                                        ...styles.colored.red.panel(),
-                                                    })
-                                                }
-                                                else if (tree[cid].type === 'folder' && tree[cid].children.length === 0) {
-                                                    modalOn({
-                                                        ...components.prompt('Delete folder', 'You won\'t be able to restore it', [{
-                                                            ...components.button(async function (event) {
-                                                                event.stopPropagation();
-                                                                delete tree[cid];
-                                                                tree[folderId].children = tree[folderId].children.filter(id => id !== cid);
-                                                                updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
-                                                                    tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                });
-                                                                modalOff();
-                                                            }),
-                                                            ...styles.button.l(),
-                                                            ...styles.colored.red.button.filledDark(),
-                                                            fontWeight: 600,
-                                                            text: 'Delete'
-                                                        }]),
-                                                    })
-                                                }
-                                            }),
-                                            ...styles.button.mFullWidth(),
-                                            ...styles.colored.red.button.flat(),
-                                            text: 'Delete'
-                                        },
-                                    ]
-                                })
-                            }),
-                            ...styles.button.flat(),
-                            width: '100%',
-                            padding: '1rem',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            borderRadius: '0.5rem',
-                            fontSize: '1.125rem',
-                            children: [
-                                { text: tree[cid]['name'] },
-                            ]
-                        }))
-                    },
-                    {
-                        position: 'fixed',
-                        bottom: 0,
-                        left: 0,
-                        zIndex: 10,
-                        ...components.button(function (event) {
-                            event.stopPropagation();
-                            modalOn({
-                                ...components.menu(),
-                                children: [
-                                    {
-                                        ...components.button(function (event) {
-                                            event.stopPropagation();
-                                            modalOn({
-                                                ...components.prompt('Delete account', 'You won\'t be able to restore it', [
-                                                    {
-                                                        ...components.button(async function (event) {
-                                                            event.stopPropagation();
-                                                            updatePage(pages.loadingPage());
-                                                            await updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
-                                                                status: 'deleted',
-                                                                orphanNoteIds: orphanNoteIds.concat(Object.keys(tree).filter(id => tree[id].type === 'note')),
-                                                            });
-                                                            signOut(firebase.auth);
-                                                        }),
-                                                        ...styles.button.l(),
-                                                        ...styles.colored.red.button.filledDark(),
-                                                        fontWeight: 600,
-                                                        text: 'Delete'
-                                                    }
-                                                ]),
-                                            });
-                                        }),
-                                        ...styles.button.mFullWidth(),
-                                        ...styles.colored.red.button.flat(),
-                                        text: 'Delete account'
-                                    },
-                                    {
-                                        ...components.button(function (event) {
-                                            event.stopPropagation();
-                                            signOut(firebase.auth);
-                                        }),
-                                        ...styles.button.mFullWidth(),
-                                        ...styles.colored.red.button.flat(),
-                                        text: 'Log out'
-                                    }
-                                ]
-                            })
-                        }),
-                        ...styles.button.m(),
-                        ...styles.button.filledLight(),
-                        margin: '1rem',
-                        borderRadius: '2rem',
-                        children: [
-                            {
-                                html: icons.menu,
-                                width: '2rem',
-                                height: '2rem',
-                            }
-                        ]
-                    },
-                    {
-                        ...col,
-                        position: 'fixed',
-                        bottom: 0,
-                        right: 0,
-                        zIndex: 10,
-                        margin: '1rem',
-                        gap: '1rem',
-                        children: [
-                            {
-                                ...components.switchThemeButton(),
-                                ...styles.button.filledLight(),
-                                width: '3rem',
-                                height: '3rem',
-                                padding: '0.5rem',
-                                borderRadius: '2rem',
-                            },
-                            {
-                                ...components.button(function (event) {
-                                    event.stopPropagation();
-                                    modalOn({
-                                        ...components.menu(),
-                                        children: [
+                                                        ],
+                                                    }));
+                                                }),
+                                                ...styles.button.mFullWidth(),
+                                                ...styles.button.flat(),
+                                                text: 'Move to Folder'
+                                            },
                                             {
                                                 ...components.button(function (event) {
                                                     event.stopPropagation();
                                                     nameValid = true;
-                                                    modalOn({
+                                                    modalOn(() => ({
                                                         ...components.menu(),
                                                         alignItems: 'start',
                                                         gap: '0.5rem',
                                                         children: [
                                                             {
                                                                 fontWeight: 600,
-                                                                text: 'Name'
+                                                                text: 'New Name'
                                                             },
                                                             () => ({
                                                                 id: 'new-folder-name-hint',
@@ -1017,7 +847,8 @@ export const pages = {
                                                                 ...styles.border.default(),
                                                                 width: '100%',
                                                                 type: 'text',
-                                                                maxlength: '64'
+                                                                maxlength: '64',
+                                                                value: tree[cid].name
                                                             },
                                                             {
                                                                 ...components.button(async function (event) {
@@ -1030,10 +861,8 @@ export const pages = {
                                                                     if (!nameValid) {
                                                                         return;
                                                                     }
-                                                                    const newFolderId = generateTreeId();
-                                                                    tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: folderId, children: [] }
-                                                                    tree[folderId].children.push(newFolderId);
-                                                                    updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
+                                                                    tree[cid]['name'] = widgets['new-folder-name-input'].domElement.value.trim();
+                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
                                                                         tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
                                                                     });
                                                                     modalOff();
@@ -1043,98 +872,315 @@ export const pages = {
                                                                 marginTop: '0.5rem',
                                                                 alignSelf: 'end',
                                                                 fontWeight: 600,
-                                                                text: 'Create'
+                                                                text: 'Rename'
                                                             }
                                                         ]
-                                                    })
+                                                    }))
                                                 }),
                                                 ...styles.button.mFullWidth(),
                                                 ...styles.button.flat(),
-                                                text: 'New Folder'
+                                                text: 'Rename'
                                             },
                                             {
                                                 ...components.button(function (event) {
                                                     event.stopPropagation();
-                                                    nameValid = true;
-                                                    modalOn({
-                                                        ...components.menu(),
-                                                        alignItems: 'start',
-                                                        gap: '0.5rem',
-                                                        children: [
-                                                            {
-                                                                fontWeight: 600,
-                                                                text: 'Name'
-                                                            },
-                                                            () => ({
-                                                                id: 'new-note-name-hint',
-                                                                ...styles.text.aux(),
-                                                                display: nameValid ? 'none' : 'block',
-                                                                fontWeight: 500,
-                                                                color: colors.red[500],
-                                                                text: 'Required'
-                                                            }),
-                                                            {
-                                                                id: 'new-note-name-input',
-                                                                ...components.input(),
-                                                                ...styles.border.default(),
-                                                                width: '100%',
-                                                                type: 'text',
-                                                                maxlength: '64'
-                                                            },
-                                                            {
+                                                    if (tree[cid].type === 'note') {
+                                                        modalOn({
+                                                            ...components.prompt('Delete note', 'You won\'t be able to restore it. Consider moving to "Archive" folder', [
+                                                                {
+                                                                    ...components.button(async function (event) {
+                                                                        event.stopPropagation();
+                                                                        delete tree[cid];
+                                                                        tree[folderId].children = tree[folderId].children.filter(id => id !== id);
+                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
+                                                                            tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
+                                                                            orphanNoteIds: arrayUnion(cid),
+                                                                        });
+                                                                        modalOff();
+                                                                    }),
+                                                                    ...styles.button.l(),
+                                                                    ...styles.colored.red.button.filledDark(),
+                                                                    fontWeight: 600,
+                                                                    text: 'Delete'
+                                                                }
+                                                            ]),
+                                                        });
+                                                    }
+                                                    else if (tree[cid].type === 'folder' && tree[cid].children.length > 0) {
+                                                        modalOn({
+                                                            ...components.prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
+                                                            ...styles.colored.red.panel(),
+                                                        })
+                                                    }
+                                                    else if (tree[cid].type === 'folder' && tree[cid].children.length === 0) {
+                                                        modalOn({
+                                                            ...components.prompt('Delete folder', 'You won\'t be able to restore it', [{
                                                                 ...components.button(async function (event) {
                                                                     event.stopPropagation();
-                                                                    nameValid = true;
-                                                                    if (!widgets['new-note-name-input'].domElement.value?.trim()) {
-                                                                        nameValid = false;
-                                                                    }
-                                                                    widgets['new-note-name-hint'].update();
-                                                                    if (!nameValid) {
-                                                                        return;
-                                                                    }
-                                                                    const newNoteId = generateTreeId();
-                                                                    tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: folderId }
-                                                                    tree[folderId].children.push(newNoteId);
-                                                                    updateDoc(doc(firebase.firestore, 'notebooks', user.uid), {
+                                                                    delete tree[cid];
+                                                                    tree[folderId].children = tree[folderId].children.filter(id => id !== id);
+                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
                                                                         tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
                                                                     });
                                                                     modalOff();
                                                                 }),
                                                                 ...styles.button.l(),
-                                                                ...styles.colored.blue.button.filledDark(),
-                                                                marginTop: '0.5rem',
-                                                                alignSelf: 'end',
+                                                                ...styles.colored.red.button.filledDark(),
                                                                 fontWeight: 600,
-                                                                text: 'Create'
-                                                            }
-                                                        ]
-                                                    })
+                                                                text: 'Delete'
+                                                            }]),
+                                                        })
+                                                    }
                                                 }),
                                                 ...styles.button.mFullWidth(),
-                                                ...styles.button.flat(),
-                                                text: 'New Note'
+                                                ...styles.colored.red.button.flat(),
+                                                text: 'Delete'
                                             },
                                         ]
                                     })
                                 }),
-                                ...styles.colored.blue.button.filledLight(),
-                                padding: 0,
-                                borderRadius: '2rem',
+                                ...styles.button.flat(),
+                                width: '100%',
+                                padding: '1rem',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderRadius: '0.5rem',
+                                fontSize: '1.125rem',
                                 children: [
-                                    {
-                                        html: icons.add,
-                                        width: '3rem',
-                                        height: '3rem',
-                                    }
+                                    { text: tree[cid]['name'] },
                                 ]
-                            }
-                        ]
-                    }
-                ]
-            }),
+                            }))
+                        },
+                        {
+                            position: 'fixed',
+                            bottom: 0,
+                            left: 0,
+                            zIndex: 10,
+                            ...components.button(function (event) {
+                                event.stopPropagation();
+                                modalOn({
+                                    ...components.menu(),
+                                    children: [
+                                        {
+                                            ...components.button(function (event) {
+                                                event.stopPropagation();
+                                                modalOn({
+                                                    ...components.prompt('Delete account', 'You won\'t be able to restore it', [
+                                                        {
+                                                            ...components.button(async function (event) {
+                                                                event.stopPropagation();
+                                                                updatePage(pages.loadingPage());
+                                                                await updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
+                                                                    status: 'deleted',
+                                                                    orphanNoteIds: orphanNoteIds.concat(Object.keys(tree).filter(id => tree[id].type === 'note')),
+                                                                });
+                                                                signOut(firebase.auth);
+                                                            }),
+                                                            ...styles.button.l(),
+                                                            ...styles.colored.red.button.filledDark(),
+                                                            fontWeight: 600,
+                                                            text: 'Delete'
+                                                        }
+                                                    ]),
+                                                });
+                                            }),
+                                            ...styles.button.mFullWidth(),
+                                            ...styles.colored.red.button.flat(),
+                                            text: 'Delete account'
+                                        },
+                                        {
+                                            ...components.button(function (event) {
+                                                event.stopPropagation();
+                                                signOut(firebase.auth);
+                                            }),
+                                            ...styles.button.mFullWidth(),
+                                            ...styles.colored.red.button.flat(),
+                                            text: 'Log out'
+                                        }
+                                    ]
+                                })
+                            }),
+                            ...styles.button.m(),
+                            ...styles.button.filledLight(),
+                            margin: '1rem',
+                            borderRadius: '2rem',
+                            children: [
+                                {
+                                    html: icons.menu,
+                                    width: '2rem',
+                                    height: '2rem',
+                                }
+                            ]
+                        },
+                        {
+                            ...col,
+                            position: 'fixed',
+                            bottom: 0,
+                            right: 0,
+                            zIndex: 10,
+                            margin: '1rem',
+                            gap: '1rem',
+                            children: [
+                                {
+                                    ...components.switchThemeButton(),
+                                    ...styles.button.filledLight(),
+                                    width: '3rem',
+                                    height: '3rem',
+                                    padding: '0.5rem',
+                                    borderRadius: '2rem',
+                                },
+                                {
+                                    ...components.button(function (event) {
+                                        event.stopPropagation();
+                                        modalOn({
+                                            ...components.menu(),
+                                            children: [
+                                                {
+                                                    ...components.button(function (event) {
+                                                        event.stopPropagation();
+                                                        nameValid = true;
+                                                        modalOn({
+                                                            ...components.menu(),
+                                                            alignItems: 'start',
+                                                            gap: '0.5rem',
+                                                            children: [
+                                                                {
+                                                                    fontWeight: 600,
+                                                                    text: 'Name'
+                                                                },
+                                                                () => ({
+                                                                    id: 'new-folder-name-hint',
+                                                                    ...styles.text.aux(),
+                                                                    display: nameValid ? 'none' : 'block',
+                                                                    fontWeight: 500,
+                                                                    color: colors.red[500],
+                                                                    text: 'Required'
+                                                                }),
+                                                                {
+                                                                    id: 'new-folder-name-input',
+                                                                    ...components.input(),
+                                                                    ...styles.border.default(),
+                                                                    width: '100%',
+                                                                    type: 'text',
+                                                                    maxlength: '64'
+                                                                },
+                                                                {
+                                                                    ...components.button(async function (event) {
+                                                                        event.stopPropagation();
+                                                                        nameValid = true;
+                                                                        if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                            nameValid = false;
+                                                                        }
+                                                                        widgets['new-folder-name-hint'].update();
+                                                                        if (!nameValid) {
+                                                                            return;
+                                                                        }
+                                                                        const newFolderId = generateTreeId();
+                                                                        tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: folderId, children: [] }
+                                                                        tree[folderId].children.push(newFolderId);
+                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
+                                                                            tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
+                                                                        });
+                                                                        modalOff();
+                                                                    }),
+                                                                    ...styles.button.l(),
+                                                                    ...styles.colored.blue.button.filledDark(),
+                                                                    marginTop: '0.5rem',
+                                                                    alignSelf: 'end',
+                                                                    fontWeight: 600,
+                                                                    text: 'Create'
+                                                                }
+                                                            ]
+                                                        })
+                                                    }),
+                                                    ...styles.button.mFullWidth(),
+                                                    ...styles.button.flat(),
+                                                    text: 'New Folder'
+                                                },
+                                                {
+                                                    ...components.button(function (event) {
+                                                        event.stopPropagation();
+                                                        nameValid = true;
+                                                        modalOn({
+                                                            ...components.menu(),
+                                                            alignItems: 'start',
+                                                            gap: '0.5rem',
+                                                            children: [
+                                                                {
+                                                                    fontWeight: 600,
+                                                                    text: 'Name'
+                                                                },
+                                                                () => ({
+                                                                    id: 'new-note-name-hint',
+                                                                    ...styles.text.aux(),
+                                                                    display: nameValid ? 'none' : 'block',
+                                                                    fontWeight: 500,
+                                                                    color: colors.red[500],
+                                                                    text: 'Required'
+                                                                }),
+                                                                {
+                                                                    id: 'new-note-name-input',
+                                                                    ...components.input(),
+                                                                    ...styles.border.default(),
+                                                                    width: '100%',
+                                                                    type: 'text',
+                                                                    maxlength: '64'
+                                                                },
+                                                                {
+                                                                    ...components.button(async function (event) {
+                                                                        event.stopPropagation();
+                                                                        nameValid = true;
+                                                                        if (!widgets['new-note-name-input'].domElement.value?.trim()) {
+                                                                            nameValid = false;
+                                                                        }
+                                                                        widgets['new-note-name-hint'].update();
+                                                                        if (!nameValid) {
+                                                                            return;
+                                                                        }
+                                                                        const newNoteId = generateTreeId();
+                                                                        tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: folderId }
+                                                                        tree[folderId].children.push(newNoteId);
+                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
+                                                                            tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
+                                                                        });
+                                                                        modalOff();
+                                                                    }),
+                                                                    ...styles.button.l(),
+                                                                    ...styles.colored.blue.button.filledDark(),
+                                                                    marginTop: '0.5rem',
+                                                                    alignSelf: 'end',
+                                                                    fontWeight: 600,
+                                                                    text: 'Create'
+                                                                }
+                                                            ]
+                                                        })
+                                                    }),
+                                                    ...styles.button.mFullWidth(),
+                                                    ...styles.button.flat(),
+                                                    text: 'New Note'
+                                                },
+                                            ]
+                                        })
+                                    }),
+                                    ...styles.colored.blue.button.filledLight(),
+                                    padding: 0,
+                                    borderRadius: '2rem',
+                                    children: [
+                                        {
+                                            html: icons.add,
+                                            width: '3rem',
+                                            height: '3rem',
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                };
+            },
         };
     },
-    notePage(noteId) {
+    notePage() {
         let limitParagraphs = true;
         let addParagraphValid = true;
         let editParagraphId;
@@ -1152,7 +1198,8 @@ export const pages = {
                 alignItems: 'center',
                 gap: '1rem',
                 children: [
-                    {
+                    () => ({
+                        id: 'note-header',
                         ...components.stickyHeader(),
                         children: [
                             {
@@ -1180,7 +1227,7 @@ export const pages = {
                                 ]
                             }
                         ]
-                    },
+                    }),
                     {
                         width: 'min(640px, 100% - 1rem)',
                         ...col,
@@ -1246,7 +1293,7 @@ export const pages = {
                                                                                             } else {
                                                                                                 let compressOutputReader = new FileReader();
                                                                                                 compressOutputReader.onload = async function (e) {
-                                                                                                    addDoc(collection(firebase.firestore, 'notebooks', user.uid, 'paragraphs'), {
+                                                                                                    addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
                                                                                                         timestamp: Math.floor(Date.now() / 1000),
                                                                                                         noteId: noteId,
                                                                                                         image: {
@@ -1278,7 +1325,7 @@ export const pages = {
                                                 } else {
                                                     const reader = new FileReader();
                                                     reader.onload = async function (e) {
-                                                        addDoc(collection(firebase.firestore, 'notebooks', user.uid, 'paragraphs'), {
+                                                        addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
                                                             timestamp: Math.floor(Date.now() / 1000),
                                                             noteId: noteId,
                                                             image: {
@@ -1325,7 +1372,7 @@ export const pages = {
                                             if (!addParagraphValid) {
                                                 return;
                                             }
-                                            addDoc(collection(firebase.firestore, 'notebooks', user.uid, 'paragraphs'), {
+                                            addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
                                                 timestamp: Math.floor(Date.now() / 1000),
                                                 noteId: noteId,
                                                 text: await encrypt(key, textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
@@ -1463,7 +1510,7 @@ export const pages = {
                                                 editParagraphId = undefined;
                                                 editParagraphValid = undefined;
                                                 editParagraphText = undefined;
-                                                updateDoc(doc(doc(firebase.firestore, 'notebooks', user.uid), 'paragraphs', paragraph.id), {
+                                                updateDoc(doc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), 'paragraphs', paragraph.id), {
                                                     text: await encrypt(key, textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
                                                 });
                                             }),
@@ -1552,7 +1599,7 @@ export const pages = {
                                                                     children: ['default', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => ({
                                                                         ...components.button(async function (event) {
                                                                             event.stopPropagation();
-                                                                            updateDoc(doc(doc(firebase.firestore, 'notebooks', user.uid), 'paragraphs', paragraph.id), {
+                                                                            updateDoc(doc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), 'paragraphs', paragraph.id), {
                                                                                 color: await encrypt(key, textEncoder.encode(color)),
                                                                             });
                                                                             modalOff();
@@ -1614,7 +1661,7 @@ export const pages = {
                                                             ...components.prompt('Delete', 'You won\'t be able to restore it', [{
                                                                 ...components.button(async function (event) {
                                                                     event.stopPropagation();
-                                                                    deleteDoc(doc(firebase.firestore, 'notebooks', user.uid, 'paragraphs', paragraph.id));
+                                                                    deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
                                                                     modalOff();
                                                                 }),
                                                                 ...styles.button.l(),
