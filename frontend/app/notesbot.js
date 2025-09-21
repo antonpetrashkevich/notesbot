@@ -1,8 +1,8 @@
-import { appName, widgets, pageWidget, modalWidget, smallViewport, darkMode, startApp, updateMetaTags, updateBodyStyle, updatePage, startViewportSizeController, startThemeController, startPathController, resolveCurrentPath, goTo, modalOn, modalOff, row, col, grid } from '/home/n1/projects/xpl_kit/core.js';
-import { colors as baseColors, styles as baseStyles, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 import { initializeApp as initializeFirebase } from "firebase/app";
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, Bytes, collection, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, runTransaction, getDoc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocs, getDocsFromServer, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, increment } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { addDoc, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, doc, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { colors as baseColors, components as baseComponents, pages as basePages, styles as baseStyles } from '/home/n1/projects/xpl_kit/commons';
+import { appName, col, darkMode, goTo, grid, modalOff, modalOn, resolveCurrentPath, row, startApp, startPathController, startThemeController, startViewportSizeController, updateBodyStyle, updateMetaTags, updatePage, widgets } from '/home/n1/projects/xpl_kit/core.js';
 // import { getAnalytics } from "firebase/analytics";
 
 
@@ -72,7 +72,7 @@ function generateTreeId() {
         for (let i = 0; i < 8; i++) {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
-        if (!tree.hasOwnProperty(result) && orphanNoteIds.indexOf(result) === -1) {
+        if (!tree.hasOwnProperty(result)) {
             return result;
         }
     }
@@ -131,7 +131,7 @@ export async function init() {
             noteId = undefined;
             paragraphs = undefined;
             window.localStorage.removeItem('keyphrase');
-            updatePage(pages.loginPage());
+            resolveCurrentPath();
         }
     });
 }
@@ -143,11 +143,12 @@ async function pathController(segments, params, historyScroll) {
     paragraphs = undefined;
     if (!firebase.auth.currentUser) {
         updatePage(pages.loginPage());
-    } else if (notebook && notebook.status === 'deleted') {
-        updatePage(pages.notebookDeletedPage());
     }
     else if (!notebook) {
         updatePage(pages.setupTutorialPage());
+    }
+    else if (notebook && notebook.status === 'deleted') {
+        updatePage(pages.notebookDeletedPage());
     }
     else if (notebook && !window.localStorage.getItem('keyphrase')) {
         updatePage(pages.keyphrasePage());
@@ -174,23 +175,19 @@ function startListenNotebook() {
                 notebook = docSnap.data();
                 if (notebook.status === 'active' && window.localStorage.getItem('keyphrase')) {
                     key = await generateKey(window.localStorage.getItem('keyphrase'), notebook.salt.toUint8Array());
-                    tree = Object.fromEntries(Object.entries(notebook.tree).map(async ([key, value]) => [key, { type: value.type, parent: value.parent, order: value.order, name: JSON.parse(textDecoder.decode(await decrypt(key, value.name.iv.toUint8Array(), value.name.data.toUint8Array()))) }]));
-                    if (noteId && tree[noteId] && tree[noteId].parent !== 'deleted') {
-                        widgets['note-header'].update();
-                    } else {
-                        resolveCurrentPath();
+                    tree = {};
+                    for (const id in notebook.tree) {
+                        tree[id] = { type: notebook.tree[id].type, parent: notebook.tree[id].parent, order: notebook.tree[id].order, name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array())) };
                     }
-                } else {
+                }
+                if (!noteId) {
                     resolveCurrentPath();
                 }
             } else {
-                if (docSnap.metadata.fromCache) {
+                if (notebook) {
+                    signOut(firebase.auth);
                 } else {
-                    if (notebook) {
-                        signOut(firebase.auth);
-                    } else {
-                        resolveCurrentPath();
-                    }
+                    resolveCurrentPath();
                 }
             }
         });
@@ -247,12 +244,13 @@ export const pages = {
             config: {
                 width: '100%',
                 height: '100%',
+                padding: '1rem',
                 ...col,
+                justifyContent: 'center',
                 alignItems: 'center',
                 gap: '1rem',
                 children: [
                     {
-                        margin: '25vh 1rem',
                         text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
                     },
                     {
@@ -484,10 +482,10 @@ export const pages = {
                                             keyphraseValid = true;
                                             keyphraseRepeatValid = true;
                                             if (!widgets['keyphrase-input'].domElement.value) {
-                                                keyphraseValid = true;
+                                                keyphraseValid = false;
                                             }
                                             else if (!widgets['keyphrase-repeat-input'].domElement.value || widgets['keyphrase-input'].domElement.value != widgets['keyphrase-repeat-input'].domElement.value) {
-                                                keyphraseRepeatValid = true;
+                                                keyphraseRepeatValid = false;
                                             }
                                             widgets['keyphrase-hint'].update();
                                             widgets['keyphrase-repeat-hint'].update();
@@ -506,18 +504,25 @@ export const pages = {
                                                         throw "Notebook already exists";
                                                     }
                                                     else {
+                                                        const salt = Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(16)));
+                                                        const key = await generateKey(keyphrase, salt.toUint8Array());
                                                         transaction.set(notebookDocRef, {
                                                             timestamp: serverTimestamp(),
                                                             status: 'active',
-                                                            salt: Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(16))),
+                                                            salt,
+                                                            keytest: await encrypt(key, textEncoder.encode(Math.random().toString(36).slice(2))),
                                                             tree: {}
                                                         });
                                                     }
                                                     return true;
                                                 });
                                             } catch (error) {
-                                                console.error(error);
-                                                updatePage(pages.generalErrorPage());
+                                                if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                    updatePage(pages.networkErrorPage());
+                                                } else {
+                                                    console.error(error);
+                                                    updatePage(pages.generalErrorPage());
+                                                }
                                             }
                                         }),
                                         ...styles.button.l(),
@@ -604,19 +609,22 @@ export const pages = {
                                     },
                                     {
                                         ...components.button(async function (event) {
-                                            if (widgets['keyphrase-input'].domElement.value) {
-                                                try {
-                                                    key = await generateKey(widgets['keyphrase-input'].domElement.value, notebook.salt.toUint8Array());
-                                                    tree = Object.fromEntries(Object.entries(notebook.tree).map(async ([key, value]) => [key, { type: value.type, parent: value.parent, order: value.order, name: JSON.parse(textDecoder.decode(await decrypt(key, value.name.iv.toUint8Array(), value.name.data.toUint8Array()))) }]));
-                                                    window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
-                                                    resolveCurrentPath();
-                                                    return;
-                                                } catch (error) {
+                                            try {
+                                                key = await generateKey(widgets['keyphrase-input'].domElement.value, notebook.salt.toUint8Array());
+                                                await decrypt(key, notebook.keytest.iv.toUint8Array(), notebook.keytest.data.toUint8Array());
+                                                window.localStorage.setItem('keyphrase', widgets['keyphrase-input'].domElement.value);
+                                                tree = {};
+                                                for (const id in notebook.tree) {
+                                                    tree[id] = { type: notebook.tree[id].type, parent: notebook.tree[id].parent, order: notebook.tree[id].order, name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array())) };
                                                 }
+                                                resolveCurrentPath();
+                                                return;
+                                            } catch (error) {
+                                                keyphraseValid = false;
+                                                widgets['keyphrase-hint'].update();
+                                                widgets['keyphrase-input'].update();
+                                                window.scrollTo(0, 0);
                                             }
-                                            keyphraseValid = false;
-                                            widgets['keyphrase-input'].update();
-                                            window.scrollTo(0, 0);
                                         }),
                                         ...styles.button.l(),
                                         ...styles.colored.blue.button.filledDark(),
@@ -633,7 +641,7 @@ export const pages = {
         };
     },
     folderPage() {
-        let nodeModificationTimestamp;
+        let modificationTimestamp;
         let nameValid = true;
         let moveToFolderId;
         return {
@@ -693,7 +701,7 @@ export const pages = {
                                         goTo(`/note/${cid}`);
                                     }
                                 }, function (event) {
-                                    nodeModificationTimestamp = notebook.timestamp.toMillis();;
+                                    modificationTimestamp = notebook.timestamp.toMillis();;
                                     modalOn({
                                         ...components.menu(),
                                         children: [
@@ -706,11 +714,11 @@ export const pages = {
                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                         const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                             const notebookDoc = await transaction.get(notebookDocRef);
-                                                            if (notebookDoc.data().timestamp.toMillis() === nodeModificationTimestamp) {
+                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
                                                                 transaction.update(notebookDocRef, {
                                                                     timestamp: serverTimestamp(),
-                                                                    [`tree.${cid}`.order]: increment(-1),
-                                                                    [`tree.${neighborId}`.order]: increment(1),
+                                                                    [`tree.${cid}.order`]: increment(-1),
+                                                                    [`tree.${neighborId}.order`]: increment(1),
                                                                 });
                                                                 return true;
                                                             }
@@ -720,8 +728,12 @@ export const pages = {
                                                             }
                                                         });
                                                     } catch (error) {
-                                                        console.error(error);
-                                                        updatePage(pages.generalErrorPage());
+                                                        if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                            updatePage(pages.networkErrorPage());
+                                                        } else {
+                                                            console.error(error);
+                                                            updatePage(pages.generalErrorPage());
+                                                        }
                                                     }
                                                 }),
                                                 ...styles.button.mFullWidth(),
@@ -737,11 +749,11 @@ export const pages = {
                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                         const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                             const notebookDoc = await transaction.get(notebookDocRef);
-                                                            if (notebookDoc.data().timestamp.toMillis() === nodeModificationTimestamp) {
+                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
                                                                 transaction.update(notebookDocRef, {
                                                                     timestamp: serverTimestamp(),
-                                                                    [`tree.${cid}`.order]: increment(1),
-                                                                    [`tree.${neighborId}`.order]: increment(-1),
+                                                                    [`tree.${cid}.order`]: increment(1),
+                                                                    [`tree.${neighborId}.order`]: increment(-1),
                                                                 });
                                                                 return true;
                                                             }
@@ -751,8 +763,12 @@ export const pages = {
                                                             }
                                                         });
                                                     } catch (error) {
-                                                        console.error(error);
-                                                        updatePage(pages.generalErrorPage());
+                                                        if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                            updatePage(pages.networkErrorPage());
+                                                        } else {
+                                                            console.error(error);
+                                                            updatePage(pages.generalErrorPage());
+                                                        }
                                                     }
                                                 }),
                                                 ...styles.button.mFullWidth(),
@@ -783,7 +799,7 @@ export const pages = {
                                                                 ...styles.button.flat(),
                                                                 text: '...'
                                                             },
-                                                            ...tree[moveToFolderId].children.filter(id => tree[id].type === 'folder').map(id => ({
+                                                            ...Object.keys(tree).filter(id => id !== cid && tree[id].type === 'folder' && tree[id].parent === moveToFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order).map(id => ({
                                                                 ...components.button(function (event) {
                                                                     event.stopPropagation();
                                                                     moveToFolderId = id;
@@ -796,22 +812,39 @@ export const pages = {
                                                             {
                                                                 ...components.button(async function (event) {
                                                                     event.stopPropagation();
-                                                                    const oldParent = tree[tree[cid].parent];
-                                                                    const newParent = tree[moveToFolderId];
-                                                                    oldParent.children = oldParent.children.filter(id => id !== id);
-                                                                    newParent.children.push(cid);
-                                                                    tree[cid].parent = moveToFolderId;
-                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
-                                                                        tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                    });
-                                                                    modalOff();
+                                                                    updatePage(pages.loadingPage());
+                                                                    try {
+                                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                        const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                                transaction.update(notebookDocRef, {
+                                                                                    timestamp: serverTimestamp(),
+                                                                                    [`tree.${cid}.parent`]: moveToFolderId,
+                                                                                    [`tree.${cid}.order`]: Object.keys(tree).filter(id => tree[id].parent === moveToFolderId).length,
+                                                                                });
+                                                                                return true;
+                                                                            }
+                                                                            else {
+                                                                                updatePage(pages.notebookOutOfSyncPage());
+                                                                                return false;
+                                                                            }
+                                                                        });
+                                                                    } catch (error) {
+                                                                        if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                                            updatePage(pages.networkErrorPage());
+                                                                        } else {
+                                                                            console.error(error);
+                                                                            updatePage(pages.generalErrorPage());
+                                                                        }
+                                                                    }
                                                                 }),
                                                                 ...styles.button.l(),
                                                                 ...styles.colored.blue.button.filledDark(),
                                                                 marginTop: '0.5rem',
                                                                 alignSelf: 'end',
                                                                 fontWeight: 600,
-                                                                text: `Move to ${tree[moveToFolderId].name}`
+                                                                text: `Move to ${moveToFolderId === 'root' ? 'Home' : tree[moveToFolderId].name}`
                                                             }
                                                         ],
                                                     }));
@@ -861,11 +894,32 @@ export const pages = {
                                                                     if (!nameValid) {
                                                                         return;
                                                                     }
-                                                                    tree[cid]['name'] = widgets['new-folder-name-input'].domElement.value.trim();
-                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
-                                                                        tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                    });
-                                                                    modalOff();
+                                                                    const name = widgets['new-folder-name-input'].domElement.value.trim();
+                                                                    updatePage(pages.loadingPage());
+                                                                    try {
+                                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                        const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                                transaction.update(notebookDocRef, {
+                                                                                    timestamp: serverTimestamp(),
+                                                                                    [`tree.${cid}.name`]: await encrypt(key, textEncoder.encode(name)),
+                                                                                });
+                                                                                return true;
+                                                                            }
+                                                                            else {
+                                                                                updatePage(pages.notebookOutOfSyncPage());
+                                                                                return false;
+                                                                            }
+                                                                        });
+                                                                    } catch (error) {
+                                                                        if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                                            updatePage(pages.networkErrorPage());
+                                                                        } else {
+                                                                            console.error(error);
+                                                                            updatePage(pages.generalErrorPage());
+                                                                        }
+                                                                    }
                                                                 }),
                                                                 ...styles.button.l(),
                                                                 ...styles.colored.blue.button.filledDark(),
@@ -884,53 +938,44 @@ export const pages = {
                                             {
                                                 ...components.button(function (event) {
                                                     event.stopPropagation();
-                                                    if (tree[cid].type === 'note') {
-                                                        modalOn({
-                                                            ...components.prompt('Delete note', 'You won\'t be able to restore it. Consider moving to "Archive" folder', [
-                                                                {
-                                                                    ...components.button(async function (event) {
-                                                                        event.stopPropagation();
-                                                                        delete tree[cid];
-                                                                        tree[folderId].children = tree[folderId].children.filter(id => id !== id);
-                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
-                                                                            tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                            orphanNoteIds: arrayUnion(cid),
-                                                                        });
-                                                                        modalOff();
-                                                                    }),
-                                                                    ...styles.button.l(),
-                                                                    ...styles.colored.red.button.filledDark(),
-                                                                    fontWeight: 600,
-                                                                    text: 'Delete'
-                                                                }
-                                                            ]),
-                                                        });
-                                                    }
-                                                    else if (tree[cid].type === 'folder' && tree[cid].children.length > 0) {
-                                                        modalOn({
-                                                            ...components.prompt('Delete folder', 'Before deleting, move or delete all the notes and folders inside'),
-                                                            ...styles.colored.red.panel(),
-                                                        })
-                                                    }
-                                                    else if (tree[cid].type === 'folder' && tree[cid].children.length === 0) {
-                                                        modalOn({
-                                                            ...components.prompt('Delete folder', 'You won\'t be able to restore it', [{
+                                                    modalOn({
+                                                        ...components.prompt(tree[cid].type === 'note' ? 'Delete note' : 'Delete folder', 'Are you sure?', [
+                                                            {
                                                                 ...components.button(async function (event) {
                                                                     event.stopPropagation();
-                                                                    delete tree[cid];
-                                                                    tree[folderId].children = tree[folderId].children.filter(id => id !== id);
-                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
-                                                                        tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                    });
-                                                                    modalOff();
+                                                                    updatePage(pages.loadingPage());
+                                                                    try {
+                                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                        const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                                transaction.update(notebookDocRef, {
+                                                                                    timestamp: serverTimestamp(),
+                                                                                    [`tree.${cid}.parent`]: 'deleted',
+                                                                                });
+                                                                                return true;
+                                                                            }
+                                                                            else {
+                                                                                updatePage(pages.notebookOutOfSyncPage());
+                                                                                return false;
+                                                                            }
+                                                                        });
+                                                                    } catch (error) {
+                                                                        if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                                            updatePage(pages.networkErrorPage());
+                                                                        } else {
+                                                                            console.error(error);
+                                                                            updatePage(pages.generalErrorPage());
+                                                                        }
+                                                                    }
                                                                 }),
                                                                 ...styles.button.l(),
                                                                 ...styles.colored.red.button.filledDark(),
                                                                 fontWeight: 600,
                                                                 text: 'Delete'
-                                                            }]),
-                                                        })
-                                                    }
+                                                            }
+                                                        ]),
+                                                    });
                                                 }),
                                                 ...styles.button.mFullWidth(),
                                                 ...styles.colored.red.button.flat(),
@@ -958,6 +1003,7 @@ export const pages = {
                             zIndex: 10,
                             ...components.button(function (event) {
                                 event.stopPropagation();
+                                modificationTimestamp = notebook.timestamp.toMillis();;
                                 modalOn({
                                     ...components.menu(),
                                     children: [
@@ -965,16 +1011,35 @@ export const pages = {
                                             ...components.button(function (event) {
                                                 event.stopPropagation();
                                                 modalOn({
-                                                    ...components.prompt('Delete account', 'You won\'t be able to restore it', [
+                                                    ...components.prompt('Delete account', 'Are you sure?', [
                                                         {
                                                             ...components.button(async function (event) {
                                                                 event.stopPropagation();
                                                                 updatePage(pages.loadingPage());
-                                                                await updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
-                                                                    status: 'deleted',
-                                                                    orphanNoteIds: orphanNoteIds.concat(Object.keys(tree).filter(id => tree[id].type === 'note')),
-                                                                });
-                                                                signOut(firebase.auth);
+                                                                try {
+                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                        const notebookDoc = await transaction.get(notebookDocRef);
+                                                                        if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                            transaction.update(notebookDocRef, {
+                                                                                timestamp: serverTimestamp(),
+                                                                                status: 'deleted',
+                                                                            });
+                                                                            return true;
+                                                                        }
+                                                                        else {
+                                                                            updatePage(pages.notebookOutOfSyncPage());
+                                                                            return false;
+                                                                        }
+                                                                    });
+                                                                } catch (error) {
+                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                                        updatePage(pages.networkErrorPage());
+                                                                    } else {
+                                                                        console.error(error);
+                                                                        updatePage(pages.generalErrorPage());
+                                                                    }
+                                                                }
                                                             }),
                                                             ...styles.button.l(),
                                                             ...styles.colored.red.button.filledDark(),
@@ -1032,6 +1097,7 @@ export const pages = {
                                 {
                                     ...components.button(function (event) {
                                         event.stopPropagation();
+                                        modificationTimestamp = notebook.timestamp.toMillis();;
                                         modalOn({
                                             ...components.menu(),
                                             children: [
@@ -1075,13 +1141,32 @@ export const pages = {
                                                                         if (!nameValid) {
                                                                             return;
                                                                         }
-                                                                        const newFolderId = generateTreeId();
-                                                                        tree[newFolderId] = { name: widgets['new-folder-name-input'].domElement.value.trim(), type: 'folder', parent: folderId, children: [] }
-                                                                        tree[folderId].children.push(newFolderId);
-                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
-                                                                            tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                        });
-                                                                        modalOff();
+                                                                        const name = widgets['new-folder-name-input'].domElement.value.trim();
+                                                                        updatePage(pages.loadingPage());
+                                                                        try {
+                                                                            const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                            const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                                    transaction.update(notebookDocRef, {
+                                                                                        timestamp: serverTimestamp(),
+                                                                                        [`tree.${generateTreeId()}`]: { type: 'folder', parent: folderId, order: children.length, name: await encrypt(key, textEncoder.encode(name)) },
+                                                                                    });
+                                                                                    return true;
+                                                                                }
+                                                                                else {
+                                                                                    updatePage(pages.notebookOutOfSyncPage());
+                                                                                    return false;
+                                                                                }
+                                                                            });
+                                                                        } catch (error) {
+                                                                            if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                                                updatePage(pages.networkErrorPage());
+                                                                            } else {
+                                                                                console.error(error);
+                                                                                updatePage(pages.generalErrorPage());
+                                                                            }
+                                                                        }
                                                                     }),
                                                                     ...styles.button.l(),
                                                                     ...styles.colored.blue.button.filledDark(),
@@ -1137,13 +1222,32 @@ export const pages = {
                                                                         if (!nameValid) {
                                                                             return;
                                                                         }
-                                                                        const newNoteId = generateTreeId();
-                                                                        tree[newNoteId] = { name: widgets['new-note-name-input'].domElement.value.trim(), type: 'note', parent: folderId }
-                                                                        tree[folderId].children.push(newNoteId);
-                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), {
-                                                                            tree: await encrypt(key, textEncoder.encode(JSON.stringify(tree))),
-                                                                        });
-                                                                        modalOff();
+                                                                        const name = widgets['new-note-name-input'].domElement.value.trim();
+                                                                        updatePage(pages.loadingPage());
+                                                                        try {
+                                                                            const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                            const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                                    transaction.update(notebookDocRef, {
+                                                                                        timestamp: serverTimestamp(),
+                                                                                        [`tree.${generateTreeId()}`]: { type: 'note', parent: folderId, order: children.length, name: await encrypt(key, textEncoder.encode(name)) },
+                                                                                    });
+                                                                                    return true;
+                                                                                }
+                                                                                else {
+                                                                                    updatePage(pages.notebookOutOfSyncPage());
+                                                                                    return false;
+                                                                                }
+                                                                            });
+                                                                        } catch (error) {
+                                                                            if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                                                updatePage(pages.networkErrorPage());
+                                                                            } else {
+                                                                                console.error(error);
+                                                                                updatePage(pages.generalErrorPage());
+                                                                            }
+                                                                        }
                                                                     }),
                                                                     ...styles.button.l(),
                                                                     ...styles.colored.blue.button.filledDark(),
@@ -1600,7 +1704,7 @@ export const pages = {
                                                                         ...components.button(async function (event) {
                                                                             event.stopPropagation();
                                                                             updateDoc(doc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), 'paragraphs', paragraph.id), {
-                                                                                color: await encrypt(key, textEncoder.encode(color)),
+                                                                                color: color,
                                                                             });
                                                                             modalOff();
                                                                         }),
