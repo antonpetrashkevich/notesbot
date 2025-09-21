@@ -641,7 +641,7 @@ export const pages = {
         };
     },
     folderPage() {
-        let modificationTimestamp;
+        let notebookTimestamp = notebook.timestamp.toMillis();
         let nameValid = true;
         let moveToFolderId;
         return {
@@ -701,7 +701,6 @@ export const pages = {
                                         goTo(`/note/${cid}`);
                                     }
                                 }, function (event) {
-                                    modificationTimestamp = notebook.timestamp.toMillis();;
                                     modalOn({
                                         ...components.menu(),
                                         children: [
@@ -714,7 +713,7 @@ export const pages = {
                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                         const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                             const notebookDoc = await transaction.get(notebookDocRef);
-                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                            if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                 transaction.update(notebookDocRef, {
                                                                     timestamp: serverTimestamp(),
                                                                     [`tree.${cid}.order`]: increment(-1),
@@ -749,7 +748,7 @@ export const pages = {
                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                         const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                             const notebookDoc = await transaction.get(notebookDocRef);
-                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                            if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                 transaction.update(notebookDocRef, {
                                                                     timestamp: serverTimestamp(),
                                                                     [`tree.${cid}.order`]: increment(1),
@@ -817,7 +816,7 @@ export const pages = {
                                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                         const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                             const notebookDoc = await transaction.get(notebookDocRef);
-                                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                            if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                 transaction.update(notebookDocRef, {
                                                                                     timestamp: serverTimestamp(),
                                                                                     [`tree.${cid}.parent`]: moveToFolderId,
@@ -900,7 +899,7 @@ export const pages = {
                                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                         const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                             const notebookDoc = await transaction.get(notebookDocRef);
-                                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                            if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                 transaction.update(notebookDocRef, {
                                                                                     timestamp: serverTimestamp(),
                                                                                     [`tree.${cid}.name`]: await encrypt(key, textEncoder.encode(name)),
@@ -948,7 +947,7 @@ export const pages = {
                                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                         const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                             const notebookDoc = await transaction.get(notebookDocRef);
-                                                                            if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                            if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                 transaction.update(notebookDocRef, {
                                                                                     timestamp: serverTimestamp(),
                                                                                     [`tree.${cid}.parent`]: 'deleted',
@@ -1003,7 +1002,6 @@ export const pages = {
                             zIndex: 10,
                             ...components.button(function (event) {
                                 event.stopPropagation();
-                                modificationTimestamp = notebook.timestamp.toMillis();;
                                 modalOn({
                                     ...components.menu(),
                                     children: [
@@ -1020,7 +1018,7 @@ export const pages = {
                                                                     const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                     const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                         const notebookDoc = await transaction.get(notebookDocRef);
-                                                                        if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                             transaction.update(notebookDocRef, {
                                                                                 timestamp: serverTimestamp(),
                                                                                 status: 'deleted',
@@ -1097,7 +1095,6 @@ export const pages = {
                                 {
                                     ...components.button(function (event) {
                                         event.stopPropagation();
-                                        modificationTimestamp = notebook.timestamp.toMillis();;
                                         modalOn({
                                             ...components.menu(),
                                             children: [
@@ -1147,7 +1144,7 @@ export const pages = {
                                                                             const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                             const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                                 const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                                if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                     transaction.update(notebookDocRef, {
                                                                                         timestamp: serverTimestamp(),
                                                                                         [`tree.${generateTreeId()}`]: { type: 'folder', parent: folderId, order: children.length, name: await encrypt(key, textEncoder.encode(name)) },
@@ -1228,7 +1225,7 @@ export const pages = {
                                                                             const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                             const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                                 const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                if (notebookDoc.data().timestamp.toMillis() === modificationTimestamp) {
+                                                                                if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                     transaction.update(notebookDocRef, {
                                                                                         timestamp: serverTimestamp(),
                                                                                         [`tree.${generateTreeId()}`]: { type: 'note', parent: folderId, order: children.length, name: await encrypt(key, textEncoder.encode(name)) },
