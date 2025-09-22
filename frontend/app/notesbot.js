@@ -1611,7 +1611,7 @@ export const pages = {
                                                 editParagraphId = undefined;
                                                 editParagraphValid = undefined;
                                                 editParagraphText = undefined;
-                                                updateDoc(doc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), 'paragraphs', paragraph.id), {
+                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
                                                     text: await encrypt(key, textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
                                                 });
                                             }),
@@ -1640,6 +1640,7 @@ export const pages = {
                                     padding: '0.5rem 0.5rem 0 0.5rem',
                                     whiteSpace: 'pre-wrap',
                                     lineHeight: '1.5rem',
+                                    wordBreak: 'break-word',
                                     text: paragraph.text
                                 } : null,
                                 paragraph.image ? {
@@ -1700,7 +1701,7 @@ export const pages = {
                                                                     children: ['default', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => ({
                                                                         ...components.button(async function (event) {
                                                                             event.stopPropagation();
-                                                                            updateDoc(doc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid), 'paragraphs', paragraph.id), {
+                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
                                                                                 color: color,
                                                                             });
                                                                             modalOff();
