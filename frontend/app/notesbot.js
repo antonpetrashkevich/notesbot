@@ -1,8 +1,8 @@
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
-import { addDoc, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { appName, widgets, pageWidget, modalWidget, formWidget, smallViewport, darkMode, utils, startApp, updateMetaTags, updateBodyStyle, updatePage, startViewportSizeController, startThemeController, startPathController, resolveCurrentPath, goTo, formOn, modalOn } from '/home/n1/projects/xpl_kit/core.js';
-import { colors as baseColors, icons as baseIcons, fonts as baseFonts, styles as baseStyles, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
+import { colors as baseColors, icons as baseIcons, fonts as baseFonts, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 // import { getAnalytics } from "firebase/analytics";
 
 
@@ -100,7 +100,7 @@ export async function init() {
     startViewportSizeController();
     startThemeController(function () {
         updateMetaTags({
-            'theme-color': colors.metaThemeColor()
+            'theme-color': colors.metaTheme()
         });
         updateBodyStyle({
             backgroundColor: colors.background(),
@@ -108,7 +108,7 @@ export async function init() {
         });
     });
     updateMetaTags({
-        'theme-color': colors.metaThemeColor()
+        'theme-color': colors.metaTheme()
     });
     updateBodyStyle({
         fontFamily: fonts.default().family,
@@ -241,6 +241,10 @@ export const layouts = {
     ...baseLayouts,
 }
 
+export const handlers = {
+    ...baseLayouts,
+}
+
 export const components = {
     ...baseComponents,
 }
@@ -257,16 +261,13 @@ export const pages = {
                 width: '100%',
                 height: '100%',
                 padding: '1rem',
-                ...layouts.column()(),
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '1rem',
+                ...layouts.column('center', 'center', '1rem'),
                 children: [
                     {
                         lineHeight: 1.5,
                         text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
                     },
-                    components.button.filledLight({
+                    components.button.form({
                         text: 'Log out',
                         onclick: function (event) {
                             signOut(firebase.auth);
@@ -286,9 +287,7 @@ export const pages = {
                 width: '100%',
                 height: '100%',
                 padding: '1rem',
-                ...layouts.column(),
-                justifyContent: 'center',
-                alignItems: 'center',
+                ...layouts.column('center', 'center'),
                 children: [
                     {
                         lineHeight: 1.5,
@@ -308,18 +307,26 @@ export const pages = {
                 width: '100%',
                 height: '100%',
                 padding: '1rem',
-                ...layouts.row(),
-                justifyContent: 'center',
-                alignItems: 'center',
+                ...layouts.column('center', 'center'),
                 children: [
-                    components.button.flat({
-                        icon: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
-                        text: 'Login with Google',
+                    components.button.custom({
+                        padding: '0.75rem',
+                        hover: {
+                            backgroundColor: colors.background3(),
+                        },
                         onclick: function (event) {
                             updatePage(pages.loadingPage());
                             signInWithPopup(firebase.auth, new GoogleAuthProvider());
+                        },
+                        leading: {
+                            html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
+                            width: '1.25rem',
+                            height: '1.25rem',
+                        },
+                        trailing: {
+                            text: 'Login with Google',
                         }
-                    })
+                    }),
                 ]
             }),
         };
@@ -334,18 +341,14 @@ export const pages = {
             },
             config: () => ({
                 padding: '0.5rem 0',
-                ...layouts.base(),
-                justifyContent: 'center',
-                alignItems: 'center',
+                ...layouts.base('center', 'center'),
                 children: [
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        ...styles.border.default(),
+                        border: `1px solid ${colors.foreground4()}`,
                         borderRadius: '0.5rem',
-                        ...layouts.column(),
-                        justifyContent: 'center',
-                        gap: '2rem',
+                        ...layouts.column('center', 'start', '2rem'),
                         children: [
                             {
                                 fontSize: '2rem',
@@ -353,8 +356,7 @@ export const pages = {
                                 text: 'Keyphrase'
                             },
                             {
-                                ...layouts.column(),
-                                gap: '0.5rem',
+                                ...layouts.column('start', 'start', '0.5rem'),
                                 children: [
                                     {
                                         text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.'
@@ -368,13 +370,11 @@ export const pages = {
                                 ]
                             },
                             {
-                                ...layouts.column(),
                                 width: '100%',
-                                gap: '1rem',
+                                ...layouts.column('start', 'start', '1rem'),
                                 children: [
                                     {
-                                        ...layouts.column(),
-                                        gap: '0.5rem',
+                                        ...layouts.column('start', 'start', '0.5rem'),
                                         children: [
                                             {
                                                 fontWeight: 600,
@@ -384,19 +384,17 @@ export const pages = {
                                                 id: 'keyphrase-hint',
                                                 display: keyphraseValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foregroundRed(),
+                                                color: colors.foreground1('red'),
                                                 text: 'Required',
                                             }),
-                                            components.input.text({
+                                            components.input.password({
                                                 id: 'keyphrase-input',
-                                                secret: true,
                                                 maxlength: 64
                                             })
                                         ]
                                     },
                                     {
-                                        ...layouts.column(),
-                                        gap: '0.5rem',
+                                        ...layouts.column('start', 'start', '0.5rem'),
                                         children: [
                                             {
                                                 fontWeight: 600,
@@ -406,12 +404,11 @@ export const pages = {
                                                 id: 'keyphrase-repeat-hint',
                                                 display: keyphraseRepeatValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foregroundRed(),
+                                                color: colors.foreground1('red'),
                                                 text: 'Invalid',
                                             }),
-                                            components.input.text({
+                                            components.input.password({
                                                 id: 'keyphrase-repeat-input',
-                                                secret: true,
                                                 maxlength: 64
                                             })
                                         ]
@@ -420,18 +417,15 @@ export const pages = {
                             },
                             {
                                 width: '100%',
-                                ...layouts.row(),
-                                justifyContent: 'end',
-                                alignItems: 'center',
-                                gap: '1rem',
+                                ...layouts.row('end', 'center', '1rem'),
                                 children: [
-                                    components.button.filledLight({
+                                    components.button.form({
                                         text: 'Log out',
                                         onclick: function (event) {
                                             signOut(firebase.auth);
                                         }
                                     }),
-                                    components.button.filledDark({
+                                    components.button.form({
                                         color: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
@@ -497,19 +491,15 @@ export const pages = {
                 description: 'Keyphrase page.'
             },
             config: () => ({
-                ...layouts.base(),
                 padding: '0.5rem 0',
-                justifyContent: 'center',
-                alignItems: 'center',
+                ...layouts.base('center', 'center'),
                 children: [
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        ...styles.border.default(),
+                        border: `1px solid ${colors.foreground4()}`,
                         borderRadius: '0.5rem',
-                        ...layouts.column(),
-                        justifyContent: 'center',
-                        gap: '2rem',
+                        ...layouts.column('center', 'start', '2rem'),
                         children: [
                             {
                                 fontSize: '2rem',
@@ -517,9 +507,8 @@ export const pages = {
                                 text: 'Keyphrase'
                             },
                             {
-                                ...layouts.column(),
+                                ...layouts.column('start', 'start', '0.5rem'),
                                 width: '100%',
-                                gap: '0.5rem',
                                 children: [
                                     {
                                         fontWeight: 600,
@@ -529,30 +518,26 @@ export const pages = {
                                         id: 'keyphrase-hint',
                                         display: keyphraseValid ? 'none' : 'block',
                                         fontWeight: 500,
-                                        color: colors.foregroundRed(),
+                                        color: colors.foreground1('red'),
                                         text: 'Invalid'
                                     }),
-                                    components.input.text({
+                                    components.input.password({
                                         id: 'keyphrase-input',
-                                        secret: true,
                                         maxlength: 64
                                     }),
                                 ]
                             },
                             {
-                                ...layouts.row(),
                                 width: '100%',
-                                justifyContent: 'end',
-                                alignItems: 'center',
-                                gap: '1rem',
+                                ...layouts.row('end', 'center', '1rem'),
                                 children: [
-                                    components.button.filledLight({
+                                    components.button.form({
                                         text: 'Log out',
                                         onclick: function (event) {
                                             signOut(firebase.auth);
                                         }
                                     }),
-                                    components.button.filledDark({
+                                    components.button.form({
                                         color: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
@@ -593,11 +578,10 @@ export const pages = {
                 const children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
                 return {
                     id: 'folder',
-                    ...layouts.base(),
-                    alignItems: 'center',
+                    ...layouts.base('start', 'center'),
                     children: [
                         folderId === 'root' ? null : components.header({
-                            leading: components.buttonLink.flat({
+                            leading: components.button.iconFlatLink({
                                 icon: icons.up(),
                                 href: `/folder/${tree[folderId].parent}`,
                             }),
@@ -607,14 +591,10 @@ export const pages = {
                             flexGrow: 1,
                             width: 'min(640px, 100% - 1rem)',
                             padding: '1rem 0',
-                            ...layouts.column(),
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            gap: '1rem',
+                            ...layouts.column('center', 'center', '1rem'),
                             children: children.map(cid =>
-                                components.button.flat({
-                                    padding: '0.75rem',
-                                    fontSize: '1.125rem',
+                                components.button.menu({
+                                    size: 'l',
                                     text: tree[cid]['name'],
                                     onclick: function (event) {
                                         if (tree[cid].type === 'folder') {
@@ -626,8 +606,7 @@ export const pages = {
                                     oncontextmenu: function (event) {
                                         modalOn(components.modal.menu({
                                             buttons: [
-                                                tree[cid].order > 0 ? components.button.flat({
-                                                    width: '100%',
+                                                tree[cid].order > 0 ? components.button.menu({
                                                     text: 'Move Up',
                                                     onclick: async function (event) {
                                                         updatePage(pages.loadingPage());
@@ -659,8 +638,7 @@ export const pages = {
                                                         }
                                                     }
                                                 }) : null,
-                                                tree[cid].order < children.length - 1 ? components.button.flat({
-                                                    width: '100%',
+                                                tree[cid].order < children.length - 1 ? components.button.menu({
                                                     text: 'Move Down',
                                                     onclick: async function (event) {
                                                         updatePage(pages.loadingPage());
@@ -692,8 +670,7 @@ export const pages = {
                                                         }
                                                     }
                                                 }) : null,
-                                                components.button.flat({
-                                                    width: '100%',
+                                                components.button.menu({
                                                     text: 'Move to Folder',
                                                     onclick: function (event) {
                                                         let moveToFolderId = 'root';
@@ -701,9 +678,7 @@ export const pages = {
                                                             id: 'move-to-folder-menu',
                                                             ...components.menu(),
                                                             height: 'calc(100% - 2rem)',
-                                                            ...layouts.column(),
-                                                            justifyContent: 'space-between',
-                                                            gap: '1rem',
+                                                            ...layouts.column('space-between', 'start', '1rem'),
                                                             children: [
                                                                 {
                                                                     marginBottom: '0.5rem',
@@ -713,10 +688,7 @@ export const pages = {
                                                                 {
                                                                     width: '100%',
                                                                     flexGrow: 1,
-                                                                    ...layouts.column(),
-                                                                    justifyContent: 'center',
-                                                                    alignItems: 'center',
-                                                                    gap: '1rem',
+                                                                    ...layouts.column('center', 'center', '1rem'),
                                                                     children: [
                                                                         moveToFolderId === 'root' ? null : {
                                                                             ...components.button(function (event) {
@@ -778,88 +750,85 @@ export const pages = {
                                                         }));
                                                     }
                                                 }),
-                                                components.button.flat({
-                                                    width: '100%',
+                                                components.button.menu({
                                                     text: 'Rename',
                                                     onclick: function (event) {
                                                         nameValid = true;
                                                         modalOn({
-                                                            ...components.modal(),
-                                                            width: 'min(640px, 100% - 1rem)',
-                                                            padding: '0.75rem',
-                                                            ...styles.border.default(),
-                                                            borderRadius: '0.5rem',
-                                                            backgroundColor: colors.background(),
-                                                            ...styles.shadow.l(),
-                                                            ...layouts.column(),
+                                                            ...styles.modal(),
+                                                            ...layouts.column('start', 'start', '1rem'),
                                                             children: [
                                                                 {
-                                                                    fontWeight: 600,
-                                                                    text: 'New Name'
-                                                                },
-                                                                () => ({
-                                                                    id: 'new-folder-name-hint',
-                                                                    display: nameValid ? 'none' : 'block',
-                                                                    marginTop: '0.5rem',
-                                                                    fontWeight: 500,
-                                                                    color: colors.foregroundRed(),
-                                                                    text: 'Required'
-                                                                }),
-                                                                {
-                                                                    id: 'new-folder-name-input',
                                                                     width: '100%',
-                                                                    marginTop: '0.5rem',
-                                                                    ...components.input(),
-                                                                    type: 'text',
-                                                                    maxlength: '64',
-                                                                    value: tree[cid].name,
+                                                                    ...layouts.column('start', 'start', '0.5rem'),
+                                                                    children: [{
+                                                                        fontWeight: 600,
+                                                                        text: 'New Name'
+                                                                    },
+                                                                    () => ({
+                                                                        id: 'new-folder-name-hint',
+                                                                        display: nameValid ? 'none' : 'block',
+                                                                        fontWeight: 500,
+                                                                        color: colors.foreground1('red'),
+                                                                        text: 'Required'
+                                                                    }),
+                                                                    components.input.text({
+                                                                        id: 'new-folder-name-input',
+                                                                        maxlength: '64',
+                                                                        value: tree[cid].name,
+                                                                    })]
                                                                 },
                                                                 {
-                                                                    marginTop: '1rem',
-                                                                    alignSelf: 'end',
-                                                                    ...components.button.modalPrimary('blue', null, 'Rename', async function (event) {
-                                                                        nameValid = true;
-                                                                        if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                            nameValid = false;
-                                                                        }
-                                                                        widgets['new-folder-name-hint'].update();
-                                                                        if (!nameValid) {
-                                                                            return;
-                                                                        }
-                                                                        const name = widgets['new-folder-name-input'].domElement.value.trim();
-                                                                        updatePage(pages.loadingPage());
-                                                                        try {
-                                                                            const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                            const txResult = await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                    transaction.update(notebookDocRef, {
-                                                                                        timestamp: serverTimestamp(),
-                                                                                        [`tree.${cid}.name`]: await encrypt(key, textEncoder.encode(name)),
+                                                                    width: '100%',
+                                                                    ...layouts.row('end'),
+                                                                    children: [
+                                                                        components.button.form({
+                                                                            color: 'blue',
+                                                                            text: 'Rename',
+                                                                            onclick: async function (event) {
+                                                                                nameValid = true;
+                                                                                if (!widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                                    nameValid = false;
+                                                                                }
+                                                                                widgets['new-folder-name-hint'].update();
+                                                                                if (!nameValid) {
+                                                                                    return;
+                                                                                }
+                                                                                const name = widgets['new-folder-name-input'].domElement.value.trim();
+                                                                                updatePage(pages.loadingPage());
+                                                                                try {
+                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                            transaction.update(notebookDocRef, {
+                                                                                                timestamp: serverTimestamp(),
+                                                                                                [`tree.${cid}.name`]: await encrypt(key, textEncoder.encode(name)),
+                                                                                            });
+                                                                                            return true;
+                                                                                        }
+                                                                                        else {
+                                                                                            updatePage(pages.notebookOutOfSyncPage());
+                                                                                            return false;
+                                                                                        }
                                                                                     });
-                                                                                    return true;
+                                                                                } catch (error) {
+                                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+                                                                                        updatePage(pages.networkErrorPage());
+                                                                                    } else {
+                                                                                        console.error(error);
+                                                                                        updatePage(pages.generalErrorPage());
+                                                                                    }
                                                                                 }
-                                                                                else {
-                                                                                    updatePage(pages.notebookOutOfSyncPage());
-                                                                                    return false;
-                                                                                }
-                                                                            });
-                                                                        } catch (error) {
-                                                                            if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                                updatePage(pages.networkErrorPage());
-                                                                            } else {
-                                                                                console.error(error);
-                                                                                updatePage(pages.generalErrorPage());
                                                                             }
-                                                                        }
-                                                                    }),
-                                                                }
+                                                                        })
+                                                                    ]
+                                                                },
                                                             ]
                                                         })
                                                     }
                                                 }),
-                                                components.button.flat({
-                                                    width: '100%',
+                                                components.button.menu({
                                                     color: 'red',
                                                     text: 'Delete',
                                                     onclick: function (event) {
@@ -867,7 +836,7 @@ export const pages = {
                                                             title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
                                                             description: 'Are you sure?',
                                                             buttons: [
-                                                                components.button.filledDark({
+                                                                components.button.form({
                                                                     color: 'red',
                                                                     text: 'Delete',
                                                                     onclick: async function (event) {
@@ -913,19 +882,19 @@ export const pages = {
                             bottom: '1rem',
                             left: '1rem',
                             zIndex: 10,
-                            ...layouts.column(),
-                            gap: '1rem',
+                            ...layouts.column('start', 'start', '1rem'),
                             children: [
-                                components.button.filledLight(
+                                components.button.iconFilled(
                                     {
+                                        width: '3rem',
+                                        height: '3rem',
+                                        padding: '0.35rem',
                                         borderRadius: '2rem',
-                                        iconSize: '2rem',
                                         icon: icons.menu(),
                                         onclick: function (event) {
                                             modalOn(components.modal.menu({
                                                 buttons: [
-                                                    components.button.flat({
-                                                        width: '100%',
+                                                    components.button.menu({
                                                         color: 'red',
                                                         text: 'Delete account',
                                                         onclick: function (event) {
@@ -933,7 +902,7 @@ export const pages = {
                                                                 title: 'Delete account',
                                                                 description: 'Are you sure?',
                                                                 buttons: [
-                                                                    components.button.filledDark({
+                                                                    components.button.form({
                                                                         color: 'red',
                                                                         text: 'Delete',
                                                                         onclick: async function (event) {
@@ -968,8 +937,7 @@ export const pages = {
                                                             }));
                                                         }
                                                     }),
-                                                    components.button.flat({
-                                                        width: '100%',
+                                                    components.button.menu({
                                                         color: 'red',
                                                         text: 'Log out',
                                                         onclick: function (event) {
@@ -984,37 +952,37 @@ export const pages = {
                             ]
                         },
                         {
-                            ...layouts.column(),
                             position: 'fixed',
                             bottom: '1rem',
                             right: '1rem',
                             zIndex: 10,
-                            gap: '1rem',
+                            ...layouts.column('start', 'start', '1rem'),
                             children: [
-                                components.misc.switchThemeButton(),
-                                components.button.filledLight({
+                                components.button.switchTheme({
+                                    width: '3rem',
+                                    height: '3rem',
+                                }),
+                                components.button.iconFilled({
+                                    color: 'blue',
+                                    width: '3rem',
+                                    height: '3rem',
                                     padding: 0,
                                     borderRadius: '2rem',
-                                    iconSize: '3rem',
-                                    color: 'blue',
                                     icon: icons.add(),
                                     onclick: function (event) {
                                         modalOn(components.modal.menu({
                                             buttons: [
-                                                components.button.flat({
-                                                    width: '100%',
+                                                components.button.menu({
                                                     text: 'New Folder',
                                                     onclick: function (event) {
                                                         nameValid = true;
                                                         modalOn({
                                                             ...styles.modal(),
-                                                            ...layouts.column(),
-                                                            gap: '1rem',
+                                                            ...layouts.column('start', 'start', '1rem'),
                                                             children: [
                                                                 {
                                                                     width: '100%',
-                                                                    ...layouts.column(),
-                                                                    gap: '0.5rem',
+                                                                    ...layouts.column('start', 'start', '0.5rem'),
                                                                     children: [
                                                                         {
                                                                             fontWeight: 600,
@@ -1024,7 +992,7 @@ export const pages = {
                                                                             id: 'new-folder-name-hint',
                                                                             display: nameValid ? 'none' : 'block',
                                                                             fontWeight: 500,
-                                                                            color: colors.foregroundRed(),
+                                                                            color: colors.foreground1('red'),
                                                                             text: 'Required'
                                                                         }),
                                                                         components.input.text({
@@ -1035,10 +1003,9 @@ export const pages = {
                                                                 },
                                                                 {
                                                                     width: '100%',
-                                                                    ...layouts.row(),
-                                                                    justifyContent: 'end',
+                                                                    ...layouts.row('end'),
                                                                     children: [
-                                                                        components.button.filledDark({
+                                                                        components.button.form({
                                                                             color: 'blue',
                                                                             text: 'Create',
                                                                             onclick: async function (event) {
@@ -1084,20 +1051,17 @@ export const pages = {
                                                         })
                                                     }
                                                 }),
-                                                components.button.flat({
-                                                    width: '100%',
+                                                components.button.menu({
                                                     text: 'New Note',
                                                     onclick: function (event) {
                                                         nameValid = true;
                                                         modalOn({
                                                             ...styles.modal(),
-                                                            ...layouts.column(),
-                                                            gap: '1rem',
+                                                            ...layouts.column('start', 'start', '1rem'),
                                                             children: [
                                                                 {
                                                                     width: '100%',
-                                                                    ...layouts.column(),
-                                                                    gap: '0.5rem',
+                                                                    ...layouts.column('start', 'start', '0.5rem'),
                                                                     children: [
                                                                         {
                                                                             fontWeight: 600,
@@ -1107,7 +1071,7 @@ export const pages = {
                                                                             id: 'new-note-name-hint',
                                                                             display: nameValid ? 'none' : 'block',
                                                                             fontWeight: 500,
-                                                                            color: colors.foregroundRed(),
+                                                                            color: colors.foreground1('red'),
                                                                             text: 'Required'
                                                                         }),
                                                                         components.input.text({
@@ -1118,10 +1082,9 @@ export const pages = {
                                                                 },
                                                                 {
                                                                     width: '100%',
-                                                                    ...layouts.row(),
-                                                                    justifyContent: 'end',
+                                                                    ...layouts.row('end'),
                                                                     children: [
-                                                                        components.button.filledDark({
+                                                                        components.button.form({
                                                                             color: 'blue',
                                                                             text: 'Create',
                                                                             onclick: async function (event) {
@@ -1192,47 +1155,34 @@ export const pages = {
             },
             config: () => ({
                 id: 'note',
-                ...layouts.base(),
-                alignItems: 'center',
-                gap: '1rem',
+                ...layouts.base('start', 'center'),
                 children: [
                     components.header({
-                        leading: components.buttonLink.flat({
+                        leading: components.button.iconFlatLink({
                             icon: icons.up(),
-                            href: `/folder/${tree[folderId].parent}`,
+                            href: `/folder/${tree[noteId].parent}`,
                         }),
-                        title: tree[folderId].name
+                        title: tree[noteId].name
                     }),
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '1rem 0',
-                        ...layouts.column(),
-                        gap: '1rem',
+                        ...layouts.column('start', 'start', '1rem'),
                         children: [
                             () => ({
                                 id: 'add-paragraph-hint',
                                 display: addParagraphValid ? 'none' : 'block',
                                 fontWeight: 500,
-                                color: colors.foregroundRed(),
+                                color: colors.foreground1('red'),
                                 text: 'Required'
                             }),
                             components.input.textArea({
                                 id: 'add-paragraph-input',
                                 height: '16rem',
                             }),
-                            // {
-                            //     ...styles.button.filledDark(),
-                            //     ...styles.button.sizeM(),
-                            //     ...layouts.button('Icon', 'Text'),
-                            //     ...components.button(onclick),
-                            // },
-                            // components.button.filledDark('Icon', 'Text', onclick),
                             {
-                                ...layouts.row(),
                                 width: '100%',
-                                justifyContent: 'end',
-                                alignItems: 'center',
-                                gap: '1rem',
+                                ...layouts.row('end', 'center', '1rem'),
                                 children: [
                                     {
                                         id: 'image-input',
@@ -1245,53 +1195,62 @@ export const pages = {
                                             if (file) {
                                                 if (file.size > (1024 * 1024 - 8 * 1024)) {
                                                     modalOn(
-                                                        components.prompt('yellow', 'Image Upload', 'Image would be compressed to 1MB jpeg', [
-                                                            components.button.modalPrimary('yellow', null, 'OK', function (event) {
-                                                                history.back();
-                                                                const reader = new FileReader();
-                                                                reader.readAsDataURL(file);
-                                                                reader.onload = (event) => {
-                                                                    const img = new Image();
-                                                                    img.src = event.target.result;
-                                                                    img.onload = () => {
-                                                                        const canvas = document.createElement("canvas");
-                                                                        const ctx = canvas.getContext("2d");
-                                                                        let width = img.width;
-                                                                        let height = img.height;
-                                                                        let quality = 1.0;
-                                                                        canvas.width = width;
-                                                                        canvas.height = height;
-                                                                        ctx.drawImage(img, 0, 0, width, height);
-                                                                        const compress = () => {
-                                                                            canvas.toBlob(
-                                                                                (blob) => {
-                                                                                    if (blob.size > (1024 * 1024 - 8 * 1024)) {
-                                                                                        quality -= 0.05;
-                                                                                        compress();
-                                                                                    } else {
-                                                                                        let compressOutputReader = new FileReader();
-                                                                                        compressOutputReader.onload = async function (e) {
-                                                                                            addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                                                                                timestamp: Math.floor(Date.now() / 1000),
-                                                                                                noteIds: [noteId],
-                                                                                                image: {
-                                                                                                    type: 'image/jpeg',
-                                                                                                    content: await encrypt(key, e.target.result)
-                                                                                                },
-                                                                                            })
-                                                                                        };
-                                                                                        compressOutputReader.readAsArrayBuffer(blob);
-                                                                                    }
-                                                                                },
-                                                                                'image/jpeg',
-                                                                                quality
-                                                                            );
+                                                        components.modal.prompt({
+                                                            color: 'yellow',
+                                                            title: 'Image Upload',
+                                                            description: 'Image would be compressed to 1MB jpeg',
+                                                            buttons: [
+                                                                components.button.form({
+                                                                    color: 'yellow',
+                                                                    text: 'OK',
+                                                                    onclick: function (event) {
+                                                                        history.back();
+                                                                        const reader = new FileReader();
+                                                                        reader.readAsDataURL(file);
+                                                                        reader.onload = (event) => {
+                                                                            const img = new Image();
+                                                                            img.src = event.target.result;
+                                                                            img.onload = () => {
+                                                                                const canvas = document.createElement("canvas");
+                                                                                const ctx = canvas.getContext("2d");
+                                                                                let width = img.width;
+                                                                                let height = img.height;
+                                                                                let quality = 1.0;
+                                                                                canvas.width = width;
+                                                                                canvas.height = height;
+                                                                                ctx.drawImage(img, 0, 0, width, height);
+                                                                                const compress = () => {
+                                                                                    canvas.toBlob(
+                                                                                        (blob) => {
+                                                                                            if (blob.size > (1024 * 1024 - 8 * 1024)) {
+                                                                                                quality -= 0.05;
+                                                                                                compress();
+                                                                                            } else {
+                                                                                                let compressOutputReader = new FileReader();
+                                                                                                compressOutputReader.onload = async function (e) {
+                                                                                                    addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
+                                                                                                        timestamp: Math.floor(Date.now() / 1000),
+                                                                                                        noteIds: [noteId],
+                                                                                                        image: {
+                                                                                                            type: 'image/jpeg',
+                                                                                                            content: await encrypt(key, e.target.result)
+                                                                                                        },
+                                                                                                    })
+                                                                                                };
+                                                                                                compressOutputReader.readAsArrayBuffer(blob);
+                                                                                            }
+                                                                                        },
+                                                                                        'image/jpeg',
+                                                                                        quality
+                                                                                    );
+                                                                                };
+                                                                                compress();
+                                                                            };
                                                                         };
-                                                                        compress();
-                                                                    };
-                                                                };
-                                                            })
-                                                        ])
+                                                                    }
+                                                                })
+                                                            ]
+                                                        })
                                                     )
                                                 } else {
                                                     const reader = new FileReader();
@@ -1310,287 +1269,311 @@ export const pages = {
                                             }
                                         }
                                     },
-                                    components.button.formSecondary(icons.menu, null, function (event) {
-                                        modalOn(components.menu([
-                                            components.button.menuEntry(null, null, 'Image', function (event) {
-                                                widgets['image-input'].domElement.click();
-                                            }),
-                                            components.button.menuEntry(null, null, 'File', function (event) {
-                                            }),
-                                            components.button.menuEntry(null, null, 'Paragraph', function (event) {
-                                                let folderId = 'root';
-                                            }),
-                                        ]))
+                                    components.button.form({
+                                        icon: icons.upload(),
+                                        text: 'Attach',
+                                        onclick: function (event) {
+                                            modalOn(components.modal.menu({
+                                                buttons: [
+                                                    components.button.menu({
+                                                        text: 'Image',
+                                                        onclick: function (event) {
+                                                            history.back();
+                                                            widgets['image-input'].domElement.click();
+                                                        }
+                                                    }),
+                                                    components.button.menu({
+                                                        text: 'File',
+                                                        onclick: function (event) {
+                                                            history.back();
+                                                        }
+                                                    }),
+                                                    components.button.menu({
+                                                        text: 'Paragraph',
+                                                        onclick: function (event) {
+                                                            history.back();
+                                                        }
+                                                    }),
+                                                ]
+                                            }))
+                                        }
                                     }),
-                                    components.button.formPrimary('blue', null, 'Add', async function (event) {
-                                        addParagraphValid = true;
-                                        if (!widgets['add-paragraph-input'].domElement.value.trim()) {
-                                            addParagraphValid = false;
+                                    components.button.form({
+                                        color: 'blue',
+                                        text: 'Add',
+                                        onclick: async function (event) {
+                                            addParagraphValid = true;
+                                            if (!widgets['add-paragraph-input'].domElement.value.trim()) {
+                                                addParagraphValid = false;
+                                            }
+                                            widgets['add-paragraph-hint'].update();
+                                            if (!addParagraphValid) {
+                                                return;
+                                            }
+                                            addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
+                                                timestamp: Math.floor(Date.now() / 1000),
+                                                noteIds: [noteId],
+                                                text: await encrypt(key, textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
+                                            });
+                                            widgets['add-paragraph-input'].domElement.value = '';
                                         }
-                                        widgets['add-paragraph-hint'].update();
-                                        if (!addParagraphValid) {
-                                            return;
-                                        }
-                                        addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                            timestamp: Math.floor(Date.now() / 1000),
-                                            noteIds: [noteId],
-                                            text: await encrypt(key, textEncoder.encode(widgets['add-paragraph-input'].domElement.value)),
-                                        });
-                                        widgets['add-paragraph-input'].domElement.value = '';
                                     })
                                 ]
                             },
-                        ]
-                    },
-                    {
-                        id: 'filter-paragraphs',
-                        width: 'min(640px, 100% - 1rem)',
-                        padding: '0 0.25rem 0 0.5rem',
-                        ...styles.border.default(),
-                        borderRadius: '0.5rem',
-                        ...layouts.row(),
-                        alignItems: 'center',
-                        children: [
-                            {
-                                html: icons.search(),
-                                width: '1.25rem',
-                                height: '1.25rem',
-                                fill: colors.foreground2(),
-                            },
-                            {
-                                flexGrow: 1,
-                                ...baseComponents.input(),
-                                type: 'text',
-                                value: filterParagraphQuery,
-                                padding: '0.5rem',
-                                backgroundColor: 'inherit',
-                                fontSize: '1rem',
-                                oninput: function (event) {
-                                    filterParagraphQuery = event.target.value;
-                                    widgets['paragraphs'].update();
-                                },
-                            },
-                            {
-                                ...components.button(function (event) {
-                                    filterParagraphQuery = undefined;
-                                    widgets['filter-paragraphs'].update();
-                                    widgets['paragraphs'].update();
-                                }),
-                                ...styles.button.flat(),
-                                padding: '0.25rem',
+                            () => ({
+                                id: 'filter-paragraphs',
+                                width: '100%',
+                                padding: '0 0.25rem 0 0.5rem',
+                                border: `1px solid ${colors.foreground4()}`,
+                                borderRadius: '0.5rem',
+                                ...layouts.row('start', 'center'),
                                 children: [
                                     {
-                                        html: icons.close(),
+                                        html: icons.search(),
                                         width: '1.25rem',
                                         height: '1.25rem',
                                         fill: colors.foreground2(),
                                     },
-                                ]
-                            }
-                        ]
-                    },
-                    () => ({
-                        id: 'paragraphs',
-                        width: 'min(640px, 100% - 1rem)',
-                        ...layouts.column(),
-                        gap: '1rem',
-                        children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
-                            if (!filterParagraphQuery) {
-                                return true;
-                            }
-                            if (p.id === editParagraphId) {
-                                return true;
-                            }
-                            if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                return true;
-                            }
-                            return false;
-                        }).map((paragraph, index) => paragraph.id === editParagraphId ? {
-                            id: 'edit-paragraph',
-                            ...layouts.column(),
-                            width: '100%',
-                            gap: '1rem',
-                            children: [
-                                () => ({
-                                    id: 'edit-paragraph-hint',
-                                    display: editParagraphValid ? 'none' : 'block',
-                                    fontWeight: 500,
-                                    color: colors.foregroundRed(),
-                                    text: 'Required'
-                                }),
-                                {
-                                    id: 'edit-paragraph-input',
-                                    ...components.textArea(),
-                                    width: '100%',
-                                    height: `max(${widgets[`paragraph-${editParagraphId}`].domElement.getBoundingClientRect().height}px, 16rem)`,
-                                    padding: '0.5rem',
-                                    ...styles.border.default(),
-                                    borderRadius: '0.5rem',
-                                    borderColor: paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].colors.border() : colors.border(),
-                                    backgroundColor: paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].colors.background() : colors.background(),
-                                    fontSize: '1rem',
-                                    lineHeight: 1.5,
-                                    color: paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].colors.foreground1() : colors.foreground1(),
-                                    text: editParagraphText,
-                                    oninput: function (event) {
-                                        editParagraphText = event.target.value;
-                                    }
-                                },
-                                {
-                                    ...layouts.row(),
-                                    width: '100%',
-                                    justifyContent: 'end',
-                                    gap: '1rem',
-                                    children: [
-                                        components.button.formSecondary(null, 'Cancel', function (event) {
-                                            editParagraphId = undefined;
-                                            editParagraphValid = undefined;
-                                            editParagraphText = undefined;
+                                    {
+                                        tag: 'input',
+                                        flexGrow: 1,
+                                        ...styles.input(),
+                                        border: 'none',
+                                        type: 'text',
+                                        value: filterParagraphQuery,
+                                        oninput: function (event) {
+                                            filterParagraphQuery = event.target.value;
                                             widgets['paragraphs'].update();
-                                        }),
-                                        components.button.formPrimary('blue', null, 'Save', async function (event) {
-                                            editParagraphValid = true;
-                                            if (!widgets['edit-paragraph-input'].domElement.value.trim()) {
-                                                editParagraphValid = false;
-                                            }
-                                            widgets['edit-paragraph-hint'].update();
-                                            if (!editParagraphValid) {
-                                                return;
-                                            }
-                                            editParagraphId = undefined;
-                                            editParagraphValid = undefined;
-                                            editParagraphText = undefined;
-                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                text: await encrypt(key, textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
-                                            });
-                                        })
-                                    ]
-                                }
-                            ]
-                        } : {
-                            id: `paragraph-${paragraph.id}`,
-                            width: '100%',
-                            ...styles.border.default(),
-                            borderRadius: '0.5rem',
-                            borderColor: paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].colors.border() : colors.border(),
-                            backgroundColor: paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].colors.background() : colors.background(),
-                            color: paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].colors.foreground1() : colors.foreground1(),
-                            ...layouts.column(),
-                            gap: '1rem',
-                            children: [
-                                paragraph.text ? {
-                                    width: '100%',
-                                    padding: '0.5rem 0.5rem 0 0.5rem',
-                                    whiteSpace: 'pre-wrap',
-                                    lineHeight: '1.5rem',
-                                    wordBreak: 'break-word',
-                                    text: paragraph.text
-                                } : null,
-                                paragraph.image ? {
-                                    tag: 'img',
-                                    width: '100%',
-                                    src: paragraph.image
-                                } : null,
-                                {
-                                    ...layouts.row(),
-                                    width: '100%',
-                                    padding: '0 0.5rem 0.5rem 0.5rem',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    gap: '1rem',
-                                    children: [
-                                        {
-                                            fontSize: '0.875rem',
-                                            color: paragraph.color && paragraph.color !== 'default' ? styles.colored[paragraph.color].colors.foreground3() : colors.foreground3(),
-                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                         },
+                                    },
+                                    components.button.iconFlat({
+                                        width: '1.75rem',
+                                        height: '1.75rem',
+                                        padding: '0.25rem',
+                                        icon: icons.close(),
+                                        onclick: function (event) {
+                                            filterParagraphQuery = undefined;
+                                            widgets['filter-paragraphs'].update();
+                                            widgets['paragraphs'].update();
+                                        }
+                                    }),
+                                ]
+                            }),
+                            () => ({
+                                id: 'paragraphs',
+                                width: '100%',
+                                ...layouts.column('start', 'start', '1rem'),
+                                children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
+                                    if (!filterParagraphQuery) {
+                                        return true;
+                                    }
+                                    if (p.id === editParagraphId) {
+                                        return true;
+                                    }
+                                    if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                        return true;
+                                    }
+                                    return false;
+                                }).map((paragraph, index) => paragraph.id === editParagraphId ? {
+                                    id: 'edit-paragraph',
+                                    ...layouts.column('start', 'start', '1rem'),
+                                    width: '100%',
+                                    children: [
+                                        () => ({
+                                            id: 'edit-paragraph-hint',
+                                            display: editParagraphValid ? 'none' : 'block',
+                                            fontWeight: 500,
+                                            color: colors.foreground1('red'),
+                                            text: 'Required'
+                                        }),
+                                        components.input.textArea({
+                                            id: 'edit-paragraph-input',
+                                            color: paragraph.color,
+                                            width: '100%',
+                                            height: `max(${widgets[`paragraph-${editParagraphId}`].domElement.getBoundingClientRect().height}px, 16rem)`,
+                                            text: editParagraphText,
+                                            oninput: function (event) {
+                                                editParagraphText = event.target.value;
+                                            }
+                                        }),
                                         {
-                                            ...layouts.row(),
+                                            width: '100%',
+                                            ...layouts.row('end', 'start', '1rem'),
                                             children: [
-                                                paragraph.text ? components.button.paragraphControl(paragraph.color, icons.copy, function (event) {
-                                                    navigator.clipboard.writeText(paragraph.text);
-                                                }) : null,
-                                                paragraph.text ? components.button.paragraphControl(paragraph.color, icons.color, function (event) {
-                                                    modalOn({
-                                                        ...components.menu(),
-                                                        ...layouts.column(),
-                                                        gap: '1rem',
-                                                        children: [
-                                                            {
-                                                                fontWeight: 600,
-                                                                text: 'Color'
-                                                            },
-                                                            {
-                                                                ...grid,
-                                                                width: '100%',
-                                                                alignSelf: 'center',
-                                                                gridTemplateColumns: 'repeat(auto-fill, 3rem)',
-                                                                justifyContent: 'center',
-                                                                gap: '1rem',
-                                                                children: ['default', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => ({
-                                                                    ...components.button(async function (event) {
-                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                            color: color,
-                                                                        });
-                                                                        modalOff();
-                                                                    }),
-                                                                    width: '3rem',
-                                                                    height: '3rem',
-                                                                    ...styles.button.flat(),
-                                                                    children: [
-                                                                        {
-                                                                            width: '1.75rem',
-                                                                            height: '1.75rem',
-                                                                            borderRadius: '2rem',
-                                                                            borderWidth: '4px',
-                                                                            borderStyle: 'solid',
-                                                                            borderColor: color === 'default' ? colors.foreground1() : colors[color][500],
-                                                                            backgroundColor: color === 'default' ? colors.background() : colors[color][darkMode ? 900 : 100],
-                                                                        },
-                                                                    ]
-                                                                }))
-                                                            }
-                                                        ]
-                                                    });
-                                                }) : null,
-                                                paragraph.text ? components.button.paragraphControl(paragraph.color, icons.edit, function (event) {
-                                                    if (!editParagraphId) {
-                                                        editParagraphId = paragraph.id;
-                                                        editParagraphValid = true;
-                                                        editParagraphText = paragraph.text;
+                                                components.button.form({
+                                                    text: 'Cancel',
+                                                    onclick: function (event) {
+                                                        editParagraphId = undefined;
+                                                        editParagraphValid = undefined;
+                                                        editParagraphText = undefined;
                                                         widgets['paragraphs'].update();
                                                     }
-                                                }, disabled = editParagraphId) : null,
-                                                components.button.paragraphControl(paragraph.color, icons.delete, function (event) {
-                                                    modalOn(components.prompt(null, 'Delete', 'You won\'t be able to restore it', [
-                                                        components.button.modalPrimary('red', null, 'Delete', function (event) {
-                                                            deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
-                                                            history.back();
-                                                        })
-                                                    ]))
                                                 }),
+                                                components.button.form({
+                                                    color: 'blue',
+                                                    text: 'Save',
+                                                    onclick: async function (event) {
+                                                        editParagraphValid = true;
+                                                        if (!widgets['edit-paragraph-input'].domElement.value.trim()) {
+                                                            editParagraphValid = false;
+                                                        }
+                                                        widgets['edit-paragraph-hint'].update();
+                                                        if (!editParagraphValid) {
+                                                            return;
+                                                        }
+                                                        editParagraphId = undefined;
+                                                        editParagraphValid = undefined;
+                                                        editParagraphText = undefined;
+                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                            text: await encrypt(key, textEncoder.encode(widgets['edit-paragraph-input'].domElement.value)),
+                                                        });
+                                                    }
+                                                })
                                             ]
                                         }
                                     ]
-                                }
-                            ]
-                        }),
-                        !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? {
-                            ...components.button(function (event) {
-                                limitParagraphs = false;
-                                widgets['paragraphs'].update();
-                            }),
-                            width: '100%',
-                            padding: '0.75rem',
-                            ...styles.button.filledLight(),
-                            borderRadius: '0.5rem',
-                            fontWeight: 600,
-                            color: colors.foreground2(),
-                            ...layouts.row(),
-                            justifyContent: 'center',
-                            text: 'More'
-                        } : null]
-                    }),
+                                } : {
+                                    id: `paragraph-${paragraph.id}`,
+                                    width: '100%',
+                                    border: `1px solid ${colors.foreground4(paragraph.color)}`,
+                                    borderRadius: '0.5rem',
+                                    backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background(),
+                                    color: colors.foreground1(paragraph.color),
+                                    ...layouts.column('start', 'start', '1rem'),
+                                    children: [
+                                        paragraph.text ? {
+                                            width: '100%',
+                                            padding: '0.5rem 0.5rem 0 0.5rem',
+                                            whiteSpace: 'pre-wrap',
+                                            lineHeight: '1.5rem',
+                                            wordBreak: 'break-word',
+                                            text: paragraph.text
+                                        } : null,
+                                        paragraph.image ? {
+                                            tag: 'img',
+                                            width: '100%',
+                                            src: paragraph.image
+                                        } : null,
+                                        {
+                                            width: '100%',
+                                            padding: '0 0.5rem 0.5rem 0.5rem',
+                                            ...layouts.row('space-between', 'center', '1rem'),
+                                            children: [
+                                                {
+                                                    fontSize: '0.875rem',
+                                                    color: colors.foreground3(paragraph.color),
+                                                    text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                },
+                                                {
+                                                    ...layouts.row(),
+                                                    children: [
+                                                        paragraph.text ? components.button.iconFlat({
+                                                            color: paragraph.color,
+                                                            icon: icons.copy(),
+                                                            onclick: function (event) {
+                                                                navigator.clipboard.writeText(paragraph.text);
+                                                            }
+                                                        }) : null,
+                                                        paragraph.text ? components.button.iconFlat({
+                                                            color: paragraph.color,
+                                                            icon: icons.color(),
+                                                            onclick: function (event) {
+                                                                modalOn({
+                                                                    ...styles.modal(),
+                                                                    ...layouts.column('start', 'start', '1rem'),
+                                                                    children: [
+                                                                        {
+                                                                            fontWeight: 600,
+                                                                            text: 'Color'
+                                                                        },
+                                                                        {
+                                                                            ...layouts.grid(),
+                                                                            width: '100%',
+                                                                            alignSelf: 'center',
+                                                                            gridTemplateColumns: 'repeat(auto-fill, 3rem)',
+                                                                            justifyContent: 'center',
+                                                                            gap: '1rem',
+                                                                            children: [null, 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color =>
+                                                                                components.button.iconFilled({
+                                                                                    color,
+                                                                                    width: '3rem',
+                                                                                    height: '3rem',
+                                                                                    padding: '0.25rem',
+                                                                                    borderRadius: '2rem',
+                                                                                    icon: icons.circle(),
+                                                                                    onclick: async function (event) {
+                                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                            color: color || deleteField(),
+                                                                                        });
+                                                                                        history.back();
+                                                                                    }
+                                                                                }),
+                                                                            )
+                                                                        }
+                                                                    ]
+                                                                });
+                                                            }
+                                                        }) : null,
+                                                        paragraph.text ? components.button.iconFlat({
+                                                            color: paragraph.color,
+                                                            icon: icons.edit(),
+                                                            disabled: editParagraphId,
+                                                            onclick: function (event) {
+                                                                if (!editParagraphId) {
+                                                                    editParagraphId = paragraph.id;
+                                                                    editParagraphValid = true;
+                                                                    editParagraphText = paragraph.text;
+                                                                    widgets['paragraphs'].update();
+                                                                }
+                                                            }
+                                                        }) : null,
+                                                        components.button.iconFlat({
+                                                            color: paragraph.color,
+                                                            icon: icons.delete(),
+                                                            onclick: function (event) {
+                                                                modalOn(components.modal.prompt({
+                                                                    title: 'Delete',
+                                                                    description: 'You won\'t be able to restore it',
+                                                                    buttons: [
+                                                                        components.button.form({
+                                                                            color: 'red',
+                                                                            text: 'Delete',
+                                                                            onclick: function (event) {
+                                                                                deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                history.back();
+                                                                            }
+                                                                        })
+                                                                    ]
+                                                                }))
+                                                            }
+                                                        }),
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }),
+                                !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button.custom({
+                                    width: '100%',
+                                    height: '2.5rem',
+                                    padding: '0 0.75rem',
+                                    backgroundColor: colors.background3(),
+                                    hover: {
+                                        backgroundColor: colors.background4(),
+                                    },
+                                    onclick: function (event) {
+                                        limitParagraphs = false;
+                                        widgets['paragraphs'].update();
+                                    },
+                                    leading: {
+                                        fontWeight: 600,
+                                        color: colors.foreground2(),
+                                        text: 'More'
+                                    },
+                                }) : null]
+                            })
+                        ]
+                    },
                 ]
             }),
         };
