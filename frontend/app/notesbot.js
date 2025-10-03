@@ -257,7 +257,7 @@ export const pages = {
                 title: `Notebook Deleted | ${appName}`,
                 description: 'Notebook deleted.'
             },
-            config: {
+            config: () => ({
                 width: '100%',
                 height: '100%',
                 padding: '1rem',
@@ -274,7 +274,7 @@ export const pages = {
                         }
                     })
                 ]
-            },
+            }),
         };
     },
     notebookOutOfSyncPage() {
@@ -283,7 +283,7 @@ export const pages = {
                 title: `Notebook Out of Sync | ${appName}`,
                 description: 'Notebook out of sync.'
             },
-            config: {
+            config: () => ({
                 width: '100%',
                 height: '100%',
                 padding: '1rem',
@@ -294,7 +294,7 @@ export const pages = {
                         text: 'Notebook is out of sync. Reload the page and try again.'
                     },
                 ]
-            },
+            }),
         };
     },
     loginPage() {
@@ -604,7 +604,7 @@ export const pages = {
                                         }
                                     },
                                     oncontextmenu: function (event) {
-                                        modalOn(components.modal.menu({
+                                        modalOn(() => components.modal.menu({
                                             buttons: [
                                                 tree[cid].order > 0 ? components.button.menu({
                                                     text: 'Move Up',
@@ -754,7 +754,7 @@ export const pages = {
                                                     text: 'Rename',
                                                     onclick: function (event) {
                                                         nameValid = true;
-                                                        modalOn({
+                                                        modalOn(() => ({
                                                             ...styles.modal(),
                                                             ...layouts.column('start', 'start', '1rem'),
                                                             children: [
@@ -825,14 +825,14 @@ export const pages = {
                                                                     ]
                                                                 },
                                                             ]
-                                                        })
+                                                        }))
                                                     }
                                                 }),
                                                 components.button.menu({
                                                     color: 'red',
                                                     text: 'Delete',
                                                     onclick: function (event) {
-                                                        modalOn(components.modal.prompt({
+                                                        modalOn(() => components.modal.prompt({
                                                             title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
                                                             description: 'Are you sure?',
                                                             buttons: [
@@ -892,13 +892,13 @@ export const pages = {
                                         borderRadius: '2rem',
                                         icon: icons.menu(),
                                         onclick: function (event) {
-                                            modalOn(components.modal.menu({
+                                            modalOn(() => components.modal.menu({
                                                 buttons: [
                                                     components.button.menu({
                                                         color: 'red',
                                                         text: 'Delete account',
                                                         onclick: function (event) {
-                                                            modalOn(components.modal.prompt({
+                                                            modalOn(() => components.modal.prompt({
                                                                 title: 'Delete account',
                                                                 description: 'Are you sure?',
                                                                 buttons: [
@@ -970,13 +970,13 @@ export const pages = {
                                     borderRadius: '2rem',
                                     icon: icons.add(),
                                     onclick: function (event) {
-                                        modalOn(components.modal.menu({
+                                        modalOn(() => components.modal.menu({
                                             buttons: [
                                                 components.button.menu({
                                                     text: 'New Folder',
                                                     onclick: function (event) {
                                                         nameValid = true;
-                                                        modalOn({
+                                                        modalOn(() => ({
                                                             ...styles.modal(),
                                                             ...layouts.column('start', 'start', '1rem'),
                                                             children: [
@@ -1048,14 +1048,14 @@ export const pages = {
                                                                     ]
                                                                 },
                                                             ]
-                                                        })
+                                                        }))
                                                     }
                                                 }),
                                                 components.button.menu({
                                                     text: 'New Note',
                                                     onclick: function (event) {
                                                         nameValid = true;
-                                                        modalOn({
+                                                        modalOn(() => ({
                                                             ...styles.modal(),
                                                             ...layouts.column('start', 'start', '1rem'),
                                                             children: [
@@ -1127,7 +1127,7 @@ export const pages = {
                                                                     ]
                                                                 },
                                                             ]
-                                                        })
+                                                        }))
                                                     }
                                                 })
                                             ]
@@ -1194,63 +1194,62 @@ export const pages = {
                                             const file = event.target.files[0];
                                             if (file) {
                                                 if (file.size > (1024 * 1024 - 8 * 1024)) {
-                                                    modalOn(
-                                                        components.modal.prompt({
-                                                            color: 'yellow',
-                                                            title: 'Image Upload',
-                                                            description: 'Image would be compressed to 1MB jpeg',
-                                                            buttons: [
-                                                                components.button.form({
-                                                                    color: 'yellow',
-                                                                    text: 'OK',
-                                                                    onclick: function (event) {
-                                                                        history.back();
-                                                                        const reader = new FileReader();
-                                                                        reader.readAsDataURL(file);
-                                                                        reader.onload = (event) => {
-                                                                            const img = new Image();
-                                                                            img.src = event.target.result;
-                                                                            img.onload = () => {
-                                                                                const canvas = document.createElement("canvas");
-                                                                                const ctx = canvas.getContext("2d");
-                                                                                let width = img.width;
-                                                                                let height = img.height;
-                                                                                let quality = 1.0;
-                                                                                canvas.width = width;
-                                                                                canvas.height = height;
-                                                                                ctx.drawImage(img, 0, 0, width, height);
-                                                                                const compress = () => {
-                                                                                    canvas.toBlob(
-                                                                                        (blob) => {
-                                                                                            if (blob.size > (1024 * 1024 - 8 * 1024)) {
-                                                                                                quality -= 0.05;
-                                                                                                compress();
-                                                                                            } else {
-                                                                                                let compressOutputReader = new FileReader();
-                                                                                                compressOutputReader.onload = async function (e) {
-                                                                                                    addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                                                                                        timestamp: Math.floor(Date.now() / 1000),
-                                                                                                        noteIds: [noteId],
-                                                                                                        image: {
-                                                                                                            type: 'image/jpeg',
-                                                                                                            content: await encrypt(key, e.target.result)
-                                                                                                        },
-                                                                                                    })
-                                                                                                };
-                                                                                                compressOutputReader.readAsArrayBuffer(blob);
-                                                                                            }
-                                                                                        },
-                                                                                        'image/jpeg',
-                                                                                        quality
-                                                                                    );
-                                                                                };
-                                                                                compress();
+                                                    modalOn(() => components.modal.prompt({
+                                                        color: 'yellow',
+                                                        title: 'Image Upload',
+                                                        description: 'Image would be compressed to 1MB jpeg',
+                                                        buttons: [
+                                                            components.button.form({
+                                                                color: 'yellow',
+                                                                text: 'OK',
+                                                                onclick: function (event) {
+                                                                    history.back();
+                                                                    const reader = new FileReader();
+                                                                    reader.readAsDataURL(file);
+                                                                    reader.onload = (event) => {
+                                                                        const img = new Image();
+                                                                        img.src = event.target.result;
+                                                                        img.onload = () => {
+                                                                            const canvas = document.createElement("canvas");
+                                                                            const ctx = canvas.getContext("2d");
+                                                                            let width = img.width;
+                                                                            let height = img.height;
+                                                                            let quality = 1.0;
+                                                                            canvas.width = width;
+                                                                            canvas.height = height;
+                                                                            ctx.drawImage(img, 0, 0, width, height);
+                                                                            const compress = () => {
+                                                                                canvas.toBlob(
+                                                                                    (blob) => {
+                                                                                        if (blob.size > (1024 * 1024 - 8 * 1024)) {
+                                                                                            quality -= 0.05;
+                                                                                            compress();
+                                                                                        } else {
+                                                                                            let compressOutputReader = new FileReader();
+                                                                                            compressOutputReader.onload = async function (e) {
+                                                                                                addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
+                                                                                                    timestamp: Math.floor(Date.now() / 1000),
+                                                                                                    noteIds: [noteId],
+                                                                                                    image: {
+                                                                                                        type: 'image/jpeg',
+                                                                                                        content: await encrypt(key, e.target.result)
+                                                                                                    },
+                                                                                                })
+                                                                                            };
+                                                                                            compressOutputReader.readAsArrayBuffer(blob);
+                                                                                        }
+                                                                                    },
+                                                                                    'image/jpeg',
+                                                                                    quality
+                                                                                );
                                                                             };
+                                                                            compress();
                                                                         };
-                                                                    }
-                                                                })
-                                                            ]
-                                                        })
+                                                                    };
+                                                                }
+                                                            })
+                                                        ]
+                                                    })
                                                     )
                                                 } else {
                                                     const reader = new FileReader();
@@ -1273,7 +1272,7 @@ export const pages = {
                                         icon: icons.upload(),
                                         text: 'Attach',
                                         onclick: function (event) {
-                                            modalOn(components.modal.menu({
+                                            modalOn(() => components.modal.menu({
                                                 buttons: [
                                                     components.button.menu({
                                                         text: 'Image',
@@ -1478,7 +1477,7 @@ export const pages = {
                                                             color: paragraph.color,
                                                             icon: icons.color(),
                                                             onclick: function (event) {
-                                                                modalOn({
+                                                                modalOn(() => ({
                                                                     ...styles.modal(),
                                                                     ...layouts.column('start', 'start', '1rem'),
                                                                     children: [
@@ -1511,7 +1510,7 @@ export const pages = {
                                                                             )
                                                                         }
                                                                     ]
-                                                                });
+                                                                }));
                                                             }
                                                         }) : null,
                                                         paragraph.text ? components.button.iconFlat({
@@ -1531,7 +1530,7 @@ export const pages = {
                                                             color: paragraph.color,
                                                             icon: icons.delete(),
                                                             onclick: function (event) {
-                                                                modalOn(components.modal.prompt({
+                                                                modalOn(() => components.modal.prompt({
                                                                     title: 'Delete',
                                                                     description: 'You won\'t be able to restore it',
                                                                     buttons: [
