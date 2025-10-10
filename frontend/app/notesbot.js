@@ -1,6 +1,6 @@
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
-import { addDoc, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
 import { colors as baseColors, icons as baseIcons, fonts as baseFonts, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 // import { getAnalytics } from "firebase/analytics";
@@ -234,7 +234,7 @@ export const layouts = {
 }
 
 export const handlers = {
-    ...baseLayouts,
+    ...baseHandlers,
 }
 
 export const components = {
@@ -681,16 +681,16 @@ export const pages = {
                                                         components.button.menu({
                                                             text: 'Move to Folder',
                                                             onclick: function (event) {
-                                                                function moveToPage(moveToFolderId) {
+                                                                function moveToFolderPage(targetFolderId) {
                                                                     return {
-                                                                        path: `#moveto-${moveToFolderId}`,
+                                                                        path: `#moveto-${targetFolderId}`,
                                                                         config: () => {
-                                                                            const children = Object.keys(tree).filter(id => tree[id].type === 'folder' && tree[id].parent === moveToFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                            const children = Object.keys(tree).filter(id => tree[id].type === 'folder' && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
                                                                             return {
                                                                                 ...layouts.base('start', 'center'),
                                                                                 children: [
                                                                                     components.header({
-                                                                                        title: `Move to ${moveToFolderId === 'root' ? 'Home' : tree[moveToFolderId].name}`,
+                                                                                        title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
                                                                                         trailing: components.button.form({
                                                                                             color: 'blue',
                                                                                             smallViewportGrow: false,
@@ -712,8 +712,8 @@ export const pages = {
                                                                                                         if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                                             transaction.update(notebookDocRef, {
                                                                                                                 timestamp: serverTimestamp(),
-                                                                                                                [`tree.${cid}.parent`]: moveToFolderId,
-                                                                                                                [`tree.${cid}.order`]: Object.keys(tree).filter(id => tree[id].parent === moveToFolderId).length,
+                                                                                                                [`tree.${cid}.parent`]: targetFolderId,
+                                                                                                                [`tree.${cid}.order`]: Object.keys(tree).filter(id => tree[id].parent === targetFolderId).length,
                                                                                                             });
                                                                                                             return true;
                                                                                                         }
@@ -742,7 +742,7 @@ export const pages = {
                                                                                             size: 'l',
                                                                                             text: tree[cid]['name'],
                                                                                             onclick: function (event) {
-                                                                                                stack.push(moveToPage(cid));
+                                                                                                stack.push(moveToFolderPage(cid));
                                                                                             },
                                                                                         }))
                                                                                     }
@@ -751,7 +751,7 @@ export const pages = {
                                                                         }
                                                                     };
                                                                 }
-                                                                stack.replace(moveToPage('root'));
+                                                                stack.replace(moveToFolderPage('root'));
                                                             }
                                                         }),
                                                         components.button.menu({
@@ -1194,6 +1194,7 @@ export const pages = {
         let limitParagraphs = true;
         let addParagraphValid = true;
         let editParagraphId;
+        let editParagraphHeight;
         let editParagraphValid;
         let editParagraphText;
         let filterParagraphQuery;
@@ -1349,7 +1350,7 @@ export const pages = {
                                         text: 'Attach',
                                         onclick: function (event) {
                                             stack.push({
-                                                path: '#menu',
+                                                path: '#attach',
                                                 config: () => components.modal.closeBackground({
                                                     child: components.modal.menu({
                                                         buttons: [
@@ -1369,7 +1370,212 @@ export const pages = {
                                                             components.button.menu({
                                                                 text: 'Paragraph',
                                                                 onclick: function (event) {
-                                                                    stack.pop();
+                                                                    function attachParagraphFolder(targetFolderId) {
+                                                                        return {
+                                                                            path: `#attach-${targetFolderId}`,
+                                                                            config: () => {
+                                                                                const children = Object.keys(tree).filter(id => id !== noteId && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                                return {
+                                                                                    ...layouts.base('start', 'center'),
+                                                                                    children: [
+                                                                                        components.header({
+                                                                                            title: 'Attach Paragraph',
+                                                                                        }),
+                                                                                        {
+                                                                                            flexGrow: 1,
+                                                                                            width: 'min(640px, 100% - 1rem)',
+                                                                                            padding: '1rem 0',
+                                                                                            ...layouts.column('center', 'center', '1rem'),
+                                                                                            children: children.map(cid => components.button.menu({
+                                                                                                size: 'l',
+                                                                                                text: tree[cid]['name'],
+                                                                                                onclick: function (event) {
+                                                                                                    if (tree[cid].type === 'folder') {
+                                                                                                        stack.push(attachParagraphFolder(cid));
+                                                                                                    } else {
+                                                                                                        stack.push(attachParagraphNote(cid));
+                                                                                                    }
+                                                                                                },
+                                                                                            }))
+                                                                                        }
+                                                                                    ]
+                                                                                };
+                                                                            }
+                                                                        };
+                                                                    }
+                                                                    function attachParagraphNote(targetNoteId) {
+                                                                        const paragraphs = [];
+                                                                        let filterParagraphQuery;
+                                                                        let stopListenParagraphs;
+                                                                        return {
+                                                                            path: `#attach-${targetNoteId}`,
+                                                                            onPush: function () {
+                                                                                stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('noteIds', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
+                                                                                    async (querySnapshot) => {
+                                                                                        paragraphs.length = 0;
+                                                                                        for (const docSnap of querySnapshot.docs) {
+                                                                                            const docData = docSnap.data();
+                                                                                            if (!docData.noteIds.includes(noteId)) {
+                                                                                                paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, noteIds: docData.noteIds, color: docData.color, text: docData.text ? textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
+                                                                                            }
+                                                                                        }
+                                                                                        this.widgets['paragraphs'].update();
+                                                                                    }
+                                                                                );
+                                                                            },
+                                                                            onPop: function () {
+                                                                                stopListenParagraphs();
+                                                                            },
+                                                                            config: () => {
+                                                                                return {
+                                                                                    ...layouts.base('start', 'center'),
+                                                                                    children: [
+                                                                                        components.header({
+                                                                                            title: tree[targetNoteId].name,
+                                                                                        }),
+                                                                                        {
+                                                                                            width: 'min(640px, 100% - 1rem)',
+                                                                                            padding: '1rem 0',
+                                                                                            ...layouts.column('start', 'start', '1rem'),
+                                                                                            children: [
+                                                                                                () => ({
+                                                                                                    id: 'filter-paragraphs',
+                                                                                                    width: '100%',
+                                                                                                    padding: '0 0.25rem 0 0.5rem',
+                                                                                                    border: `1px solid ${colors.foreground4()}`,
+                                                                                                    borderRadius: '0.5rem',
+                                                                                                    ...layouts.row('start', 'center'),
+                                                                                                    children: [
+                                                                                                        {
+                                                                                                            html: icons.search(),
+                                                                                                            width: '1.25rem',
+                                                                                                            height: '1.25rem',
+                                                                                                            fill: colors.foreground2(),
+                                                                                                        },
+                                                                                                        {
+                                                                                                            tag: 'input',
+                                                                                                            flexGrow: 1,
+                                                                                                            ...styles.input(),
+                                                                                                            border: 'none',
+                                                                                                            type: 'text',
+                                                                                                            value: filterParagraphQuery,
+                                                                                                            oninput: function (event) {
+                                                                                                                filterParagraphQuery = event.target.value;
+                                                                                                                this.layer.widgets['paragraphs'].update();
+                                                                                                            },
+                                                                                                        },
+                                                                                                        components.button.iconFlat({
+                                                                                                            width: '1.75rem',
+                                                                                                            height: '1.75rem',
+                                                                                                            padding: '0.25rem',
+                                                                                                            icon: icons.close(),
+                                                                                                            onclick: function (event) {
+                                                                                                                filterParagraphQuery = undefined;
+                                                                                                                this.layer.widgets['filter-paragraphs'].update();
+                                                                                                                this.layer.widgets['paragraphs'].update();
+                                                                                                            }
+                                                                                                        }),
+                                                                                                    ]
+                                                                                                }),
+                                                                                                () => {
+                                                                                                    return ({
+                                                                                                        id: 'paragraphs',
+                                                                                                        width: '100%',
+                                                                                                        ...layouts.column('start', 'start', '1rem'),
+                                                                                                        children: paragraphs.filter(p => {
+                                                                                                            if (!filterParagraphQuery) {
+                                                                                                                return true;
+                                                                                                            }
+                                                                                                            if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                                                                                return true;
+                                                                                                            }
+                                                                                                            return false;
+                                                                                                        }).map((paragraph, index) => ({
+                                                                                                            id: `paragraph-${paragraph.id}`,
+                                                                                                            width: '100%',
+                                                                                                            border: `1px solid ${colors.foreground4(paragraph.color)}`,
+                                                                                                            borderRadius: '0.5rem',
+                                                                                                            backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background(),
+                                                                                                            color: colors.foreground1(paragraph.color),
+                                                                                                            ...styles.unselectable(),
+                                                                                                            cursor: 'pointer',
+                                                                                                            ...handlers.hover({
+                                                                                                                backgroundColor: colors.background3(paragraph.color),
+                                                                                                            }),
+                                                                                                            ...handlers.button(function (event) {
+                                                                                                                stack.push({
+                                                                                                                    path: '#confirm',
+                                                                                                                    config: () => components.modal.closeBackground({
+                                                                                                                        child: components.modal.prompt({
+                                                                                                                            title: 'Attach Paragraph',
+                                                                                                                            description: 'Are you sure?',
+                                                                                                                            buttons: [
+                                                                                                                                components.button.form({
+                                                                                                                                    color: 'blue',
+                                                                                                                                    text: 'Attach',
+                                                                                                                                    onclick: async function (event) {
+                                                                                                                                        let steps = 0;
+                                                                                                                                        for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                                                            if (stack.at(i).data.noteId) {
+                                                                                                                                                break;
+                                                                                                                                            }
+                                                                                                                                            steps += 1;
+                                                                                                                                        }
+                                                                                                                                        await stack.pop(steps);
+                                                                                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                                            noteIds: arrayUnion(noteId),
+                                                                                                                                        });
+                                                                                                                                    }
+                                                                                                                                })
+                                                                                                                            ]
+                                                                                                                        })
+                                                                                                                    })
+                                                                                                                });
+                                                                                                            }),
+                                                                                                            ...layouts.column('start', 'start', '1rem'),
+                                                                                                            children: [
+                                                                                                                paragraph.text ? {
+                                                                                                                    width: '100%',
+                                                                                                                    padding: '0.5rem 0.5rem 0 0.5rem',
+                                                                                                                    whiteSpace: 'pre-wrap',
+                                                                                                                    lineHeight: '1.5rem',
+                                                                                                                    wordBreak: 'break-word',
+                                                                                                                    text: paragraph.text
+                                                                                                                } : null,
+                                                                                                                paragraph.image ? {
+                                                                                                                    tag: 'img',
+                                                                                                                    width: '100%',
+                                                                                                                    src: paragraph.image
+                                                                                                                } : null,
+                                                                                                                {
+                                                                                                                    width: '100%',
+                                                                                                                    padding: '0 0.5rem 0.5rem 0.5rem',
+                                                                                                                    ...layouts.row('space-between', 'center', '1rem'),
+                                                                                                                    children: [
+                                                                                                                        {
+                                                                                                                            fontSize: '0.875rem',
+                                                                                                                            color: colors.foreground3(paragraph.color),
+                                                                                                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                                                                        },
+                                                                                                                        {
+                                                                                                                            ...layouts.row(),
+                                                                                                                            children: null
+                                                                                                                        }
+                                                                                                                    ]
+                                                                                                                }
+                                                                                                            ]
+                                                                                                        }))
+
+                                                                                                    });
+                                                                                                }
+                                                                                            ]
+                                                                                        }
+                                                                                    ]
+                                                                                };
+                                                                            }
+                                                                        };
+                                                                    }
+                                                                    stack.replace(attachParagraphFolder('root'));
                                                                 }
                                                             }),
                                                         ]
@@ -1471,7 +1677,7 @@ export const pages = {
                                                 id: 'edit-paragraph-input',
                                                 color: paragraph.color,
                                                 width: '100%',
-                                                height: `max(${this.layer.widgets[`paragraph-${editParagraphId}`].domElement.getBoundingClientRect().height}px, 16rem)`,
+                                                height: `max(${editParagraphHeight}px, 16rem)`,
                                                 text: editParagraphText,
                                                 oninput: function (event) {
                                                     editParagraphText = event.target.value;
@@ -1534,6 +1740,18 @@ export const pages = {
                                                 tag: 'img',
                                                 width: '100%',
                                                 src: paragraph.image
+                                            } : null,
+                                            paragraph.noteIds.length > 1 ? {
+                                                width: '100%',
+                                                padding: '0 0.5rem 0 0.5rem',
+                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                children: paragraph.noteIds.filter(nid => nid !== noteId).map(nid => components.button.textLink({
+                                                    href: `/notes/${nid}`,
+                                                    text: tree[nid].name,
+                                                    onclick: function (event) {
+                                                        stack.push(pages.notePage(`/notes/${nid}`, nid));
+                                                    }
+                                                }))
                                             } : null,
                                             {
                                                 width: '100%',
@@ -1606,6 +1824,7 @@ export const pages = {
                                                                 onclick: function (event) {
                                                                     if (!editParagraphId) {
                                                                         editParagraphId = paragraph.id;
+                                                                        editParagraphHeight = this.layer.widgets[`paragraph-${paragraph.id}`].domElement.getBoundingClientRect().height;
                                                                         editParagraphValid = true;
                                                                         editParagraphText = paragraph.text;
                                                                         this.layer.widgets['paragraphs'].update();
@@ -1621,14 +1840,16 @@ export const pages = {
                                                                         config: () => components.modal.closeBackground({
                                                                             child: components.modal.prompt({
                                                                                 title: 'Delete',
-                                                                                description: 'You won\'t be able to restore it',
+                                                                                description: paragraph.noteIds.length > 1 ? 'Linked copies will not be deleted' : 'You won\'t be able to restore it',
                                                                                 buttons: [
                                                                                     components.button.form({
                                                                                         color: 'red',
                                                                                         text: 'Delete',
                                                                                         onclick: function (event) {
                                                                                             stack.pop();
-                                                                                            deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                noteIds: arrayRemove(noteId),
+                                                                                            });
                                                                                         }
                                                                                     })
                                                                                 ]
