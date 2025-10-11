@@ -169,6 +169,7 @@ function startListenNotebook() {
                     for (const id in notebook.tree) {
                         tree[id] = { type: notebook.tree[id].type, parent: notebook.tree[id].parent, order: notebook.tree[id].order, name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array())) };
                     }
+                    window.localStorage.setItem('tree', JSON.stringify(tree));
                     for (const layer of stack) {
                         layer.widgets['folder']?.update();
                     }
@@ -257,7 +258,6 @@ export const pages = {
                 ...layouts.column('center', 'center', '1rem'),
                 children: [
                     {
-                        lineHeight: 1.5,
                         text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
                     },
                     components.button.form({
@@ -284,7 +284,6 @@ export const pages = {
                 ...layouts.column('center', 'center'),
                 children: [
                     {
-                        lineHeight: 1.5,
                         text: 'Notebook is out of sync. Reload the page and try again.'
                     },
                 ]
@@ -579,15 +578,22 @@ export const pages = {
                     id: 'folder',
                     ...layouts.base('start', 'center'),
                     children: [
-                        folderId === 'root' ? null : components.header({
-                            leading: components.button.iconFlat({
+                        components.header({
+                            leading: folderId === 'root' ? null : components.button.iconFlat({
                                 icon: icons.home(),
                                 href: '/',
                                 onclick: function (event) {
                                     stack.push(pages.folderPage('/', 'root'));
                                 }
                             }),
-                            title: tree[folderId].name
+                            title: folderId === 'root' ? 'Home' : tree[folderId].name,
+                            trailing: notebook ? null : {
+                                html: icons.spinner(),
+                                width: '2rem',
+                                height: '2rem',
+                                fill: 'none',
+                                stroke: colors.foreground4(),
+                            }
                         }),
                         {
                             flexGrow: 1,
@@ -606,13 +612,14 @@ export const pages = {
                                         }
                                     },
                                     oncontextmenu: function (event) {
-                                        const notebookTimestamp = notebook.timestamp.toMillis();
+                                        const notebookTimestamp = notebook?.timestamp.toMillis();
                                         stack.push({
                                             path: '#menu',
                                             config: () => components.modal.closeBackground({
                                                 child: components.modal.menu({
                                                     buttons: [
                                                         tree[cid].order > 0 ? components.button.menu({
+                                                            disabled: !notebook,
                                                             text: 'Move Up',
                                                             onclick: async function (event) {
                                                                 await stack.pop();
@@ -646,6 +653,7 @@ export const pages = {
                                                             }
                                                         }) : null,
                                                         tree[cid].order < children.length - 1 ? components.button.menu({
+                                                            disabled: !notebook,
                                                             text: 'Move Down',
                                                             onclick: async function (event) {
                                                                 await stack.pop();
@@ -679,6 +687,7 @@ export const pages = {
                                                             }
                                                         }) : null,
                                                         components.button.menu({
+                                                            disabled: !notebook,
                                                             text: 'Move to Folder',
                                                             onclick: function (event) {
                                                                 function moveToFolderPage(targetFolderId) {
@@ -755,6 +764,7 @@ export const pages = {
                                                             }
                                                         }),
                                                         components.button.menu({
+                                                            disabled: !notebook,
                                                             text: 'Rename',
                                                             onclick: async function (event) {
                                                                 let nameValid = true;
@@ -840,6 +850,7 @@ export const pages = {
                                                         }),
                                                         components.button.menu({
                                                             color: 'red',
+                                                            disabled: !notebook,
                                                             text: 'Delete',
                                                             onclick: async function (event) {
                                                                 stack.replace({
@@ -918,6 +929,7 @@ export const pages = {
                                                         buttons: [
                                                             components.button.menu({
                                                                 color: 'red',
+                                                                disabled: !notebook,
                                                                 text: 'Delete account',
                                                                 onclick: function (event) {
                                                                     stack.replace({
@@ -998,6 +1010,7 @@ export const pages = {
                                     height: '3rem',
                                     padding: 0,
                                     borderRadius: '2rem',
+                                    disabled: !notebook,
                                     icon: icons.add(),
                                     onclick: function (event) {
                                         const notebookTimestamp = notebook.timestamp.toMillis();
@@ -1273,7 +1286,7 @@ export const pages = {
                                                             child: components.modal.prompt({
                                                                 color: 'yellow',
                                                                 title: 'Image Upload',
-                                                                description: 'Image would be compressed to 1MB jpeg',
+                                                                description: 'Image would be compressed to 1MB jpeg.',
                                                                 buttons: [
                                                                     components.button.form({
                                                                         color: 'yellow',
@@ -1538,7 +1551,6 @@ export const pages = {
                                                                                                                     width: '100%',
                                                                                                                     padding: '0.5rem 0.5rem 0 0.5rem',
                                                                                                                     whiteSpace: 'pre-wrap',
-                                                                                                                    lineHeight: '1.5rem',
                                                                                                                     wordBreak: 'break-word',
                                                                                                                     text: paragraph.text
                                                                                                                 } : null,
@@ -1732,7 +1744,6 @@ export const pages = {
                                                 width: '100%',
                                                 padding: '0.5rem 0.5rem 0 0.5rem',
                                                 whiteSpace: 'pre-wrap',
-                                                lineHeight: '1.5rem',
                                                 wordBreak: 'break-word',
                                                 text: paragraph.text
                                             } : null,
@@ -1746,10 +1757,10 @@ export const pages = {
                                                 padding: '0 0.5rem 0 0.5rem',
                                                 ...layouts.column('start', 'start', '0.5rem'),
                                                 children: paragraph.noteIds.filter(nid => nid !== noteId).map(nid => components.button.textLink({
-                                                    href: `/notes/${nid}`,
+                                                    href: `/note/${nid}`,
                                                     text: tree[nid].name,
                                                     onclick: function (event) {
-                                                        stack.push(pages.notePage(`/notes/${nid}`, nid));
+                                                        stack.push(pages.notePage(`/note/${nid}`, nid));
                                                     }
                                                 }))
                                             } : null,
@@ -1840,7 +1851,7 @@ export const pages = {
                                                                         config: () => components.modal.closeBackground({
                                                                             child: components.modal.prompt({
                                                                                 title: 'Delete',
-                                                                                description: paragraph.noteIds.length > 1 ? 'Linked copies will not be deleted' : 'You won\'t be able to restore it',
+                                                                                description: paragraph.noteIds.length > 1 ? 'Only removed here — linked copies remain.' : 'You won\'t be able to restore it.',
                                                                                 buttons: [
                                                                                     components.button.form({
                                                                                         color: 'red',
