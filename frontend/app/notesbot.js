@@ -1335,9 +1335,9 @@ export const pages = {
                                                         buttons: [
                                                             components.button.menu({
                                                                 text: 'Image',
-                                                                onclick: function (event) {
-                                                                    stack.pop();
-                                                                    this.layer.widgets['image-input'].domElement.click();
+                                                                onclick: async function (event) {
+                                                                    await stack.pop();
+                                                                    stack.at(-1).widgets['image-input'].domElement.click();
                                                                 }
                                                             }),
                                                             components.button.menu({
@@ -1704,6 +1704,7 @@ export const pages = {
                                         borderRadius: '0.5rem',
                                         backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background(),
                                         color: colors.foreground1(paragraph.color),
+                                        overflow: 'hidden',
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
                                             paragraph.text ? {
@@ -1817,7 +1818,7 @@ export const pages = {
                                                                         config: () => components.modal.closeBackground({
                                                                             child: components.modal.prompt({
                                                                                 title: 'Delete',
-                                                                                description: paragraph.noteIds.length > 1 ? 'Only removed here — linked copies remain.' : 'You won\'t be able to restore it.',
+                                                                                description: paragraph.noteIds.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
                                                                                 buttons: [
                                                                                     components.button.form({
                                                                                         color: 'red',
