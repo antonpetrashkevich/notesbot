@@ -112,22 +112,7 @@ export async function init() {
         color: colors.foreground1(),
     });
 
-    if (window.localStorage.getItem('tree')) {
-        tree = JSON.parse(window.localStorage.getItem('tree'));
-        const { segments, params, hash } = utils.pathCurrent();
-        if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
-            stack.push(pages.folderPage('', segments[1]));
-        }
-        else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
-            stack.push(pages.notePage('', segments[1]));
-        } else {
-            stack.push({ path: '/', ...pages.folderPage('', 'root') });
-        }
-    }
-    else {
-        stack.push(pages.loadingPage('', { replaceOnTreeUpdate: true }));
-    }
-
+    stack.push(pages.loadingPage('', { replaceOnTreeUpdate: true }));
     onAuthStateChanged(firebase.auth, async (user) => {
         if (user) {
             startListenNotebook();
@@ -137,7 +122,6 @@ export async function init() {
             key = undefined;
             tree = undefined;
             window.localStorage.removeItem('keyphrase');
-            window.localStorage.removeItem('tree');
             await stack.pop(stack.length - 1);
             stack.replace(pages.loginPage('/'));
         }
@@ -153,14 +137,12 @@ function startListenNotebook() {
                     key = undefined;
                     tree = undefined;
                     window.localStorage.removeItem('keyphrase');
-                    window.localStorage.removeItem('tree');
                     await stack.pop(stack.length - 1);
                     stack.replace(pages.notebookDeletedPage('/'));
                 } else if (!window.localStorage.getItem('keyphrase')) {
                     key = undefined;
                     tree = undefined;
                     window.localStorage.removeItem('keyphrase');
-                    window.localStorage.removeItem('tree');
                     await stack.pop(stack.length - 1);
                     stack.replace(pages.keyphrasePage('/'));
                 } else if (notebook.status === 'active' && window.localStorage.getItem('keyphrase')) {
@@ -169,7 +151,6 @@ function startListenNotebook() {
                     for (const id in notebook.tree) {
                         tree[id] = { type: notebook.tree[id].type, parent: notebook.tree[id].parent, order: notebook.tree[id].order, name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array())) };
                     }
-                    window.localStorage.setItem('tree', JSON.stringify(tree));
                     for (const layer of stack) {
                         layer.widgets['folder']?.update();
                     }
@@ -190,7 +171,6 @@ function startListenNotebook() {
                 key = undefined;
                 tree = undefined;
                 window.localStorage.removeItem('keyphrase');
-                window.localStorage.removeItem('tree');
                 await stack.pop(stack.length - 1);
                 stack.replace(pages.setupPage('/'));
             }
@@ -587,13 +567,6 @@ export const pages = {
                                 }
                             }),
                             title: folderId === 'root' ? 'Home' : tree[folderId].name,
-                            trailing: notebook ? null : {
-                                html: icons.spinner(),
-                                width: '2rem',
-                                height: '2rem',
-                                fill: 'none',
-                                stroke: colors.foreground4(),
-                            }
                         }),
                         {
                             flexGrow: 1,
@@ -612,14 +585,13 @@ export const pages = {
                                         }
                                     },
                                     oncontextmenu: function (event) {
-                                        const notebookTimestamp = notebook?.timestamp.toMillis();
+                                        const notebookTimestamp = notebook.timestamp.toMillis();
                                         stack.push({
                                             path: '#menu',
                                             config: () => components.modal.closeBackground({
                                                 child: components.modal.menu({
                                                     buttons: [
                                                         tree[cid].order > 0 ? components.button.menu({
-                                                            disabled: !notebook,
                                                             text: 'Move Up',
                                                             onclick: async function (event) {
                                                                 await stack.pop();
@@ -653,7 +625,6 @@ export const pages = {
                                                             }
                                                         }) : null,
                                                         tree[cid].order < children.length - 1 ? components.button.menu({
-                                                            disabled: !notebook,
                                                             text: 'Move Down',
                                                             onclick: async function (event) {
                                                                 await stack.pop();
@@ -687,7 +658,6 @@ export const pages = {
                                                             }
                                                         }) : null,
                                                         components.button.menu({
-                                                            disabled: !notebook,
                                                             text: 'Move to Folder',
                                                             onclick: function (event) {
                                                                 function moveToFolderPage(targetFolderId) {
@@ -764,7 +734,6 @@ export const pages = {
                                                             }
                                                         }),
                                                         components.button.menu({
-                                                            disabled: !notebook,
                                                             text: 'Rename',
                                                             onclick: async function (event) {
                                                                 let nameValid = true;
@@ -850,7 +819,6 @@ export const pages = {
                                                         }),
                                                         components.button.menu({
                                                             color: 'red',
-                                                            disabled: !notebook,
                                                             text: 'Delete',
                                                             onclick: async function (event) {
                                                                 stack.replace({
@@ -929,7 +897,6 @@ export const pages = {
                                                         buttons: [
                                                             components.button.menu({
                                                                 color: 'red',
-                                                                disabled: !notebook,
                                                                 text: 'Delete account',
                                                                 onclick: function (event) {
                                                                     stack.replace({
@@ -1010,7 +977,6 @@ export const pages = {
                                     height: '3rem',
                                     padding: 0,
                                     borderRadius: '2rem',
-                                    disabled: !notebook,
                                     icon: icons.add(),
                                     onclick: function (event) {
                                         const notebookTimestamp = notebook.timestamp.toMillis();
