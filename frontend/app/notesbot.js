@@ -1,9 +1,10 @@
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
-import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
-import { colors as baseColors, icons as baseIcons, fonts as baseFonts, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 // import { getAnalytics } from "firebase/analytics";
+import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
+import { colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
+import materialFontUrl from './material_symbols_outlined_default.woff2';
 
 
 const firebase = {};
@@ -90,7 +91,7 @@ export async function init() {
         localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
         cacheSize: CACHE_SIZE_UNLIMITED
     });
-    // firebase.analytics = getAnalytics(firebase.app);    
+    // firebase.analytics = getAnalytics(firebase.app);
 
     startApp('XPL');
     startViewportSizeController();
@@ -107,10 +108,18 @@ export async function init() {
         'theme-color': colors.metaTheme()
     });
     updateBodyStyle({
-        fontFamily: fonts.default().family,
+        fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
         backgroundColor: colors.background(),
         color: colors.foreground1(),
     });
+    await utils.loadFont({
+        fontFamily: 'material',
+        url: materialFontUrl,
+        format: 'woff2',
+        params: {
+            fontWeight: 400
+        }
+    })
 
     stack.push(pages.loadingPage('', { replaceOnTreeUpdate: true }));
     onAuthStateChanged(firebase.auth, async (user) => {
@@ -181,18 +190,6 @@ export const colors = {
     ...baseColors,
 }
 
-export const icons = {
-    ...baseIcons,
-    circle: () => '<svg viewBox="0 -960 960 960"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-    link: () => '<svg viewBox="0 -960 960 960"><path d="M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z"/></svg>',
-    linkadd: () => '<svg viewBox="0 -960 960 960"><path d="M680-160v-120H560v-80h120v-120h80v120h120v80H760v120h-80ZM440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm560-40h-80q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480Z"/></svg>',
-    linkoff: () => '<svg viewBox="0 -960 960 960"><path d="m770-302-60-62q40-11 65-42.5t25-73.5q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 57-29.5 105T770-302ZM634-440l-80-80h86v80h-6ZM792-56 56-792l56-56 736 736-56 56ZM440-280H280q-83 0-141.5-58.5T80-480q0-69 42-123t108-71l74 74h-24q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h65l79 80H320Z"/></svg>'
-}
-
-export const fonts = {
-    ...baseFonts,
-}
-
 export const styles = {
     ...baseStyles,
 }
@@ -207,6 +204,99 @@ export const handlers = {
 
 export const components = {
     ...baseComponents,
+    icon: ({ fontSize = '1.25rem', color = colors.foreground2(), ligature } = {}) => ({
+        fontFamily: 'material',
+        fontSize,
+        lineHeight: 1,
+        fontWeight: 400,
+        color,
+        webkitFontFeatureSettings: 'liga',
+        webkitFontSmoothing: 'antialiased',
+        text: ligature
+    }),
+    button: {
+        ...baseComponents.button,
+        formPrimary: ({ color, smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button.filledDark({
+            minWidth: '6rem',
+            height: '2.5rem',
+            flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
+            flexBasis: smallViewportGrow && smallViewport ? 0 : undefined,
+            padding: '0 0.75rem',
+            color,
+            disabled,
+            href,
+            onclick,
+            child: {
+                ...layouts.row('center', 'center', '0.5rem'),
+                children: [
+                    ligature ? components.icon({
+                        color: 'white',
+                        ligature
+                    }) : null,
+                    text ? {
+                        fontWeight: 600,
+                        color: 'white',
+                        whiteSpace: 'nowrap',
+                        text
+                    } : null
+                ]
+            },
+        }),
+        formSecondary: ({ smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button.filled({
+            minWidth: '6rem',
+            height: '2.5rem',
+            flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
+            flexBasis: smallViewportGrow && smallViewport ? 0 : undefined,
+            padding: '0 0.75rem',
+            disabled,
+            href,
+            onclick,
+            child: {
+                ...layouts.row('center', 'center', '0.5rem'),
+                children: [
+                    ligature ? components.icon({
+                        ligature
+                    }) : null,
+                    text ? {
+                        fontWeight: 600,
+                        color: colors.foreground2(),
+                        whiteSpace: 'nowrap',
+                        text
+                    } : null
+                ]
+            },
+        }),
+        menu: ({ color, size = 'm', wrap = false, borderRadius = '0.5rem', disabled, href, onclick, oncontextmenu, justifyContent = 'center', ligature, text } = {}) => components.button.flat({
+            width: '100%',
+            padding: size === 's' ? '0.25rem' : size === 'm' ? '0.5rem' : '0.75rem',
+            borderRadius,
+            color,
+            disabled,
+            href,
+            onclick,
+            oncontextmenu,
+            child: {
+                width: '100%',
+                ...layouts.row(justifyContent, 'center', '0.5rem'),
+                children: [
+                    ligature ? components.icon({
+                        fontSize: size === 's' ? '1rem' : size === 'm' ? '1.25rem' : '1.5rem',
+                        color: colors.foreground1(color),
+                        ligature
+                    }) : null,
+                    text ? {
+                        minWidth: wrap ? undefined : 0,
+                        fontSize: size === 's' ? '0.875rem' : size === 'm' ? '1rem' : '1.125rem',
+                        color: colors.foreground1(color),
+                        whiteSpace: wrap ? undefined : 'nowrap',
+                        overflow: wrap ? undefined : 'hidden',
+                        textOverflow: wrap ? undefined : 'ellipsis',
+                        text
+                    } : null
+                ]
+            },
+        })
+    }
 }
 
 export const pages = {
@@ -227,7 +317,7 @@ export const pages = {
                     {
                         text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
                     },
-                    components.button.form({
+                    components.button.formSecondary({
                         text: 'Log out',
                         onclick: function (event) {
                             signOut(firebase.auth);
@@ -270,22 +360,24 @@ export const pages = {
                 padding: '1rem',
                 ...layouts.column('center', 'center'),
                 children: [
-                    components.button.custom({
+                    components.button.flat({
                         padding: '0.75rem',
-                        hover: {
-                            backgroundColor: colors.background3(),
-                        },
                         onclick: function (event) {
                             stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
                             signInWithPopup(firebase.auth, new GoogleAuthProvider());
                         },
-                        leading: {
-                            html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
-                            width: '1.25rem',
-                            height: '1.25rem',
-                        },
-                        trailing: {
-                            text: 'Login with Google',
+                        child: {
+                            ...layouts.row('center', 'center', '0.5rem'),
+                            children: [
+                                {
+                                    html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
+                                    width: '1.25rem',
+                                    height: '1.25rem',
+                                },
+                                {
+                                    text: 'Login with Google',
+                                }
+                            ]
                         }
                     }),
                 ]
@@ -381,13 +473,13 @@ export const pages = {
                                 width: '100%',
                                 ...layouts.row('end', 'center', '1rem'),
                                 children: [
-                                    components.button.form({
+                                    components.button.formSecondary({
                                         text: 'Log out',
                                         onclick: function (event) {
                                             signOut(firebase.auth);
                                         }
                                     }),
-                                    components.button.form({
+                                    components.button.formPrimary({
                                         color: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
@@ -494,13 +586,13 @@ export const pages = {
                                 width: '100%',
                                 ...layouts.row('end', 'center', '1rem'),
                                 children: [
-                                    components.button.form({
+                                    components.button.formSecondary({
                                         text: 'Log out',
                                         onclick: function (event) {
                                             signOut(firebase.auth);
                                         }
                                     }),
-                                    components.button.form({
+                                    components.button.formPrimary({
                                         color: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
@@ -546,9 +638,11 @@ export const pages = {
                     ...layouts.base('start', 'center'),
                     children: [
                         components.header({
-                            leading: folderId === 'root' ? null : components.button.iconFlat({
-                                icon: icons.home(),
+                            leading: folderId === 'root' ? null : components.button.flat({
                                 href: '/',
+                                child: components.icon({
+                                    ligature: 'home'
+                                }),
                                 onclick: function (event) {
                                     stack.push(pages.folderPage('/', 'root'));
                                 }
@@ -658,7 +752,7 @@ export const pages = {
                                                                                 children: [
                                                                                     components.header({
                                                                                         title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
-                                                                                        trailing: components.button.form({
+                                                                                        trailing: components.button.formPrimary({
                                                                                             color: 'blue',
                                                                                             smallViewportGrow: false,
                                                                                             text: 'Move',
@@ -757,7 +851,7 @@ export const pages = {
                                                                                     width: '100%',
                                                                                     ...layouts.row('end'),
                                                                                     children: [
-                                                                                        components.button.form({
+                                                                                        components.button.formPrimary({
                                                                                             color: 'blue',
                                                                                             text: 'Rename',
                                                                                             onclick: async function (event) {
@@ -818,7 +912,7 @@ export const pages = {
                                                                             title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
                                                                             description: 'Are you sure?',
                                                                             buttons: [
-                                                                                components.button.form({
+                                                                                components.button.formPrimary({
                                                                                     color: 'red',
                                                                                     text: 'Delete',
                                                                                     onclick: async function (event) {
@@ -871,13 +965,14 @@ export const pages = {
                             zIndex: 10,
                             ...layouts.column('start', 'start', '1rem'),
                             children: [
-                                components.button.iconFilled(
+                                components.button.filled(
                                     {
-                                        width: '3rem',
-                                        height: '3rem',
-                                        padding: '0.35rem',
+                                        padding: '0.5rem',
                                         borderRadius: '2rem',
-                                        icon: icons.menu(),
+                                        child: components.icon({
+                                            fontSize: '2rem',
+                                            ligature: 'menu'
+                                        }),
                                         onclick: function (event) {
                                             const notebookTimestamp = notebook.timestamp.toMillis();
                                             stack.push({
@@ -904,6 +999,13 @@ export const pages = {
                                                                                     components.input.radioButton({
                                                                                         id: 'theme-system',
                                                                                         value: window.localStorage.getItem('theme') === 'auto',
+                                                                                        iconFalse: components.icon({
+                                                                                            ligature: 'radio_button_unchecked'
+                                                                                        }),
+                                                                                        iconTrue: components.icon({
+                                                                                            color: colors.foreground1('blue'),
+                                                                                            ligature: 'radio_button_checked'
+                                                                                        }),
                                                                                         text: 'System',
                                                                                         onclick: function (event) {
                                                                                             window.document.dispatchEvent(new CustomEvent('switch-theme', {
@@ -916,6 +1018,13 @@ export const pages = {
                                                                                     components.input.radioButton({
                                                                                         id: 'theme-light',
                                                                                         value: window.localStorage.getItem('theme') === 'light',
+                                                                                        iconFalse: components.icon({
+                                                                                            ligature: 'radio_button_unchecked'
+                                                                                        }),
+                                                                                        iconTrue: components.icon({
+                                                                                            color: colors.foreground1('blue'),
+                                                                                            ligature: 'radio_button_checked'
+                                                                                        }),
                                                                                         text: 'Light',
                                                                                         onclick: function (event) {
                                                                                             window.document.dispatchEvent(new CustomEvent('switch-theme', {
@@ -928,6 +1037,13 @@ export const pages = {
                                                                                     components.input.radioButton({
                                                                                         id: 'theme-dark',
                                                                                         value: window.localStorage.getItem('theme') === 'dark',
+                                                                                        iconFalse: components.icon({
+                                                                                            ligature: 'radio_button_unchecked'
+                                                                                        }),
+                                                                                        iconTrue: components.icon({
+                                                                                            color: colors.foreground1('blue'),
+                                                                                            ligature: 'radio_button_checked'
+                                                                                        }),
                                                                                         text: 'Dark',
                                                                                         onclick: function (event) {
                                                                                             window.document.dispatchEvent(new CustomEvent('switch-theme', {
@@ -955,7 +1071,7 @@ export const pages = {
                                                                                 title: 'Delete account',
                                                                                 description: 'Are you sure?',
                                                                                 buttons: [
-                                                                                    components.button.form({
+                                                                                    components.button.formPrimary({
                                                                                         color: 'red',
                                                                                         text: 'Delete',
                                                                                         onclick: async function (event) {
@@ -1016,13 +1132,15 @@ export const pages = {
                             zIndex: 10,
                             ...layouts.column('start', 'start', '1rem'),
                             children: [
-                                components.button.iconFilled({
+                                components.button.filled({
                                     color: 'blue',
-                                    width: '3rem',
-                                    height: '3rem',
-                                    padding: 0,
+                                    padding: '0.5rem',
                                     borderRadius: '2rem',
-                                    icon: icons.add(),
+                                    child: components.icon({
+                                        fontSize: '2rem',
+                                        color: colors.foreground2('blue'),
+                                        ligature: 'add_2'
+                                    }),
                                     onclick: function (event) {
                                         const notebookTimestamp = notebook.timestamp.toMillis();
                                         stack.push({
@@ -1068,7 +1186,7 @@ export const pages = {
                                                                                     width: '100%',
                                                                                     ...layouts.row('end'),
                                                                                     children: [
-                                                                                        components.button.form({
+                                                                                        components.button.formPrimary({
                                                                                             color: 'blue',
                                                                                             text: 'Create',
                                                                                             onclick: async function (event) {
@@ -1154,7 +1272,7 @@ export const pages = {
                                                                                     width: '100%',
                                                                                     ...layouts.row('end'),
                                                                                     children: [
-                                                                                        components.button.form({
+                                                                                        components.button.formPrimary({
                                                                                             color: 'blue',
                                                                                             text: 'Create',
                                                                                             onclick: async function (event) {
@@ -1255,9 +1373,11 @@ export const pages = {
                 ...layouts.base('start', 'center'),
                 children: [
                     components.header({
-                        leading: components.button.iconFlat({
-                            icon: icons.home(),
+                        leading: components.button.flat({
                             href: '/',
+                            child: components.icon({
+                                ligature: 'home'
+                            }),
                             onclick: function (event) {
                                 stack.push(pages.folderPage('/', 'root'));
                             }
@@ -1303,7 +1423,7 @@ export const pages = {
                                                                 title: 'Image Upload',
                                                                 description: 'Image would be compressed to 1MB jpeg.',
                                                                 buttons: [
-                                                                    components.button.form({
+                                                                    components.button.formPrimary({
                                                                         color: 'yellow',
                                                                         text: 'OK',
                                                                         onclick: async function (event) {
@@ -1373,8 +1493,8 @@ export const pages = {
                                             }
                                         }
                                     },
-                                    components.button.form({
-                                        icon: icons.upload(),
+                                    components.button.formSecondary({
+                                        ligature: 'upload',
                                         text: 'Attach',
                                         onclick: function (event) {
                                             stack.push({
@@ -1475,12 +1595,9 @@ export const pages = {
                                                                                                     borderRadius: '0.5rem',
                                                                                                     ...layouts.row('start', 'center'),
                                                                                                     children: [
-                                                                                                        {
-                                                                                                            html: icons.search(),
-                                                                                                            width: '1.25rem',
-                                                                                                            height: '1.25rem',
-                                                                                                            fill: colors.foreground2(),
-                                                                                                        },
+                                                                                                        components.icon({
+                                                                                                            ligature: 'search'
+                                                                                                        }),
                                                                                                         {
                                                                                                             tag: 'input',
                                                                                                             flexGrow: 1,
@@ -1493,11 +1610,11 @@ export const pages = {
                                                                                                                 this.layer.widgets['paragraphs'].update();
                                                                                                             },
                                                                                                         },
-                                                                                                        components.button.iconFlat({
-                                                                                                            width: '1.75rem',
-                                                                                                            height: '1.75rem',
+                                                                                                        components.button.flat({
                                                                                                             padding: '0.25rem',
-                                                                                                            icon: icons.close(),
+                                                                                                            child: components.icon({
+                                                                                                                ligature: 'close'
+                                                                                                            }),
                                                                                                             onclick: function (event) {
                                                                                                                 filterParagraphQuery = undefined;
                                                                                                                 this.layer.widgets['filter-paragraphs'].update();
@@ -1540,7 +1657,7 @@ export const pages = {
                                                                                                                             title: 'Attach Paragraph',
                                                                                                                             description: 'Are you sure?',
                                                                                                                             buttons: [
-                                                                                                                                components.button.form({
+                                                                                                                                components.button.formPrimary({
                                                                                                                                     color: 'blue',
                                                                                                                                     text: 'Attach',
                                                                                                                                     onclick: async function (event) {
@@ -1613,7 +1730,7 @@ export const pages = {
                                             });
                                         }
                                     }),
-                                    components.button.form({
+                                    components.button.formPrimary({
                                         color: 'blue',
                                         text: 'Add',
                                         onclick: async function (event) {
@@ -1643,12 +1760,9 @@ export const pages = {
                                 borderRadius: '0.5rem',
                                 ...layouts.row('start', 'center'),
                                 children: [
-                                    {
-                                        html: icons.search(),
-                                        width: '1.25rem',
-                                        height: '1.25rem',
-                                        fill: colors.foreground2(),
-                                    },
+                                    components.icon({
+                                        ligature: 'search'
+                                    }),
                                     {
                                         tag: 'input',
                                         flexGrow: 1,
@@ -1661,11 +1775,11 @@ export const pages = {
                                             this.layer.widgets['paragraphs'].update();
                                         },
                                     },
-                                    components.button.iconFlat({
-                                        width: '1.75rem',
-                                        height: '1.75rem',
+                                    components.button.flat({
                                         padding: '0.25rem',
-                                        icon: icons.close(),
+                                        child: components.icon({
+                                            ligature: 'close'
+                                        }),
                                         onclick: function (event) {
                                             filterParagraphQuery = undefined;
                                             this.layer.widgets['filter-paragraphs'].update();
@@ -1716,7 +1830,7 @@ export const pages = {
                                                 width: '100%',
                                                 ...layouts.row('end', 'start', '1rem'),
                                                 children: [
-                                                    components.button.form({
+                                                    components.button.formSecondary({
                                                         text: 'Cancel',
                                                         onclick: function (event) {
                                                             editParagraphId = undefined;
@@ -1725,7 +1839,7 @@ export const pages = {
                                                             this.layer.widgets['paragraphs'].update();
                                                         }
                                                     }),
-                                                    components.button.form({
+                                                    components.button.formPrimary({
                                                         color: 'blue',
                                                         text: 'Save',
                                                         onclick: async function (event) {
@@ -1795,16 +1909,22 @@ export const pages = {
                                                     {
                                                         ...layouts.row(),
                                                         children: [
-                                                            paragraph.text ? components.button.iconFlat({
+                                                            paragraph.text ? components.button.flat({
                                                                 color: paragraph.color,
-                                                                icon: icons.copy(),
+                                                                child: components.icon({
+                                                                    color: colors.foreground2(paragraph.color),
+                                                                    ligature: 'content_copy',
+                                                                }),
                                                                 onclick: function (event) {
                                                                     navigator.clipboard.writeText(paragraph.text);
                                                                 }
                                                             }) : null,
-                                                            paragraph.text ? components.button.iconFlat({
+                                                            paragraph.text ? components.button.flat({
                                                                 color: paragraph.color,
-                                                                icon: icons.color(),
+                                                                child: components.icon({
+                                                                    color: colors.foreground2(paragraph.color),
+                                                                    ligature: 'palette',
+                                                                }),
                                                                 onclick: function (event) {
                                                                     stack.push({
                                                                         path: '#color',
@@ -1825,13 +1945,15 @@ export const pages = {
                                                                                         gridTemplateColumns: 'repeat(auto-fill, 3rem)',
                                                                                         justifyContent: 'center',
                                                                                         gap: '1rem',
-                                                                                        children: [null, 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => components.button.iconFilled({
+                                                                                        children: [null, 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => components.button.filled({
                                                                                             color,
-                                                                                            width: '3rem',
-                                                                                            height: '3rem',
                                                                                             padding: '0.25rem',
                                                                                             borderRadius: '2rem',
-                                                                                            icon: icons.circle(),
+                                                                                            child: components.icon({
+                                                                                                fontSize: '2.5rem',
+                                                                                                color: colors.foreground2(color),
+                                                                                                ligature: 'circle',
+                                                                                            }),
                                                                                             onclick: async function (event) {
                                                                                                 stack.pop();
                                                                                                 updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
@@ -1847,9 +1969,12 @@ export const pages = {
                                                                     });
                                                                 }
                                                             }) : null,
-                                                            paragraph.text ? components.button.iconFlat({
+                                                            paragraph.text ? components.button.flat({
                                                                 color: paragraph.color,
-                                                                icon: icons.edit(),
+                                                                child: components.icon({
+                                                                    color: colors.foreground2(paragraph.color),
+                                                                    ligature: 'edit',
+                                                                }),
                                                                 disabled: editParagraphId,
                                                                 onclick: function (event) {
                                                                     if (!editParagraphId) {
@@ -1861,9 +1986,12 @@ export const pages = {
                                                                     }
                                                                 }
                                                             }) : null,
-                                                            components.button.iconFlat({
+                                                            components.button.flat({
                                                                 color: paragraph.color,
-                                                                icon: icons.delete(),
+                                                                child: components.icon({
+                                                                    color: colors.foreground2(paragraph.color),
+                                                                    ligature: 'delete',
+                                                                }),
                                                                 onclick: function (event) {
                                                                     stack.push({
                                                                         path: '#delete',
@@ -1873,7 +2001,7 @@ export const pages = {
                                                                                 title: 'Delete',
                                                                                 description: paragraph.noteIds.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
                                                                                 buttons: [
-                                                                                    components.button.form({
+                                                                                    components.button.formPrimary({
                                                                                         color: 'red',
                                                                                         text: 'Delete',
                                                                                         onclick: function (event) {
@@ -1895,23 +2023,19 @@ export const pages = {
                                             }
                                         ]
                                     }),
-                                    !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button.custom({
+                                    !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button.filled({
                                         width: '100%',
                                         height: '2.5rem',
                                         padding: '0 0.75rem',
-                                        backgroundColor: colors.background3(),
-                                        hover: {
-                                            backgroundColor: colors.background4(),
-                                        },
                                         onclick: function (event) {
                                             limitParagraphs = false;
                                             this.layer.widgets['paragraphs'].update();
                                         },
-                                        leading: {
+                                        child: {
                                             fontWeight: 600,
                                             color: colors.foreground2(),
                                             text: 'More'
-                                        },
+                                        }
                                     }) : null]
                                 });
                             }
