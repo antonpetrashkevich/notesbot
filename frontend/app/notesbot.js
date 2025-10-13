@@ -1,19 +1,22 @@
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { getStorage, ref, listAll, getMetadata, getDownloadURL, uploadBytes, uploadBytesResumable } from "firebase/storage";
 // import { getAnalytics } from "firebase/analytics";
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
 import { colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
+// https://developers.google.com/fonts/docs/material_symbols
+// https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined
 import materialFontUrl from './material_symbols_outlined_default.woff2';
 
 
 const firebase = {};
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
-let stopListenNotebook;
 let notebook;
 let key;
 let tree;
+let stopListenNotebook;
 
 async function generateKey(keyphrase, salt) {
     const keyMaterial = await window.crypto.subtle.importKey(
@@ -37,6 +40,14 @@ async function generateKey(keyphrase, salt) {
     );
 }
 
+/**
+ * Encrypts the provided data using AES-GCM with the given CryptoKey.
+ *
+ * @async
+ * @param {CryptoKey} key - The AES-GCM CryptoKey used for encryption.
+ * @param {ArrayBuffer|Uint8Array} data - The data to encrypt, as an ArrayBuffer or Uint8Array.
+ * @returns {Promise<{iv: Uint8Array, data: Uint8Array}>} An object containing the randomly generated IV and the encrypted data as a Uint8Array.
+ */
 async function encrypt(key, data) {
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const encryptedData = await window.crypto.subtle.encrypt(
@@ -47,9 +58,18 @@ async function encrypt(key, data) {
         key,
         data
     );
-    return { iv: Bytes.fromUint8Array(iv), data: Bytes.fromUint8Array(new Uint8Array(encryptedData)) };
+    return { iv, data: new Uint8Array(encryptedData) };
 }
 
+/**
+ * Decrypts data using AES-GCM algorithm.
+ *
+ * @async
+ * @param {CryptoKey} key - The AES-GCM decryption key.
+ * @param {Uint8Array} iv - The initialization vector for AES-GCM.
+ * @param {ArrayBuffer|Uint8Array} data - The encrypted data to decrypt.
+ * @returns {Promise<ArrayBuffer>} The decrypted data as an ArrayBuffer.
+ */
 async function decrypt(key, iv, data) {
     return await window.crypto.subtle.decrypt(
         {
@@ -61,16 +81,22 @@ async function decrypt(key, iv, data) {
     );
 }
 
+function randomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
 function generateTreeId() {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     while (true) {
-        let result = '';
-        const charactersLength = characters.length;
-        for (let i = 0; i < 8; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        if (!tree.hasOwnProperty(result)) {
-            return result;
+        const id = randomString(8);
+        if (!tree.hasOwnProperty(id)) {
+            return id;
         }
     }
 }
@@ -91,6 +117,7 @@ export async function init() {
         localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
         cacheSize: CACHE_SIZE_UNLIMITED
     });
+    firebase.storage = getStorage(firebase.app);
     // firebase.analytics = getAnalytics(firebase.app);
 
     startApp('XPL');
@@ -158,7 +185,12 @@ function startListenNotebook() {
                     key = await generateKey(window.localStorage.getItem('keyphrase'), notebook.salt.toUint8Array());
                     tree = {};
                     for (const id in notebook.tree) {
-                        tree[id] = { type: notebook.tree[id].type, parent: notebook.tree[id].parent, order: notebook.tree[id].order, name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array())) };
+                        tree[id] = {
+                            type: notebook.tree[id].type,
+                            parent: notebook.tree[id].parent,
+                            order: notebook.tree[id].order,
+                            name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
+                        };
                     }
                     for (const layer of stack) {
                         layer.widgets['folder']?.update();
@@ -204,7 +236,8 @@ export const handlers = {
 
 export const components = {
     ...baseComponents,
-    icon: ({ fontSize = '1.25rem', color = colors.foreground2(), ligature } = {}) => ({
+    icon: ({ id, fontSize = '1.25rem', color = colors.foreground2(), ligature } = {}) => ({
+        id,
         fontFamily: 'material',
         fontSize,
         lineHeight: 1,
@@ -212,11 +245,13 @@ export const components = {
         color,
         webkitFontFeatureSettings: 'liga',
         webkitFontSmoothing: 'antialiased',
+        ...styles.unselectable(),
         text: ligature
     }),
     button: {
         ...baseComponents.button,
-        formPrimary: ({ color, smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button.filledDark({
+        formPrimary: ({ id, color, smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button.filledDark({
+            id,
             minWidth: '6rem',
             height: '2.5rem',
             flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
@@ -242,7 +277,8 @@ export const components = {
                 ]
             },
         }),
-        formSecondary: ({ smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button.filled({
+        formSecondary: ({ id, smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button.filled({
+            id,
             minWidth: '6rem',
             height: '2.5rem',
             flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
@@ -266,7 +302,8 @@ export const components = {
                 ]
             },
         }),
-        menu: ({ color, size = 'm', wrap = false, borderRadius = '0.5rem', disabled, href, onclick, oncontextmenu, justifyContent = 'center', ligature, text } = {}) => components.button.flat({
+        menu: ({ id, color, size = 'm', wrap = false, borderRadius = '0.5rem', disabled, href, onclick, oncontextmenu, justifyContent = 'center', ligature, text } = {}) => components.button.flat({
+            id,
             width: '100%',
             padding: size === 's' ? '0.25rem' : size === 'm' ? '0.5rem' : '0.75rem',
             borderRadius,
@@ -509,11 +546,12 @@ export const pages = {
                                                     else {
                                                         const salt = Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(16)));
                                                         const key = await generateKey(keyphrase, salt.toUint8Array());
+                                                        const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
                                                         transaction.set(notebookDocRef, {
                                                             timestamp: serverTimestamp(),
                                                             status: 'active',
                                                             salt,
-                                                            keytest: await encrypt(key, textEncoder.encode(Math.random().toString(36).slice(2))),
+                                                            keytest: { iv: Bytes.fromUint8Array(keytestEncrypted.iv), data: Bytes.fromUint8Array(keytestEncrypted.data) },
                                                             tree: {}
                                                         });
                                                     }
@@ -602,7 +640,12 @@ export const pages = {
                                                 window.localStorage.setItem('keyphrase', this.layer.widgets['keyphrase-input'].domElement.value);
                                                 tree = {};
                                                 for (const id in notebook.tree) {
-                                                    tree[id] = { type: notebook.tree[id].type, parent: notebook.tree[id].parent, order: notebook.tree[id].order, name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array())) };
+                                                    tree[id] = {
+                                                        type: notebook.tree[id].type,
+                                                        parent: notebook.tree[id].parent,
+                                                        order: notebook.tree[id].order,
+                                                        name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
+                                                    };
                                                 }
                                                 stack.replace(pages.folderPage('/', 'root'));
                                                 return;
@@ -871,9 +914,10 @@ export const pages = {
                                                                                                     const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                                                         const notebookDoc = await transaction.get(notebookDocRef);
                                                                                                         if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                            const nameEncrypted = await encrypt(key, textEncoder.encode(name));
                                                                                                             transaction.update(notebookDocRef, {
                                                                                                                 timestamp: serverTimestamp(),
-                                                                                                                [`tree.${cid}.name`]: await encrypt(key, textEncoder.encode(name)),
+                                                                                                                [`tree.${cid}.name`]: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) },
                                                                                                             });
                                                                                                             return true;
                                                                                                         }
@@ -1206,9 +1250,10 @@ export const pages = {
                                                                                                     const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                                                         const notebookDoc = await transaction.get(notebookDocRef);
                                                                                                         if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                            const nameEncrypted = await encrypt(key, textEncoder.encode(name));
                                                                                                             transaction.update(notebookDocRef, {
                                                                                                                 timestamp: serverTimestamp(),
-                                                                                                                [`tree.${generateTreeId()}`]: { type: 'folder', parent: folderId, order: children.length, name: await encrypt(key, textEncoder.encode(name)) },
+                                                                                                                [`tree.${generateTreeId()}`]: { type: 'folder', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
                                                                                                             });
                                                                                                             return true;
                                                                                                         }
@@ -1292,9 +1337,10 @@ export const pages = {
                                                                                                     const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                                                                         const notebookDoc = await transaction.get(notebookDocRef);
                                                                                                         if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                            const nameEncrypted = await encrypt(key, textEncoder.encode(name));
                                                                                                             transaction.update(notebookDocRef, {
                                                                                                                 timestamp: serverTimestamp(),
-                                                                                                                [`tree.${generateTreeId()}`]: { type: 'note', parent: folderId, order: children.length, name: await encrypt(key, textEncoder.encode(name)) },
+                                                                                                                [`tree.${generateTreeId()}`]: { type: 'note', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
                                                                                                             });
                                                                                                             return true;
                                                                                                         }
@@ -1338,6 +1384,9 @@ export const pages = {
         const paragraphs = [];
         let limitParagraphs = true;
         let addParagraphValid = true;
+        let filesAttached;
+        let filesUpload;
+        let filesUploadError = false;
         let editParagraphId;
         let editParagraphHeight;
         let editParagraphValid;
@@ -1359,7 +1408,20 @@ export const pages = {
                         paragraphs.length = 0;
                         for (const docSnap of querySnapshot.docs) {
                             const docData = docSnap.data();
-                            paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, noteIds: docData.noteIds, color: docData.color, text: docData.text ? textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
+                            paragraphs.push({
+                                id: docSnap.id,
+                                timestamp: docData.timestamp,
+                                noteIds: docData.noteIds,
+                                color: docData.color,
+                                text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
+                                files: docData.files ? await Promise.all(docData.files.map(async f => ({
+                                    id: f.id,
+                                    size: f.size,
+                                    type: f.type,
+                                    name: textDecoder.decode(await decrypt(key, f.name.iv.toUint8Array(), f.name.data.toUint8Array())),
+                                    iv: f.iv.toUint8Array()
+                                }))) : undefined
+                            });
                         }
                         this.widgets['paragraphs'].update();
                     }
@@ -1400,340 +1462,327 @@ export const pages = {
                                 id: 'add-paragraph-input',
                                 height: '16rem',
                             }),
+                            () => ({
+                                id: 'files-attached',
+                                width: '100%',
+                                ...layouts.column('start', 'start', '0.5rem'),
+                                display: filesAttached ? 'flex' : 'none',
+                                children: filesAttached?.map(f => ({
+                                    width: '100%',
+                                    text: f.name
+                                }))
+                            }),
                             {
                                 width: '100%',
                                 ...layouts.row('end', 'center', '1rem'),
                                 children: [
                                     {
-                                        id: 'image-input',
+                                        id: 'files-input',
                                         tag: 'input',
                                         display: 'none',
                                         type: 'file',
-                                        accept: 'image/*',
+                                        multiple: true,
                                         onchange: function (event) {
-                                            const file = event.target.files[0];
-                                            if (file) {
-                                                if (file.size > (1024 * 1024 - 8 * 1024)) {
-                                                    stack.push({
-                                                        path: '#compress',
-                                                        hidePrior: false,
-                                                        config: () => components.modal.closeBackground({
-                                                            child: components.modal.prompt({
-                                                                color: 'yellow',
-                                                                title: 'Image Upload',
-                                                                description: 'Image would be compressed to 1MB jpeg.',
-                                                                buttons: [
-                                                                    components.button.formPrimary({
-                                                                        color: 'yellow',
-                                                                        text: 'OK',
-                                                                        onclick: async function (event) {
-                                                                            await stack.pop();
-                                                                            const reader = new FileReader();
-                                                                            reader.readAsDataURL(file);
-                                                                            reader.onload = (event) => {
-                                                                                const img = new Image();
-                                                                                img.src = event.target.result;
-                                                                                img.onload = () => {
-                                                                                    const canvas = document.createElement("canvas");
-                                                                                    const ctx = canvas.getContext("2d");
-                                                                                    let width = img.width;
-                                                                                    let height = img.height;
-                                                                                    let quality = 1.0;
-                                                                                    canvas.width = width;
-                                                                                    canvas.height = height;
-                                                                                    ctx.drawImage(img, 0, 0, width, height);
-                                                                                    const compress = () => {
-                                                                                        canvas.toBlob(
-                                                                                            (blob) => {
-                                                                                                if (blob.size > (1024 * 1024 - 8 * 1024)) {
-                                                                                                    quality -= 0.05;
-                                                                                                    compress();
-                                                                                                } else {
-                                                                                                    let compressOutputReader = new FileReader();
-                                                                                                    compressOutputReader.onload = async function (e) {
-                                                                                                        addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                                                                                            timestamp: Math.floor(Date.now() / 1000),
-                                                                                                            noteIds: [noteId],
-                                                                                                            image: {
-                                                                                                                type: 'image/jpeg',
-                                                                                                                content: await encrypt(key, e.target.result)
-                                                                                                            },
-                                                                                                        })
-                                                                                                    };
-                                                                                                    compressOutputReader.readAsArrayBuffer(blob);
-                                                                                                }
-                                                                                            },
-                                                                                            'image/jpeg',
-                                                                                            quality
-                                                                                        );
-                                                                                    };
-                                                                                    compress();
-                                                                                };
-                                                                            };
-                                                                        }
-                                                                    })
-                                                                ]
-                                                            })
+                                            const filesSelected = [];
+                                            let sizeTotal = 0;
+                                            for (const file of event.target.files) {
+                                                filesSelected.push(file);
+                                                sizeTotal += file.size;
+                                            }
+                                            if (filesSelected.length > 8 || sizeTotal > 1073741824) {
+                                                stack.push({
+                                                    path: '#invalid',
+                                                    hidePrior: false,
+                                                    config: () => components.modal.closeBackground({
+                                                        child: components.modal.prompt({
+                                                            color: 'red',
+                                                            title: 'Invalid',
+                                                            description: 'Maximum 8 files, 1GB total'
                                                         })
-                                                    });
-                                                } else {
-                                                    const reader = new FileReader();
-                                                    reader.onload = async function (e) {
-                                                        addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                                            timestamp: Math.floor(Date.now() / 1000),
-                                                            noteIds: [noteId],
-                                                            image: {
-                                                                type: file.type,
-                                                                content: await encrypt(key, e.target.result)
-                                                            },
-                                                        })
-                                                    };
-                                                    reader.readAsArrayBuffer(file);
-                                                }
+                                                    })
+                                                });
+                                            } else {
+                                                filesAttached = filesSelected;
+                                                this.layer.widgets['files-attached'].update();
+                                                this.layer.widgets['attach_button'].update();
                                             }
                                         }
                                     },
-                                    components.button.formSecondary({
-                                        ligature: 'upload',
-                                        text: 'Attach',
+                                    () => components.button.formSecondary({
+                                        id: 'attach_button',
+                                        ligature: filesAttached ? 'attach_file_off' : 'attach_file',
+                                        text: filesAttached ? 'Detach' : 'Attach',
                                         onclick: function (event) {
-                                            stack.push({
-                                                path: '#attach',
-                                                hidePrior: false,
-                                                config: () => components.modal.closeBackground({
-                                                    child: components.modal.menu({
-                                                        buttons: [
-                                                            components.button.menu({
-                                                                text: 'Image',
-                                                                onclick: async function (event) {
-                                                                    await stack.pop();
-                                                                    stack.at(-1).widgets['image-input'].domElement.click();
-                                                                }
-                                                            }),
-                                                            components.button.menu({
-                                                                text: 'File',
-                                                                onclick: function (event) {
-                                                                    stack.pop();
-                                                                }
-                                                            }),
-                                                            components.button.menu({
-                                                                text: 'Paragraph',
-                                                                onclick: function (event) {
-                                                                    function attachParagraphFolder(targetFolderId) {
-                                                                        return {
-                                                                            path: `#attach-${targetFolderId}`,
-                                                                            config: () => {
-                                                                                const children = Object.keys(tree).filter(id => id !== noteId && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                                                                                return {
-                                                                                    ...layouts.base('start', 'center'),
-                                                                                    children: [
-                                                                                        components.header({
-                                                                                            title: 'Attach Paragraph',
-                                                                                        }),
-                                                                                        {
-                                                                                            flexGrow: 1,
-                                                                                            width: 'min(640px, 100% - 1rem)',
-                                                                                            padding: '1rem 0',
-                                                                                            ...layouts.column('center', 'center', '1rem'),
-                                                                                            children: children.map(cid => components.button.menu({
-                                                                                                size: 'l',
-                                                                                                text: tree[cid]['name'],
-                                                                                                onclick: function (event) {
-                                                                                                    if (tree[cid].type === 'folder') {
-                                                                                                        stack.push(attachParagraphFolder(cid));
-                                                                                                    } else {
-                                                                                                        stack.push(attachParagraphNote(cid));
-                                                                                                    }
-                                                                                                },
-                                                                                            }))
-                                                                                        }
-                                                                                    ]
-                                                                                };
-                                                                            }
-                                                                        };
+                                            if (filesAttached) {
+                                                filesAttached = undefined;
+                                                this.layer.widgets['files-attached'].update();
+                                                this.layer.widgets['attach_button'].update();
+                                            } else {
+                                                stack.push({
+                                                    path: '#attach',
+                                                    hidePrior: false,
+                                                    config: () => components.modal.closeBackground({
+                                                        child: components.modal.menu({
+                                                            buttons: [
+                                                                components.button.menu({
+                                                                    disabled: filesUpload,
+                                                                    text: 'Files',
+                                                                    onclick: async function (event) {
+                                                                        await stack.pop();
+                                                                        stack.at(-1).widgets['files-input'].domElement.click();
                                                                     }
-                                                                    function attachParagraphNote(targetNoteId) {
-                                                                        const paragraphs = [];
-                                                                        let filterParagraphQuery;
-                                                                        let stopListenParagraphs;
-                                                                        return {
-                                                                            path: `#attach-${targetNoteId}`,
-                                                                            onPush: function () {
-                                                                                stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('noteIds', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
-                                                                                    async (querySnapshot) => {
-                                                                                        paragraphs.length = 0;
-                                                                                        for (const docSnap of querySnapshot.docs) {
-                                                                                            const docData = docSnap.data();
-                                                                                            if (!docData.noteIds.includes(noteId)) {
-                                                                                                paragraphs.push({ id: docSnap.id, timestamp: docData.timestamp, noteIds: docData.noteIds, color: docData.color, text: docData.text ? textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())) : undefined, image: docData.image ? URL.createObjectURL(new Blob([await decrypt(key, docData.image.content.iv.toUint8Array(), docData.image.content.data.toUint8Array())], { type: docData.image.type })) : undefined });
+                                                                }),
+                                                                components.button.menu({
+                                                                    text: 'Paragraph',
+                                                                    onclick: function (event) {
+                                                                        function attachParagraphFolder(targetFolderId) {
+                                                                            return {
+                                                                                path: `#attach-${targetFolderId}`,
+                                                                                config: () => {
+                                                                                    const children = Object.keys(tree).filter(id => id !== noteId && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                                    return {
+                                                                                        ...layouts.base('start', 'center'),
+                                                                                        children: [
+                                                                                            components.header({
+                                                                                                title: 'Attach Paragraph',
+                                                                                            }),
+                                                                                            {
+                                                                                                flexGrow: 1,
+                                                                                                width: 'min(640px, 100% - 1rem)',
+                                                                                                padding: '1rem 0',
+                                                                                                ...layouts.column('center', 'center', '1rem'),
+                                                                                                children: children.map(cid => components.button.menu({
+                                                                                                    size: 'l',
+                                                                                                    text: tree[cid]['name'],
+                                                                                                    onclick: function (event) {
+                                                                                                        if (tree[cid].type === 'folder') {
+                                                                                                            stack.push(attachParagraphFolder(cid));
+                                                                                                        } else {
+                                                                                                            stack.push(attachParagraphNote(cid));
+                                                                                                        }
+                                                                                                    },
+                                                                                                }))
                                                                                             }
-                                                                                        }
-                                                                                        this.widgets['paragraphs'].update();
-                                                                                    }
-                                                                                );
-                                                                            },
-                                                                            onPop: function () {
-                                                                                stopListenParagraphs();
-                                                                            },
-                                                                            config: () => {
-                                                                                return {
-                                                                                    ...layouts.base('start', 'center'),
-                                                                                    children: [
-                                                                                        components.header({
-                                                                                            title: tree[targetNoteId].name,
-                                                                                        }),
-                                                                                        {
-                                                                                            width: 'min(640px, 100% - 1rem)',
-                                                                                            padding: '1rem 0',
-                                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                                            children: [
-                                                                                                () => ({
-                                                                                                    id: 'filter-paragraphs',
-                                                                                                    width: '100%',
-                                                                                                    padding: '0 0.25rem 0 0.5rem',
-                                                                                                    border: `1px solid ${colors.foreground4()}`,
-                                                                                                    borderRadius: '0.5rem',
-                                                                                                    ...layouts.row('start', 'center'),
-                                                                                                    children: [
-                                                                                                        components.icon({
-                                                                                                            ligature: 'search'
-                                                                                                        }),
-                                                                                                        {
-                                                                                                            tag: 'input',
-                                                                                                            flexGrow: 1,
-                                                                                                            ...styles.input(),
-                                                                                                            border: 'none',
-                                                                                                            type: 'text',
-                                                                                                            value: filterParagraphQuery,
-                                                                                                            oninput: function (event) {
-                                                                                                                filterParagraphQuery = event.target.value;
-                                                                                                                this.layer.widgets['paragraphs'].update();
-                                                                                                            },
-                                                                                                        },
-                                                                                                        components.button.flat({
-                                                                                                            padding: '0.25rem',
-                                                                                                            child: components.icon({
-                                                                                                                ligature: 'close'
-                                                                                                            }),
-                                                                                                            onclick: function (event) {
-                                                                                                                filterParagraphQuery = undefined;
-                                                                                                                this.layer.widgets['filter-paragraphs'].update();
-                                                                                                                this.layer.widgets['paragraphs'].update();
-                                                                                                            }
-                                                                                                        }),
-                                                                                                    ]
-                                                                                                }),
-                                                                                                () => {
-                                                                                                    return ({
-                                                                                                        id: 'paragraphs',
-                                                                                                        width: '100%',
-                                                                                                        ...layouts.column('start', 'start', '1rem'),
-                                                                                                        children: paragraphs.filter(p => {
-                                                                                                            if (!filterParagraphQuery) {
-                                                                                                                return true;
-                                                                                                            }
-                                                                                                            if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                                                                                                return true;
-                                                                                                            }
-                                                                                                            return false;
-                                                                                                        }).map((paragraph, index) => ({
-                                                                                                            id: `paragraph-${paragraph.id}`,
-                                                                                                            width: '100%',
-                                                                                                            border: `1px solid ${colors.foreground4(paragraph.color)}`,
-                                                                                                            borderRadius: '0.5rem',
-                                                                                                            backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background(),
-                                                                                                            color: colors.foreground1(paragraph.color),
-                                                                                                            ...styles.unselectable(),
-                                                                                                            cursor: 'pointer',
-                                                                                                            ...handlers.hover({
-                                                                                                                backgroundColor: colors.background3(paragraph.color),
-                                                                                                            }),
-                                                                                                            ...handlers.button(function (event) {
-                                                                                                                stack.push({
-                                                                                                                    path: '#confirm',
-                                                                                                                    hidePrior: false,
-                                                                                                                    config: () => components.modal.closeBackground({
-                                                                                                                        child: components.modal.prompt({
-                                                                                                                            title: 'Attach Paragraph',
-                                                                                                                            description: 'Are you sure?',
-                                                                                                                            buttons: [
-                                                                                                                                components.button.formPrimary({
-                                                                                                                                    color: 'blue',
-                                                                                                                                    text: 'Attach',
-                                                                                                                                    onclick: async function (event) {
-                                                                                                                                        let steps = 0;
-                                                                                                                                        for (let i = stack.length - 1; i > 0; i--) {
-                                                                                                                                            if (stack.at(i).data.noteId) {
-                                                                                                                                                break;
-                                                                                                                                            }
-                                                                                                                                            steps += 1;
-                                                                                                                                        }
-                                                                                                                                        await stack.pop(steps);
-                                                                                                                                        updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                                            noteIds: arrayUnion(noteId),
-                                                                                                                                        });
-                                                                                                                                    }
-                                                                                                                                })
-                                                                                                                            ]
-                                                                                                                        })
-                                                                                                                    })
-                                                                                                                });
-                                                                                                            }),
-                                                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                                                            children: [
-                                                                                                                paragraph.text ? {
-                                                                                                                    width: '100%',
-                                                                                                                    padding: '0.5rem 0.5rem 0 0.5rem',
-                                                                                                                    whiteSpace: 'pre-wrap',
-                                                                                                                    wordBreak: 'break-word',
-                                                                                                                    text: paragraph.text
-                                                                                                                } : null,
-                                                                                                                paragraph.image ? {
-                                                                                                                    tag: 'img',
-                                                                                                                    width: '100%',
-                                                                                                                    src: paragraph.image
-                                                                                                                } : null,
-                                                                                                                {
-                                                                                                                    width: '100%',
-                                                                                                                    padding: '0 0.5rem 0.5rem 0.5rem',
-                                                                                                                    ...layouts.row('space-between', 'center', '1rem'),
-                                                                                                                    children: [
-                                                                                                                        {
-                                                                                                                            fontSize: '0.875rem',
-                                                                                                                            color: colors.foreground3(paragraph.color),
-                                                                                                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                                                                                        },
-                                                                                                                        {
-                                                                                                                            ...layouts.row(),
-                                                                                                                            children: null
-                                                                                                                        }
-                                                                                                                    ]
-                                                                                                                }
-                                                                                                            ]
-                                                                                                        }))
-
+                                                                                        ]
+                                                                                    };
+                                                                                }
+                                                                            };
+                                                                        }
+                                                                        function attachParagraphNote(targetNoteId) {
+                                                                            const paragraphs = [];
+                                                                            let filterParagraphQuery;
+                                                                            let stopListenParagraphs;
+                                                                            return {
+                                                                                path: `#attach-${targetNoteId}`,
+                                                                                onPush: function () {
+                                                                                    stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('noteIds', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
+                                                                                        async (querySnapshot) => {
+                                                                                            paragraphs.length = 0;
+                                                                                            for (const docSnap of querySnapshot.docs) {
+                                                                                                const docData = docSnap.data();
+                                                                                                if (!docData.noteIds.includes(noteId)) {
+                                                                                                    paragraphs.push({
+                                                                                                        id: docSnap.id,
+                                                                                                        timestamp: docData.timestamp,
+                                                                                                        noteIds: docData.noteIds,
+                                                                                                        color: docData.color,
+                                                                                                        text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
+                                                                                                        files: docData.files ? await Promise.all(docData.files.map(async f => ({
+                                                                                                            id: f.id,
+                                                                                                            size: f.size,
+                                                                                                            type: f.type,
+                                                                                                            name: textDecoder.decode(await decrypt(key, f.name.iv.toUint8Array(), f.name.data.toUint8Array())),
+                                                                                                            iv: f.iv.toUint8Array()
+                                                                                                        }))) : undefined
                                                                                                     });
                                                                                                 }
-                                                                                            ]
+                                                                                            }
+                                                                                            this.widgets['paragraphs'].update();
                                                                                         }
-                                                                                    ]
-                                                                                };
-                                                                            }
-                                                                        };
+                                                                                    );
+                                                                                },
+                                                                                onPop: function () {
+                                                                                    stopListenParagraphs();
+                                                                                },
+                                                                                config: () => {
+                                                                                    return {
+                                                                                        ...layouts.base('start', 'center'),
+                                                                                        children: [
+                                                                                            components.header({
+                                                                                                title: tree[targetNoteId].name,
+                                                                                            }),
+                                                                                            {
+                                                                                                width: 'min(640px, 100% - 1rem)',
+                                                                                                padding: '1rem 0',
+                                                                                                ...layouts.column('start', 'start', '1rem'),
+                                                                                                children: [
+                                                                                                    () => ({
+                                                                                                        id: 'filter-paragraphs',
+                                                                                                        width: '100%',
+                                                                                                        padding: '0 0.25rem 0 0.5rem',
+                                                                                                        border: `1px solid ${colors.foreground4()}`,
+                                                                                                        borderRadius: '0.5rem',
+                                                                                                        ...layouts.row('start', 'center'),
+                                                                                                        children: [
+                                                                                                            components.icon({
+                                                                                                                ligature: 'search'
+                                                                                                            }),
+                                                                                                            {
+                                                                                                                tag: 'input',
+                                                                                                                flexGrow: 1,
+                                                                                                                ...styles.input(),
+                                                                                                                border: 'none',
+                                                                                                                type: 'text',
+                                                                                                                value: filterParagraphQuery,
+                                                                                                                oninput: function (event) {
+                                                                                                                    filterParagraphQuery = event.target.value;
+                                                                                                                    this.layer.widgets['paragraphs'].update();
+                                                                                                                },
+                                                                                                            },
+                                                                                                            components.button.flat({
+                                                                                                                padding: '0.25rem',
+                                                                                                                child: components.icon({
+                                                                                                                    ligature: 'close'
+                                                                                                                }),
+                                                                                                                onclick: function (event) {
+                                                                                                                    filterParagraphQuery = undefined;
+                                                                                                                    this.layer.widgets['filter-paragraphs'].update();
+                                                                                                                    this.layer.widgets['paragraphs'].update();
+                                                                                                                }
+                                                                                                            }),
+                                                                                                        ]
+                                                                                                    }),
+                                                                                                    () => {
+                                                                                                        return ({
+                                                                                                            id: 'paragraphs',
+                                                                                                            width: '100%',
+                                                                                                            ...layouts.column('start', 'start', '1rem'),
+                                                                                                            children: paragraphs.filter(p => {
+                                                                                                                if (!filterParagraphQuery) {
+                                                                                                                    return true;
+                                                                                                                }
+                                                                                                                if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                                                                                    return true;
+                                                                                                                }
+                                                                                                                for (const file of p.files || []) {
+                                                                                                                    if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                                                                                        return true;
+                                                                                                                    }
+                                                                                                                }
+                                                                                                                return false;
+                                                                                                            }).map((paragraph, index) => ({
+                                                                                                                id: `paragraph-${paragraph.id}`,
+                                                                                                                width: '100%',
+                                                                                                                padding: '0.5rem',
+                                                                                                                border: `1px solid ${colors.foreground4(paragraph.color)}`,
+                                                                                                                borderRadius: '0.5rem',
+                                                                                                                backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background(),
+                                                                                                                color: colors.foreground1(paragraph.color),
+                                                                                                                ...styles.unselectable(),
+                                                                                                                cursor: 'pointer',
+                                                                                                                ...handlers.hover({
+                                                                                                                    backgroundColor: colors.background3(paragraph.color),
+                                                                                                                }),
+                                                                                                                ...handlers.button(function (event) {
+                                                                                                                    stack.push({
+                                                                                                                        path: '#confirm',
+                                                                                                                        hidePrior: false,
+                                                                                                                        config: () => components.modal.closeBackground({
+                                                                                                                            child: components.modal.prompt({
+                                                                                                                                title: 'Attach Paragraph',
+                                                                                                                                description: 'Are you sure?',
+                                                                                                                                buttons: [
+                                                                                                                                    components.button.formPrimary({
+                                                                                                                                        color: 'blue',
+                                                                                                                                        text: 'Attach',
+                                                                                                                                        onclick: async function (event) {
+                                                                                                                                            let steps = 0;
+                                                                                                                                            for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                                                                if (stack.at(i).data.noteId) {
+                                                                                                                                                    break;
+                                                                                                                                                }
+                                                                                                                                                steps += 1;
+                                                                                                                                            }
+                                                                                                                                            await stack.pop(steps);
+                                                                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                                                noteIds: arrayUnion(noteId),
+                                                                                                                                            });
+                                                                                                                                        }
+                                                                                                                                    })
+                                                                                                                                ]
+                                                                                                                            })
+                                                                                                                        })
+                                                                                                                    });
+                                                                                                                }),
+                                                                                                                ...layouts.column('start', 'start', '1rem'),
+                                                                                                                children: [
+                                                                                                                    paragraph.text ? {
+                                                                                                                        width: '100%',
+                                                                                                                        whiteSpace: 'pre-wrap',
+                                                                                                                        wordBreak: 'break-word',
+                                                                                                                        text: paragraph.text
+                                                                                                                    } : null,
+                                                                                                                    paragraph.files ? {
+                                                                                                                        width: '100%',
+                                                                                                                        ...layouts.column('start', 'start', '0.5rem'),
+                                                                                                                        children: paragraph.files.map(f => ({
+                                                                                                                            width: '100%',
+                                                                                                                            padding: '0.5rem',
+                                                                                                                            borderRadius: '0.5rem',
+                                                                                                                            backgroundColor: colors.background3(paragraph.color || 'gray'),
+                                                                                                                            fontWeight: 600,
+                                                                                                                            color: colors.foreground2(paragraph.color),
+                                                                                                                            ...styles.unselectable(),
+                                                                                                                            whiteSpace: 'nowrap',
+                                                                                                                            overflow: 'hidden',
+                                                                                                                            textOverflow: 'ellipsis',
+                                                                                                                            text: f.name
+                                                                                                                        }))
+                                                                                                                    } : null,
+                                                                                                                    {
+                                                                                                                        width: '100%',
+                                                                                                                        ...layouts.row('space-between', 'center', '1rem'),
+                                                                                                                        children: [
+                                                                                                                            {
+                                                                                                                                fontSize: '0.875rem',
+                                                                                                                                color: colors.foreground3(paragraph.color),
+                                                                                                                                ...styles.unselectable(),
+                                                                                                                                text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                                                                            },
+                                                                                                                            {
+                                                                                                                                ...layouts.row(),
+                                                                                                                                children: null
+                                                                                                                            }
+                                                                                                                        ]
+                                                                                                                    }
+                                                                                                                ]
+                                                                                                            }))
+
+                                                                                                        });
+                                                                                                    }
+                                                                                                ]
+                                                                                            }
+                                                                                        ]
+                                                                                    };
+                                                                                }
+                                                                            };
+                                                                        }
+                                                                        stack.replace(attachParagraphFolder('root'));
                                                                     }
-                                                                    stack.replace(attachParagraphFolder('root'));
-                                                                }
-                                                            }),
-                                                        ]
+                                                                }),
+                                                            ]
+                                                        })
                                                     })
-                                                })
-                                            });
+                                                });
+                                            }
                                         }
                                     }),
                                     components.button.formPrimary({
                                         color: 'blue',
                                         text: 'Add',
                                         onclick: async function (event) {
+                                            filesUploadError = false;
+                                            this.layer.widgets['files-upload-error-hint'].update();
                                             addParagraphValid = true;
                                             if (!this.layer.widgets['add-paragraph-input'].domElement.value.trim()) {
                                                 addParagraphValid = false;
@@ -1742,16 +1791,105 @@ export const pages = {
                                             if (!addParagraphValid) {
                                                 return;
                                             }
-                                            addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                                timestamp: Math.floor(Date.now() / 1000),
-                                                noteIds: [noteId],
-                                                text: await encrypt(key, textEncoder.encode(this.layer.widgets['add-paragraph-input'].domElement.value)),
-                                            });
+                                            const text = this.layer.widgets['add-paragraph-input'].domElement.value;
                                             this.layer.widgets['add-paragraph-input'].domElement.value = '';
+                                            if (filesAttached) {
+                                                filesUpload = [];
+                                                for (const file of filesAttached) {
+                                                    filesUpload.push({
+                                                        id: crypto.randomUUID(),
+                                                        file,
+                                                        completed: 0
+                                                    });
+                                                }
+                                                filesAttached = undefined;
+                                                this.layer.widgets['files-attached'].update();
+                                                this.layer.widgets['attach_button'].update();
+                                                this.layer.widgets['files-upload'].update();
+                                                try {
+                                                    await Promise.all(filesUpload.map(fu => new Promise(async (resolve, reject) => {
+                                                        const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
+                                                        fu.iv = fileEncrypted.iv;
+                                                        const uploadTask = uploadBytesResumable(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`), fileEncrypted.data);
+                                                        uploadTask.on(
+                                                            "state_changed",
+                                                            (snapshot) => {
+                                                                fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                                                this.layer.widgets[`file-upload-${fu.id}`].update();
+                                                            },
+                                                            (error) => {
+                                                                reject(error);
+                                                            },
+                                                            async () => {
+                                                                resolve();
+                                                            }
+                                                        );
+                                                    })));
+                                                    const files = [];
+                                                    for (const fu of filesUpload) {
+                                                        const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
+                                                        files.push({
+                                                            id: fu.id,
+                                                            size: fu.file.size,
+                                                            type: fu.file.type,
+                                                            name: { iv: Bytes.fromUint8Array(fileNameEncrypted.iv), data: Bytes.fromUint8Array(fileNameEncrypted.data) },
+                                                            iv: Bytes.fromUint8Array(fu.iv),
+                                                        });
+                                                    }
+                                                    const textEncrypted = await encrypt(key, textEncoder.encode(text));
+                                                    addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
+                                                        timestamp: Math.floor(Date.now() / 1000),
+                                                        noteIds: [noteId],
+                                                        text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+                                                        files
+                                                    });
+                                                    filesUpload = undefined;
+                                                    this.layer.widgets['files-upload'].update();
+                                                } catch (error) {
+                                                    console.error(error);
+                                                    filesUploadError = true;
+                                                    this.layer.widgets['files-upload-error-hint'].update();
+                                                    this.layer.widgets['files-upload'].update();
+                                                }
+                                            } else {
+                                                const textEncrypted = await encrypt(key, textEncoder.encode(text));
+                                                addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
+                                                    timestamp: Math.floor(Date.now() / 1000),
+                                                    noteIds: [noteId],
+                                                    text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+                                                });
+                                            }
                                         }
                                     })
                                 ]
                             },
+                            () => ({
+                                id: 'files-upload-error-hint',
+                                width: '100%',
+                                display: filesUploadError ? 'flex' : 'none',
+                                color: colors.foreground1('red'),
+                                text: 'Files uploading failed. Try again.'
+                            }),
+                            () => ({
+                                id: 'files-upload',
+                                width: '100%',
+                                ...layouts.column('start', 'start', '0.5rem'),
+                                display: filesUpload && !filesUploadError ? 'flex' : 'none',
+                                children: filesUpload?.map(fu => () => ({
+                                    id: `file-upload-${fu.id}`,
+                                    width: '100%',
+                                    height: '1rem',
+                                    backgroundColor: colors.background2(),
+                                    ...layouts.row(),
+                                    children: [
+                                        {
+                                            width: `max(5%, ${fu.completed}%)`,
+                                            height: '100%',
+                                            backgroundColor: colors.background4()
+                                        }
+                                    ]
+                                }))
+                            }),
                             () => ({
                                 id: 'filter-paragraphs',
                                 width: '100%',
@@ -1802,6 +1940,11 @@ export const pages = {
                                         }
                                         if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
                                             return true;
+                                        }
+                                        for (const file of p.files || []) {
+                                            if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                return true;
+                                            }
                                         }
                                         return false;
                                     }).map((paragraph, index) => paragraph.id === editParagraphId ? {
@@ -1854,8 +1997,9 @@ export const pages = {
                                                             editParagraphId = undefined;
                                                             editParagraphValid = undefined;
                                                             editParagraphText = undefined;
+                                                            const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
                                                             updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                text: await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value)),
+                                                                text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                             });
                                                         }
                                                     })
@@ -1865,28 +2009,89 @@ export const pages = {
                                     } : {
                                         id: `paragraph-${paragraph.id}`,
                                         width: '100%',
+                                        padding: '0.5rem',
                                         border: `1px solid ${colors.foreground4(paragraph.color)}`,
                                         borderRadius: '0.5rem',
                                         backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background(),
                                         color: colors.foreground1(paragraph.color),
-                                        overflow: 'hidden',
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
                                             paragraph.text ? {
                                                 width: '100%',
-                                                padding: '0.5rem 0.5rem 0 0.5rem',
                                                 whiteSpace: 'pre-wrap',
                                                 wordBreak: 'break-word',
                                                 text: paragraph.text
                                             } : null,
-                                            paragraph.image ? {
-                                                tag: 'img',
+                                            paragraph.files ? {
                                                 width: '100%',
-                                                src: paragraph.image
+                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                children: paragraph.files.map(f => ({
+                                                    width: '100%',
+                                                    padding: '0.25rem 0.25rem 0.25rem 0.5rem',
+                                                    borderRadius: '0.5rem',
+                                                    backgroundColor: colors.background3(paragraph.color || 'gray'),
+                                                    ...layouts.row('space-between', 'center'),
+                                                    children: [
+                                                        {
+                                                            minWidth: 0,
+                                                            fontWeight: 600,
+                                                            color: colors.foreground2(paragraph.color),
+                                                            ...styles.unselectable(),
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            text: f.name
+                                                        },
+                                                        {
+                                                            ...layouts.row('start', 'center'),
+                                                            children: [
+                                                                f.type.startsWith('image') ? components.button.filled({
+                                                                    color: paragraph.color || 'gray',
+                                                                    child: components.icon({
+                                                                        color: colors.foreground2(paragraph.color),
+                                                                        ligature: 'image'
+                                                                    }),
+                                                                    onclick: function (event) {
+
+                                                                    }
+                                                                }) : null,
+                                                                f.type.startsWith('audio') ? components.button.filled({
+                                                                    color: paragraph.color || 'gray',
+                                                                    child: components.icon({
+                                                                        color: colors.foreground2(paragraph.color),
+                                                                        ligature: 'play_circle'
+                                                                    }),
+                                                                    onclick: function (event) {
+
+                                                                    }
+                                                                }) : null,
+                                                                f.type.startsWith('video') ? components.button.filled({
+                                                                    color: paragraph.color || 'gray',
+                                                                    child: components.icon({
+                                                                        color: colors.foreground2(paragraph.color),
+                                                                        ligature: 'play_circle'
+                                                                    }),
+                                                                    onclick: function (event) {
+
+                                                                    }
+                                                                }) : null,
+                                                                components.button.filled({
+                                                                    color: paragraph.color || 'gray',
+                                                                    child: components.icon({
+                                                                        color: colors.foreground2(paragraph.color),
+                                                                        ligature: 'download'
+                                                                    }),
+                                                                    onclick: function (event) {
+
+                                                                    }
+                                                                }),
+                                                            ]
+                                                        }
+                                                    ]
+                                                }))
                                             } : null,
                                             paragraph.noteIds.length > 1 ? {
                                                 width: '100%',
-                                                padding: '0 0.5rem 0 0.5rem',
                                                 ...layouts.column('start', 'start', '0.5rem'),
                                                 children: paragraph.noteIds.filter(nid => nid !== noteId).map(nid => components.button.textLink({
                                                     href: `/note/${nid}`,
@@ -1898,18 +2103,18 @@ export const pages = {
                                             } : null,
                                             {
                                                 width: '100%',
-                                                padding: '0 0.5rem 0.5rem 0.5rem',
                                                 ...layouts.row('space-between', 'center', '1rem'),
                                                 children: [
                                                     {
                                                         fontSize: '0.875rem',
                                                         color: colors.foreground3(paragraph.color),
+                                                        ...styles.unselectable(),
                                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                     },
                                                     {
                                                         ...layouts.row(),
                                                         children: [
-                                                            paragraph.text ? components.button.flat({
+                                                            components.button.flat({
                                                                 color: paragraph.color,
                                                                 child: components.icon({
                                                                     color: colors.foreground2(paragraph.color),
@@ -1918,8 +2123,8 @@ export const pages = {
                                                                 onclick: function (event) {
                                                                     navigator.clipboard.writeText(paragraph.text);
                                                                 }
-                                                            }) : null,
-                                                            paragraph.text ? components.button.flat({
+                                                            }),
+                                                            components.button.flat({
                                                                 color: paragraph.color,
                                                                 child: components.icon({
                                                                     color: colors.foreground2(paragraph.color),
@@ -1968,8 +2173,8 @@ export const pages = {
                                                                         })
                                                                     });
                                                                 }
-                                                            }) : null,
-                                                            paragraph.text ? components.button.flat({
+                                                            }),
+                                                            components.button.flat({
                                                                 color: paragraph.color,
                                                                 child: components.icon({
                                                                     color: colors.foreground2(paragraph.color),
@@ -1985,7 +2190,7 @@ export const pages = {
                                                                         this.layer.widgets['paragraphs'].update();
                                                                     }
                                                                 }
-                                                            }) : null,
+                                                            }),
                                                             components.button.flat({
                                                                 color: paragraph.color,
                                                                 child: components.icon({
