@@ -1,7 +1,7 @@
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
-import { getStorage, ref, listAll, getMetadata, getDownloadURL, uploadBytes, uploadBytesResumable } from "firebase/storage";
+import { getStorage, ref, listAll, getMetadata, getDownloadURL, getBytes, uploadBytes, uploadBytesResumable } from "firebase/storage";
 // import { getAnalytics } from "firebase/analytics";
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
 import { colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
@@ -1390,17 +1390,18 @@ export const pages = {
     },
     notePage(path = '', noteId) {
         const paragraphs = [];
+        let stopListenParagraphs;
         let limitParagraphs = true;
+        let filterParagraphQuery;
+        let upload;
+        let uploadError = false;
+        const downloads = {};
         let addParagraphValid = true;
         let filesAttached;
-        let filesUpload;
-        let filesUploadError = false;
         let editParagraphId;
         let editParagraphHeight;
         let editParagraphValid;
         let editParagraphText;
-        let filterParagraphQuery;
-        let stopListenParagraphs;
         return {
             path,
             meta: {
@@ -1426,6 +1427,7 @@ export const pages = {
                                     id: f.id,
                                     size: f.size,
                                     type: f.type,
+                                    lastModified: f.lastModified,
                                     name: textDecoder.decode(await decrypt(key, f.name.iv.toUint8Array(), f.name.data.toUint8Array())),
                                     iv: f.iv.toUint8Array()
                                 }))) : undefined
@@ -1534,7 +1536,7 @@ export const pages = {
                                                         child: components.modal.menu({
                                                             buttons: [
                                                                 components.buttons.menu({
-                                                                    disabled: filesUpload,
+                                                                    disabled: upload,
                                                                     text: 'Files',
                                                                     onclick: async function (event) {
                                                                         await stack.pop();
@@ -1600,6 +1602,7 @@ export const pages = {
                                                                                                             id: f.id,
                                                                                                             size: f.size,
                                                                                                             type: f.type,
+                                                                                                            lastModified: f.lastModified,
                                                                                                             name: textDecoder.decode(await decrypt(key, f.name.iv.toUint8Array(), f.name.data.toUint8Array())),
                                                                                                             iv: f.iv.toUint8Array()
                                                                                                         }))) : undefined
@@ -1629,7 +1632,7 @@ export const pages = {
                                                                                                         id: 'filter-paragraphs',
                                                                                                         width: '100%',
                                                                                                         padding: '0 0.25rem 0 0.5rem',
-                                                                                                        border: `1px solid ${colors.foreground4()}`,
+                                                                                                        border: `1px solid ${colors.foreground3()}`,
                                                                                                         borderRadius: '0.5rem',
                                                                                                         ...layouts.row('start', 'center'),
                                                                                                         children: [
@@ -1791,8 +1794,8 @@ export const pages = {
                                         palette: 'blue',
                                         text: 'Add',
                                         onclick: async function (event) {
-                                            filesUploadError = false;
-                                            this.layer.widgets['files-upload-error-hint'].update();
+                                            uploadError = false;
+                                            this.layer.widgets['upload-error-hint'].update();
                                             addParagraphValid = true;
                                             if (!this.layer.widgets['add-paragraph-input'].domElement.value.trim()) {
                                                 addParagraphValid = false;
@@ -1804,9 +1807,9 @@ export const pages = {
                                             const text = this.layer.widgets['add-paragraph-input'].domElement.value;
                                             this.layer.widgets['add-paragraph-input'].domElement.value = '';
                                             if (filesAttached) {
-                                                filesUpload = [];
+                                                upload = [];
                                                 for (const file of filesAttached) {
-                                                    filesUpload.push({
+                                                    upload.push({
                                                         id: crypto.randomUUID(),
                                                         file,
                                                         completed: 0
@@ -1815,12 +1818,18 @@ export const pages = {
                                                 filesAttached = undefined;
                                                 this.layer.widgets['files-attached'].update();
                                                 this.layer.widgets['attach_button'].update();
-                                                this.layer.widgets['files-upload'].update();
+                                                this.layer.widgets['upload'].update();
                                                 try {
-                                                    await Promise.all(filesUpload.map(fu => new Promise(async (resolve, reject) => {
+                                                    await Promise.all(upload.map(fu => new Promise(async (resolve, reject) => {
                                                         const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
                                                         fu.iv = fileEncrypted.iv;
-                                                        const uploadTask = uploadBytesResumable(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`), fileEncrypted.data);
+                                                        const uploadTask = uploadBytesResumable(
+                                                            ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`),
+                                                            fileEncrypted.data,
+                                                            {
+                                                                cacheControl: 'private, max-age=31536000, immutable'
+                                                            }
+                                                        );
                                                         uploadTask.on(
                                                             "state_changed",
                                                             (snapshot) => {
@@ -1836,12 +1845,13 @@ export const pages = {
                                                         );
                                                     })));
                                                     const files = [];
-                                                    for (const fu of filesUpload) {
+                                                    for (const fu of upload) {
                                                         const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
                                                         files.push({
                                                             id: fu.id,
                                                             size: fu.file.size,
                                                             type: fu.file.type,
+                                                            lastModified: fu.file.lastModified,
                                                             name: { iv: Bytes.fromUint8Array(fileNameEncrypted.iv), data: Bytes.fromUint8Array(fileNameEncrypted.data) },
                                                             iv: Bytes.fromUint8Array(fu.iv),
                                                         });
@@ -1853,13 +1863,13 @@ export const pages = {
                                                         text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                         files
                                                     });
-                                                    filesUpload = undefined;
-                                                    this.layer.widgets['files-upload'].update();
+                                                    upload = undefined;
+                                                    this.layer.widgets['upload'].update();
                                                 } catch (error) {
                                                     console.error(error);
-                                                    filesUploadError = true;
-                                                    this.layer.widgets['files-upload-error-hint'].update();
-                                                    this.layer.widgets['files-upload'].update();
+                                                    uploadError = true;
+                                                    this.layer.widgets['upload-error-hint'].update();
+                                                    this.layer.widgets['upload'].update();
                                                 }
                                             } else {
                                                 const textEncrypted = await encrypt(key, textEncoder.encode(text));
@@ -1874,18 +1884,18 @@ export const pages = {
                                 ]
                             },
                             () => ({
-                                id: 'files-upload-error-hint',
+                                id: 'upload-error-hint',
                                 width: '100%',
-                                display: filesUploadError ? 'flex' : 'none',
+                                display: uploadError ? 'flex' : 'none',
                                 color: colors.foreground1('red'),
                                 text: 'Files uploading failed. Try again.'
                             }),
                             () => ({
-                                id: 'files-upload',
+                                id: 'upload',
                                 width: '100%',
                                 ...layouts.column('start', 'start', '0.5rem'),
-                                display: filesUpload && !filesUploadError ? 'flex' : 'none',
-                                children: filesUpload?.map(fu => () => ({
+                                display: upload && !uploadError ? 'flex' : 'none',
+                                children: upload?.map(fu => () => ({
                                     id: `file-upload-${fu.id}`,
                                     width: '100%',
                                     height: '1rem',
@@ -1904,7 +1914,7 @@ export const pages = {
                                 id: 'filter-paragraphs',
                                 width: '100%',
                                 padding: '0 0.25rem 0 0.5rem',
-                                border: `1px solid ${colors.foreground4()}`,
+                                border: `1px solid ${colors.foreground3()}`,
                                 borderRadius: '0.5rem',
                                 ...layouts.row('start', 'center'),
                                 children: [
@@ -2021,7 +2031,7 @@ export const pages = {
                                         id: `paragraph-${paragraph.id}`,
                                         width: '100%',
                                         padding: '0.5rem',
-                                        border: `1px solid ${colors.foreground4(paragraph.color)}`,
+                                        border: `1px solid ${colors.foreground3(paragraph.color)}`,
                                         borderRadius: '0.5rem',
                                         backgroundColor: paragraph.color ? colors.background1(paragraph.color) : colors.background(),
                                         color: paragraph.color ? colors.foreground1(paragraph.color) : colors.foreground(),
@@ -2053,51 +2063,125 @@ export const pages = {
                                                             textOverflow: 'ellipsis',
                                                             text: f.name
                                                         },
-                                                        {
+                                                        () => ({
+                                                            id: `file-actions-${f.id}`,
                                                             ...layouts.row('start', 'center'),
                                                             children: [
-                                                                f.type.startsWith('image') ? components.button({
+                                                                !(f.id in downloads) ? components.button({
+                                                                    backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
+                                                                    child: components.icon({
+                                                                        color: colors.foreground1(paragraph.color),
+                                                                        ligature: 'cloud_download'
+                                                                    }),
+                                                                    onclick: async function (event) {
+                                                                        downloads[f.id] = null;
+                                                                        this.layer.widgets[`file-actions-${f.id}`].update();
+                                                                        const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
+                                                                        const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
+                                                                        downloads[f.id] = new File([fileDecrypted], f.name, {
+                                                                            type: f.type,
+                                                                            lastModified: f.lastModified,
+                                                                        });
+                                                                        this.layer.widgets[`file-actions-${f.id}`].update();
+                                                                    }
+                                                                }) : null,
+                                                                (f.id in downloads && downloads[f.id] === null) ? {
+                                                                    html: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>',
+                                                                    width: '2.25rem',
+                                                                    height: '2.25rem',
+                                                                    padding: '0.5rem',
+                                                                    fill: 'none',
+                                                                    stroke: colors.foreground1(paragraph.color),
+                                                                } : null,
+                                                                (f.id in downloads && downloads[f.id]?.type.startsWith('image')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
-
+                                                                        stack.push({
+                                                                            path: '#image',
+                                                                            config: {
+                                                                                tag: 'img',
+                                                                                width: '100%',
+                                                                                height: '100%',
+                                                                                objectFit: 'contain',
+                                                                                objectPosition: 'center',
+                                                                                src: URL.createObjectURL(downloads[f.id])
+                                                                            }
+                                                                        });
                                                                     }
                                                                 }) : null,
-                                                                f.type.startsWith('audio') ? components.button({
+                                                                (f.id in downloads && downloads[f.id]?.type.startsWith('audio')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
-
+                                                                        stack.push({
+                                                                            path: '#audio',
+                                                                            config: {
+                                                                                width: '100%',
+                                                                                height: '100%',
+                                                                                ...layouts.row('center', 'center'),
+                                                                                children: [
+                                                                                    {
+                                                                                        tag: 'audio',
+                                                                                        width: '100%',
+                                                                                        padding: '1rem',
+                                                                                        controls: true,
+                                                                                        src: URL.createObjectURL(downloads[f.id])
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        })
                                                                     }
                                                                 }) : null,
-                                                                f.type.startsWith('video') ? components.button({
+                                                                (f.id in downloads && downloads[f.id]?.type.startsWith('video')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
-
+                                                                        stack.push({
+                                                                            path: '#video',
+                                                                            config: {
+                                                                                width: '100%',
+                                                                                height: '100%',
+                                                                                ...layouts.row('center', 'center'),
+                                                                                children: [
+                                                                                    {
+                                                                                        tag: 'video',
+                                                                                        width: '100%',
+                                                                                        height: '100%',
+                                                                                        objectFit: 'contain',
+                                                                                        objectPosition: 'center',
+                                                                                        controls: true,
+                                                                                        src: URL.createObjectURL(downloads[f.id])
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        })
                                                                     }
                                                                 }) : null,
-                                                                components.button({
+                                                                (f.id in downloads && downloads[f.id]) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
-
+                                                                        const a = document.createElement('a');
+                                                                        a.href = URL.createObjectURL(downloads[f.id]);
+                                                                        a.download = downloads[f.id].name;
+                                                                        a.click();
                                                                     }
-                                                                }),
+                                                                }) : null,
                                                             ]
-                                                        }
+                                                        }),
                                                     ]
                                                 }))
                                             } : null,
