@@ -17,6 +17,8 @@ let notebook;
 let key;
 let tree;
 let stopListenNotebook;
+const uploads = {};
+const downloads = {};
 
 async function generateKey(keyphrase, salt) {
     const keyMaterial = await window.crypto.subtle.importKey(
@@ -958,7 +960,8 @@ export const pages = {
                                                                     config: () => components.modal.closeBackground({
                                                                         child: components.modal.prompt({
                                                                             title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
-                                                                            description: 'Are you sure?',
+                                                                            description: 'You won\'t be able to restore it.',
+                                                                            note: 'Consider moving it to an \'Archive\' folder instead — create one if you don’t have it yet.',
                                                                             buttons: [
                                                                                 components.buttons.formPrimary({
                                                                                     palette: 'red',
@@ -1120,6 +1123,7 @@ export const pages = {
                                                                             child: components.modal.prompt({
                                                                                 title: 'Delete account',
                                                                                 description: 'Are you sure?',
+                                                                                note: 'Your account and all it\'s data will be permanently deleted in 30 days. Contact support before then to stop the process.',
                                                                                 buttons: [
                                                                                     components.buttons.formPrimary({
                                                                                         palette: 'red',
@@ -1393,9 +1397,6 @@ export const pages = {
         let stopListenParagraphs;
         let limitParagraphs = true;
         let filterParagraphQuery;
-        let upload;
-        let uploadError = false;
-        const downloads = {};
         let addParagraphValid = true;
         let filesAttached;
         let editParagraphId;
@@ -1512,6 +1513,19 @@ export const pages = {
                                                         })
                                                     })
                                                 });
+                                            } else if (notebook.quotas?.storage?.used + sizeTotal > 10737418240) {
+                                                stack.push({
+                                                    path: '#invalid',
+                                                    hidePrior: false,
+                                                    config: () => components.modal.closeBackground({
+                                                        child: components.modal.prompt({
+                                                            palette: 'red',
+                                                            title: 'Invalid',
+                                                            description: '10 GB limit reached. Delete existing files to free up space.',
+                                                            note: 'Limit update could take up to 24 hours.'
+                                                        })
+                                                    })
+                                                });
                                             } else {
                                                 filesAttached = filesSelected;
                                                 this.layer.widgets['files-attached'].update();
@@ -1536,7 +1550,7 @@ export const pages = {
                                                         child: components.modal.menu({
                                                             buttons: [
                                                                 components.buttons.menu({
-                                                                    disabled: upload,
+                                                                    disabled: uploads[noteId],
                                                                     text: 'Files',
                                                                     onclick: async function (event) {
                                                                         await stack.pop();
@@ -1794,8 +1808,6 @@ export const pages = {
                                         palette: 'blue',
                                         text: 'Add',
                                         onclick: async function (event) {
-                                            uploadError = false;
-                                            this.layer.widgets['upload-error-hint'].update();
                                             addParagraphValid = true;
                                             if (!this.layer.widgets['add-paragraph-input'].domElement.value.trim()) {
                                                 addParagraphValid = false;
@@ -1807,9 +1819,9 @@ export const pages = {
                                             const text = this.layer.widgets['add-paragraph-input'].domElement.value;
                                             this.layer.widgets['add-paragraph-input'].domElement.value = '';
                                             if (filesAttached) {
-                                                upload = [];
+                                                uploads[noteId] = [];
                                                 for (const file of filesAttached) {
-                                                    upload.push({
+                                                    uploads[noteId].push({
                                                         id: crypto.randomUUID(),
                                                         file,
                                                         completed: 0
@@ -1818,9 +1830,11 @@ export const pages = {
                                                 filesAttached = undefined;
                                                 this.layer.widgets['files-attached'].update();
                                                 this.layer.widgets['attach_button'].update();
-                                                this.layer.widgets['upload'].update();
+                                                for (const layer of stack.filter(l => l.data.noteId === noteId)) {
+                                                    layer.widgets['uploads'].update();
+                                                }
                                                 try {
-                                                    await Promise.all(upload.map(fu => new Promise(async (resolve, reject) => {
+                                                    await Promise.all(uploads[noteId].map(fu => new Promise(async (resolve, reject) => {
                                                         const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
                                                         fu.iv = fileEncrypted.iv;
                                                         const uploadTask = uploadBytesResumable(
@@ -1834,7 +1848,9 @@ export const pages = {
                                                             "state_changed",
                                                             (snapshot) => {
                                                                 fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                                                this.layer.widgets[`file-upload-${fu.id}`].update();
+                                                                for (const layer of stack.filter(l => l.data.noteId === noteId)) {
+                                                                    layer.widgets[`file-upload-${fu.id}`].update();
+                                                                }
                                                             },
                                                             (error) => {
                                                                 reject(error);
@@ -1845,7 +1861,7 @@ export const pages = {
                                                         );
                                                     })));
                                                     const files = [];
-                                                    for (const fu of upload) {
+                                                    for (const fu of uploads[noteId]) {
                                                         const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
                                                         files.push({
                                                             id: fu.id,
@@ -1863,13 +1879,16 @@ export const pages = {
                                                         text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                         files
                                                     });
-                                                    upload = undefined;
-                                                    this.layer.widgets['upload'].update();
+                                                    uploads[noteId] = undefined;
+                                                    for (const layer of stack.filter(l => l.data.noteId === noteId)) {
+                                                        layer.widgets['uploads'].update();
+                                                    }
                                                 } catch (error) {
                                                     console.error(error);
-                                                    uploadError = true;
-                                                    this.layer.widgets['upload-error-hint'].update();
-                                                    this.layer.widgets['upload'].update();
+                                                    uploads[noteId] = undefined;
+                                                    for (const layer of stack.filter(l => l.data.noteId === noteId)) {
+                                                        layer.widgets['uploads'].update();
+                                                    }
                                                 }
                                             } else {
                                                 const textEncrypted = await encrypt(key, textEncoder.encode(text));
@@ -1884,18 +1903,11 @@ export const pages = {
                                 ]
                             },
                             () => ({
-                                id: 'upload-error-hint',
-                                width: '100%',
-                                display: uploadError ? 'flex' : 'none',
-                                color: colors.foreground1('red'),
-                                text: 'Files uploading failed. Try again.'
-                            }),
-                            () => ({
-                                id: 'upload',
+                                id: 'uploads',
                                 width: '100%',
                                 ...layouts.column('start', 'start', '0.5rem'),
-                                display: upload && !uploadError ? 'flex' : 'none',
-                                children: upload?.map(fu => () => ({
+                                display: uploads[noteId] ? 'flex' : 'none',
+                                children: uploads[noteId]?.map(fu => () => ({
                                     id: `file-upload-${fu.id}`,
                                     width: '100%',
                                     height: '1rem',
@@ -2067,25 +2079,42 @@ export const pages = {
                                                             id: `file-actions-${f.id}`,
                                                             ...layouts.row('start', 'center'),
                                                             children: [
-                                                                !(f.id in downloads) ? components.button({
+                                                                !downloads[f.id] ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'cloud_download'
                                                                     }),
                                                                     onclick: async function (event) {
-                                                                        downloads[f.id] = null;
-                                                                        this.layer.widgets[`file-actions-${f.id}`].update();
-                                                                        const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
-                                                                        const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
-                                                                        downloads[f.id] = new File([fileDecrypted], f.name, {
-                                                                            type: f.type,
-                                                                            lastModified: f.lastModified,
-                                                                        });
-                                                                        this.layer.widgets[`file-actions-${f.id}`].update();
+                                                                        downloads[f.id] = {
+                                                                            status: 'downloading'
+                                                                        };
+                                                                        for (const layer of stack) {
+                                                                            layer.widgets[`file-actions-${f.id}`]?.update();
+                                                                        }
+                                                                        try {
+                                                                            const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
+                                                                            const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
+                                                                            downloads[f.id] = {
+                                                                                status: 'ready',
+                                                                                file: new File([fileDecrypted], f.name, {
+                                                                                    type: f.type,
+                                                                                    lastModified: f.lastModified,
+                                                                                })
+                                                                            };
+                                                                            for (const layer of stack) {
+                                                                                layer.widgets[`file-actions-${f.id}`]?.update();
+                                                                            }
+                                                                        } catch (error) {
+                                                                            console.error(error);
+                                                                            downloads[f.id] = undefined;
+                                                                            for (const layer of stack) {
+                                                                                layer.widgets[`file-actions-${f.id}`]?.update();
+                                                                            }
+                                                                        }
                                                                     }
                                                                 }) : null,
-                                                                (f.id in downloads && downloads[f.id] === null) ? {
+                                                                downloads[f.id]?.status === 'downloading' ? {
                                                                     html: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>',
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
@@ -2093,35 +2122,43 @@ export const pages = {
                                                                     fill: 'none',
                                                                     stroke: colors.foreground1(paragraph.color),
                                                                 } : null,
-                                                                (f.id in downloads && downloads[f.id]?.type.startsWith('image')) ? components.button({
+                                                                (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
+                                                                        const url = URL.createObjectURL(downloads[f.id].file);
                                                                         stack.push({
                                                                             path: '#image',
+                                                                            onPop: function () {
+                                                                                URL.revokeObjectURL(url);
+                                                                            },
                                                                             config: {
                                                                                 tag: 'img',
                                                                                 width: '100%',
                                                                                 height: '100%',
                                                                                 objectFit: 'contain',
                                                                                 objectPosition: 'center',
-                                                                                src: URL.createObjectURL(downloads[f.id])
+                                                                                src: url
                                                                             }
                                                                         });
                                                                     }
                                                                 }) : null,
-                                                                (f.id in downloads && downloads[f.id]?.type.startsWith('audio')) ? components.button({
+                                                                (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
+                                                                        const url = URL.createObjectURL(downloads[f.id].file);
                                                                         stack.push({
                                                                             path: '#audio',
+                                                                            onPop: function () {
+                                                                                URL.revokeObjectURL(url);
+                                                                            },
                                                                             config: {
                                                                                 width: '100%',
                                                                                 height: '100%',
@@ -2130,24 +2167,27 @@ export const pages = {
                                                                                     {
                                                                                         tag: 'audio',
                                                                                         width: '100%',
-                                                                                        padding: '1rem',
                                                                                         controls: true,
-                                                                                        src: URL.createObjectURL(downloads[f.id])
+                                                                                        src: url
                                                                                     }
                                                                                 ]
                                                                             }
                                                                         })
                                                                     }
                                                                 }) : null,
-                                                                (f.id in downloads && downloads[f.id]?.type.startsWith('video')) ? components.button({
+                                                                (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
+                                                                        const url = URL.createObjectURL(downloads[f.id].file);
                                                                         stack.push({
                                                                             path: '#video',
+                                                                            onPop: function () {
+                                                                                URL.revokeObjectURL(url);
+                                                                            },
                                                                             config: {
                                                                                 width: '100%',
                                                                                 height: '100%',
@@ -2160,24 +2200,26 @@ export const pages = {
                                                                                         objectFit: 'contain',
                                                                                         objectPosition: 'center',
                                                                                         controls: true,
-                                                                                        src: URL.createObjectURL(downloads[f.id])
+                                                                                        src: url
                                                                                     }
                                                                                 ]
                                                                             }
                                                                         })
                                                                     }
                                                                 }) : null,
-                                                                (f.id in downloads && downloads[f.id]) ? components.button({
+                                                                downloads[f.id]?.status === 'ready' ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
                                                                     child: components.icon({
                                                                         color: colors.foreground1(paragraph.color),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
+                                                                        const url = URL.createObjectURL(downloads[f.id].file);
                                                                         const a = document.createElement('a');
-                                                                        a.href = URL.createObjectURL(downloads[f.id]);
-                                                                        a.download = downloads[f.id].name;
+                                                                        a.href = url;
+                                                                        a.download = downloads[f.id].file.name;
                                                                         a.click();
+                                                                        requestAnimationFrame(() => URL.revokeObjectURL(url));
                                                                     }
                                                                 }) : null,
                                                             ]
@@ -2307,9 +2349,13 @@ export const pages = {
                                                                                         text: 'Delete',
                                                                                         onclick: function (event) {
                                                                                             stack.pop();
-                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                noteIds: arrayRemove(noteId),
-                                                                                            });
+                                                                                            if (paragraph.noteIds.length > 1) {
+                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                    noteIds: arrayRemove(noteId),
+                                                                                                });
+                                                                                            } else {
+                                                                                                deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                            }
                                                                                         }
                                                                                     })
                                                                                 ]
