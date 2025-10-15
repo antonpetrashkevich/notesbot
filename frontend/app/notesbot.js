@@ -1413,7 +1413,7 @@ export const pages = {
                 noteId
             },
             onPush: function () {
-                stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('noteIds', 'array-contains', noteId), orderBy('timestamp', 'desc')),
+                stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', noteId), orderBy('timestamp', 'desc')),
                     async (querySnapshot) => {
                         paragraphs.length = 0;
                         for (const docSnap of querySnapshot.docs) {
@@ -1421,7 +1421,7 @@ export const pages = {
                             paragraphs.push({
                                 id: docSnap.id,
                                 timestamp: docData.timestamp,
-                                noteIds: docData.noteIds,
+                                notes: docData.notes,
                                 color: docData.color,
                                 text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
                                 files: docData.files ? await Promise.all(docData.files.map(async f => ({
@@ -1600,16 +1600,16 @@ export const pages = {
                                                                             return {
                                                                                 path: `#attach-${targetNoteId}`,
                                                                                 onPush: function () {
-                                                                                    stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('noteIds', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
+                                                                                    stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
                                                                                         async (querySnapshot) => {
                                                                                             paragraphs.length = 0;
                                                                                             for (const docSnap of querySnapshot.docs) {
                                                                                                 const docData = docSnap.data();
-                                                                                                if (!docData.noteIds.includes(noteId)) {
+                                                                                                if (!docData.notes.includes(noteId)) {
                                                                                                     paragraphs.push({
                                                                                                         id: docSnap.id,
                                                                                                         timestamp: docData.timestamp,
-                                                                                                        noteIds: docData.noteIds,
+                                                                                                        notes: docData.notes,
                                                                                                         color: docData.color,
                                                                                                         text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
                                                                                                         files: docData.files ? await Promise.all(docData.files.map(async f => ({
@@ -1732,7 +1732,7 @@ export const pages = {
                                                                                                                                             }
                                                                                                                                             await stack.pop(steps);
                                                                                                                                             updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                                                noteIds: arrayUnion(noteId),
+                                                                                                                                                notes: arrayUnion(noteId),
                                                                                                                                             });
                                                                                                                                         }
                                                                                                                                     })
@@ -1875,7 +1875,7 @@ export const pages = {
                                                     const textEncrypted = await encrypt(key, textEncoder.encode(text));
                                                     addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
                                                         timestamp: Math.floor(Date.now() / 1000),
-                                                        noteIds: [noteId],
+                                                        notes: [noteId],
                                                         text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                         files
                                                     });
@@ -1894,7 +1894,7 @@ export const pages = {
                                                 const textEncrypted = await encrypt(key, textEncoder.encode(text));
                                                 addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
                                                     timestamp: Math.floor(Date.now() / 1000),
-                                                    noteIds: [noteId],
+                                                    notes: [noteId],
                                                     text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                 });
                                             }
@@ -2227,10 +2227,10 @@ export const pages = {
                                                     ]
                                                 }))
                                             } : null,
-                                            paragraph.noteIds.length > 1 ? {
+                                            paragraph.notes.length > 1 ? {
                                                 width: '100%',
                                                 ...layouts.column('start', 'start', '0.5rem'),
-                                                children: paragraph.noteIds.filter(nid => nid !== noteId).map(nid => components.textLink({
+                                                children: paragraph.notes.filter(nid => nid !== noteId).map(nid => components.textLink({
                                                     href: `/note/${nid}`,
                                                     text: tree[nid].name,
                                                     onclick: function (event) {
@@ -2342,16 +2342,16 @@ export const pages = {
                                                                         config: () => components.modal.closeBackground({
                                                                             child: components.modal.prompt({
                                                                                 title: 'Delete',
-                                                                                description: paragraph.noteIds.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
+                                                                                description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
                                                                                 buttons: [
                                                                                     components.buttons.formPrimary({
                                                                                         palette: 'red',
                                                                                         text: 'Delete',
                                                                                         onclick: function (event) {
                                                                                             stack.pop();
-                                                                                            if (paragraph.noteIds.length > 1) {
+                                                                                            if (paragraph.notes.length > 1) {
                                                                                                 updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                    noteIds: arrayRemove(noteId),
+                                                                                                    notes: arrayRemove(noteId),
                                                                                                 });
                                                                                             } else {
                                                                                                 deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
