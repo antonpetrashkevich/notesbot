@@ -1,4 +1,4 @@
-import argon2 from 'argon2-browser/dist/argon2-bundled.min.js';
+import Argon2Worker from './workers/argon2.js?worker';
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDoc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
@@ -20,14 +20,7 @@ const firebaseConfig = {
     appId: "1:408712122661:web:30fa210ad4a3dc73ec4acc",
     measurementId: "G-85D3XP1ZM8"
 };
-const argon2Options = {
-    type: 'argon2id',
-    version: '19(1.3)',
-    time: 8,
-    mem: 512 * 1024,
-    hashLen: 32,
-    parallelism: 4,
-}
+
 
 const firebase = {};
 const textEncoder = new TextEncoder();
@@ -48,27 +41,6 @@ function randomString(length) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
-}
-
-/**
- * Computes Argon2id hash based on password and salt.
- *
- * @async
- * @param {string} password - Plaintext password.
- * @param {ArrayBuffer|Uint8Array} salt - Salt.
- * @returns {Promise<Uint8Array>} Hash.
- */
-async function passwordToHash(password, salt) {
-    const options = {
-        pass: password,
-        salt: salt,
-        time: argon2Options.time,
-        mem: argon2Options.mem,
-        hashLen: argon2Options.hashLen,
-        parallelism: argon2Options.parallelism,
-        type: argon2.ArgonType.Argon2id
-    };
-    return (await argon2.hash(options)).hash;
 }
 
 /**
@@ -457,6 +429,26 @@ export const pages = {
             }),
         };
     },
+    keyBuldingPage(path = '') {
+        return {
+            path,
+            meta: {
+                title: `Key Building | ${appName}`,
+                description: 'Building the encryption key.'
+            },
+            config: () => ({
+                width: '100%',
+                height: '100%',
+                padding: '1rem',
+                ...layouts.column('center', 'center'),
+                children: [
+                    {
+                        text: 'Building the encryption key... This may take over a minute on older devices.'
+                    },
+                ]
+            }),
+        };
+    },
     loginPage(path = '') {
         return {
             path,
@@ -613,7 +605,7 @@ export const pages = {
                                                 return;
                                             }
                                             const keyphrase = this.layer.widgets['keyphrase-input'].domElement.value;
-                                            stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
+                                            stack.replace(pages.keyBuldingPage('', { replaceOnTreeUpdate: true }));
                                             try {
                                                 const salt = Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(32)));
                                                 key = await hashToKey(await passwordToHash(keyphrase, salt.toUint8Array()));
@@ -713,26 +705,38 @@ export const pages = {
                                         palette: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
-                                            try {
-                                                key = await hashToKey(await passwordToHash(this.layer.widgets['keyphrase-input'].domElement.value, notebook.salt.toUint8Array()));
-                                                await decrypt(key, notebook.keytest.iv.toUint8Array(), notebook.keytest.data.toUint8Array());
-                                                await saveKeyToIDB('main', key);
-                                                tree = {};
-                                                for (const id in notebook.tree) {
-                                                    tree[id] = {
-                                                        type: notebook.tree[id].type,
-                                                        parent: notebook.tree[id].parent,
-                                                        order: notebook.tree[id].order,
-                                                        name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
-                                                    };
+                                            // stack.replace(pages.keyBuldingPage(''));
+                                            const worker = new Argon2Worker();
+                                            worker.onmessage = async (event) => {
+                                                if (event.data.success) {
+                                                    try {
+                                                        key = await hashToKey(event.data.hash);
+                                                        await decrypt(key, notebook.keytest.iv.toUint8Array(), notebook.keytest.data.toUint8Array());
+                                                        await saveKeyToIDB('main', key);
+                                                        tree = {};
+                                                        for (const id in notebook.tree) {
+                                                            tree[id] = {
+                                                                type: notebook.tree[id].type,
+                                                                parent: notebook.tree[id].parent,
+                                                                order: notebook.tree[id].order,
+                                                                name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
+                                                            };
+                                                        }
+                                                        stack.replace(pages.folderPage('/', 'root'));
+                                                    } catch (error) {
+                                                        keyphraseValid = false;
+                                                        this.layer.widgets['keyphrase-hint'].update();
+                                                        this.layer.widgets['keyphrase-input'].update();
+                                                    }
+                                                } else {
+                                                    console.error(event.data.error);
+                                                    stack.replace(pages.generalErrorPage());
                                                 }
-                                                stack.replace(pages.folderPage('/', 'root'));
-                                                return;
-                                            } catch (error) {
-                                                keyphraseValid = false;
-                                                this.layer.widgets['keyphrase-hint'].update();
-                                                this.layer.widgets['keyphrase-input'].update();
-                                            }
+                                            };
+                                            worker.postMessage({
+                                                password: this.layer.widgets['keyphrase-input'].domElement.value,
+                                                salt: notebook.salt.toUint8Array(),
+                                            });
                                         }
                                     })
                                 ]
