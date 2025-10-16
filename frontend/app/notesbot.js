@@ -1,7 +1,7 @@
 import argon2 from 'argon2-browser/dist/argon2-bundled.min.js';
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
-import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, getDoc, getDocs, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { getStorage, ref, listAll, getMetadata, getDownloadURL, getBytes, uploadBytes, uploadBytesResumable } from "firebase/storage";
 // import { getAnalytics } from "firebase/analytics";
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
@@ -10,6 +10,24 @@ import { colors as baseColors, styles as baseStyles, handlers as baseHandlers, l
 // https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined
 import materialFontUrl from './material_symbols_outlined_default.woff2';
 
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
+    authDomain: "notesbot-be271.firebaseapp.com",
+    projectId: "notesbot-be271",
+    storageBucket: "notesbot-be271.firebasestorage.app",
+    messagingSenderId: "408712122661",
+    appId: "1:408712122661:web:30fa210ad4a3dc73ec4acc",
+    measurementId: "G-85D3XP1ZM8"
+};
+const argon2Options = {
+    type: 'argon2id',
+    version: '19(1.3)',
+    time: 8,
+    mem: 512 * 1024,
+    hashLen: 32,
+    parallelism: 4,
+}
 
 const firebase = {};
 const textEncoder = new TextEncoder();
@@ -21,24 +39,50 @@ let stopListenNotebook;
 const uploads = {};
 const downloads = {};
 
-async function generateKey(keyphrase, salt) {
-    const keyMaterial = await window.crypto.subtle.importKey(
+
+function randomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+/**
+ * Computes Argon2id hash based on password and salt.
+ *
+ * @async
+ * @param {string} password - Plaintext password.
+ * @param {ArrayBuffer|Uint8Array} salt - Salt.
+ * @returns {Promise<Uint8Array>} Hash.
+ */
+async function passwordToHash(password, salt) {
+    const options = {
+        pass: password,
+        salt: salt,
+        time: argon2Options.time,
+        mem: argon2Options.mem,
+        hashLen: argon2Options.hashLen,
+        parallelism: argon2Options.parallelism,
+        type: argon2.ArgonType.Argon2id
+    };
+    return (await argon2.hash(options)).hash;
+}
+
+/**
+ * Imports raw key material (hash bytes) into a non-extractable AES-GCM CryptoKey (256-bit) usable for encryption and decryption.
+ *
+ * @param {ArrayBuffer|ArrayBufferView} hash - Raw key bytes to import (e.g., ArrayBuffer, Uint8Array, DataView).
+ * @returns {Promise<CryptoKey>} A promise that resolves to a non-extractable CryptoKey configured for AES-GCM with usages ['encrypt', 'decrypt'].
+ */
+async function hashToKey(hash) {
+    return await crypto.subtle.importKey(
         'raw',
-        textEncoder.encode(keyphrase),
-        { name: 'PBKDF2' },
-        false,
-        ['deriveKey']
-    );
-    return window.crypto.subtle.deriveKey(
-        {
-            name: 'PBKDF2',
-            salt: salt,
-            iterations: 2 ** 16,
-            hash: 'SHA-256',
-        },
-        keyMaterial,
+        hash,
         { name: 'AES-GCM', length: 256 },
-        true,
+        false,
         ['encrypt', 'decrypt']
     );
 }
@@ -84,36 +128,56 @@ async function decrypt(key, iv, data) {
     );
 }
 
-function randomString(length) {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
+function openIDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('db', 1);
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('keys')) {
+                db.createObjectStore('keys');
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
 }
 
-function generateTreeId() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    while (true) {
-        const id = randomString(8);
-        if (!tree.hasOwnProperty(id)) {
-            return id;
-        }
-    }
+async function loadKeyFromIDB(name) {
+    const db = await openIDB();
+    return await new Promise((resolve, reject) => {
+        const tx = db.transaction('keys', 'readonly');
+        const store = tx.objectStore('keys');
+        const req = store.get(name);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
 }
+
+async function saveKeyToIDB(name, data) {
+    const db = await openIDB();
+    return await new Promise((resolve, reject) => {
+        const tx = db.transaction('keys', 'readwrite');
+        const store = tx.objectStore('keys');
+        const req = store.put(data, name);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function removeAllKeysFromIDB() {
+    const db = await openIDB();
+    return await new Promise((resolve, reject) => {
+        const tx = db.transaction('keys', 'readwrite');
+        const store = tx.objectStore('keys');
+        const req = store.clear();
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+
 
 export async function init() {
-    const firebaseConfig = {
-        apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
-        authDomain: "notesbot-be271.firebaseapp.com",
-        projectId: "notesbot-be271",
-        storageBucket: "notesbot-be271.firebasestorage.app",
-        messagingSenderId: "408712122661",
-        appId: "1:408712122661:web:30fa210ad4a3dc73ec4acc",
-        measurementId: "G-85D3XP1ZM8"
-    };
     firebase.app = initializeFirebase(firebaseConfig);
     firebase.auth = getAuth(firebase.app);
     firebase.firestore = initializeFirestore(firebase.app, {
@@ -152,6 +216,7 @@ export async function init() {
     })
 
     stack.push(pages.loadingPage('', { replaceOnTreeUpdate: true }));
+    key = await loadKeyFromIDB('main');
     onAuthStateChanged(firebase.auth, async (user) => {
         if (user) {
             startListenNotebook();
@@ -160,7 +225,7 @@ export async function init() {
             notebook = undefined;
             key = undefined;
             tree = undefined;
-            window.localStorage.removeItem('keyphrase');
+            removeAllKeysFromIDB();
             await stack.pop(stack.length - 1);
             stack.replace(pages.loginPage('/'));
         }
@@ -175,17 +240,13 @@ function startListenNotebook() {
                 if (notebook.status === 'deleted') {
                     key = undefined;
                     tree = undefined;
-                    window.localStorage.removeItem('keyphrase');
+                    removeAllKeysFromIDB();
                     await stack.pop(stack.length - 1);
                     stack.replace(pages.notebookDeletedPage('/'));
-                } else if (!window.localStorage.getItem('keyphrase')) {
-                    key = undefined;
-                    tree = undefined;
-                    window.localStorage.removeItem('keyphrase');
+                } else if (!key) {
                     await stack.pop(stack.length - 1);
                     stack.replace(pages.keyphrasePage('/'));
-                } else if (notebook.status === 'active' && window.localStorage.getItem('keyphrase')) {
-                    key = await generateKey(window.localStorage.getItem('keyphrase'), notebook.salt.toUint8Array());
+                } else if (notebook.status === 'active' && key) {
                     tree = {};
                     for (const id in notebook.tree) {
                         tree[id] = {
@@ -214,7 +275,7 @@ function startListenNotebook() {
                 notebook = undefined;
                 key = undefined;
                 tree = undefined;
-                window.localStorage.removeItem('keyphrase');
+                removeAllKeysFromIDB();
                 await stack.pop(stack.length - 1);
                 stack.replace(pages.setupPage('/'));
             }
@@ -359,12 +420,19 @@ export const pages = {
                     {
                         text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
                     },
-                    components.buttons.formSecondary({
-                        text: 'Log out',
-                        onclick: function (event) {
-                            signOut(firebase.auth);
-                        }
-                    })
+                    {
+                        width: '100%',
+                        ...layouts.row('center'),
+                        children: [
+                            components.buttons.formSecondary({
+                                text: 'Log out',
+                                onclick: function (event) {
+                                    signOut(firebase.auth);
+                                }
+                            })
+                        ]
+                    }
+
                 ]
             }),
         };
@@ -453,7 +521,7 @@ export const pages = {
                                 text: 'Keyphrase'
                             },
                             {
-                                ...layouts.column('start', 'start', '0.5rem'),
+                                ...layouts.column('start', 'start', '1rem'),
                                 children: [
                                     {
                                         text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.'
@@ -464,6 +532,9 @@ export const pages = {
                                     {
                                         text: 'Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.'
                                     },
+                                    {
+                                        text: 'Passwords shorter than 20 characters may become crackable in 50 years.'
+                                    },
                                 ]
                             },
                             {
@@ -471,6 +542,7 @@ export const pages = {
                                 ...layouts.column('start', 'start', '1rem'),
                                 children: [
                                     {
+                                        width: '100%',
                                         ...layouts.column('start', 'start', '0.5rem'),
                                         children: [
                                             {
@@ -491,6 +563,7 @@ export const pages = {
                                         ]
                                     },
                                     {
+                                        width: '100%',
                                         ...layouts.column('start', 'start', '0.5rem'),
                                         children: [
                                             {
@@ -542,7 +615,9 @@ export const pages = {
                                             const keyphrase = this.layer.widgets['keyphrase-input'].domElement.value;
                                             stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
                                             try {
-                                                window.localStorage.setItem('keyphrase', keyphrase);
+                                                const salt = Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(32)));
+                                                key = await hashToKey(await passwordToHash(keyphrase, salt.toUint8Array()));
+                                                const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                 const txResult = await runTransaction(firebase.firestore, async (transaction) => {
                                                     const notebookDoc = await transaction.get(notebookDocRef);
@@ -550,9 +625,6 @@ export const pages = {
                                                         throw "Notebook already exists";
                                                     }
                                                     else {
-                                                        const salt = Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(16)));
-                                                        const key = await generateKey(keyphrase, salt.toUint8Array());
-                                                        const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
                                                         transaction.set(notebookDocRef, {
                                                             timestamp: serverTimestamp(),
                                                             status: 'active',
@@ -560,6 +632,7 @@ export const pages = {
                                                             keytest: { iv: Bytes.fromUint8Array(keytestEncrypted.iv), data: Bytes.fromUint8Array(keytestEncrypted.data) },
                                                             tree: {}
                                                         });
+                                                        await saveKeyToIDB('main', key);
                                                     }
                                                     return true;
                                                 });
@@ -641,9 +714,9 @@ export const pages = {
                                         text: 'Save',
                                         onclick: async function (event) {
                                             try {
-                                                key = await generateKey(this.layer.widgets['keyphrase-input'].domElement.value, notebook.salt.toUint8Array());
+                                                key = await hashToKey(await passwordToHash(this.layer.widgets['keyphrase-input'].domElement.value, notebook.salt.toUint8Array()));
                                                 await decrypt(key, notebook.keytest.iv.toUint8Array(), notebook.keytest.data.toUint8Array());
-                                                window.localStorage.setItem('keyphrase', this.layer.widgets['keyphrase-input'].domElement.value);
+                                                await saveKeyToIDB('main', key);
                                                 tree = {};
                                                 for (const id in notebook.tree) {
                                                     tree[id] = {
@@ -671,6 +744,15 @@ export const pages = {
         };
     },
     folderPage(path = '', folderId) {
+        function generateTreeId() {
+            while (true) {
+                const id = randomString(8);
+                if (!tree.hasOwnProperty(id)) {
+                    return id;
+                }
+            }
+        }
+
         return {
             path,
             meta: {
@@ -1331,7 +1413,7 @@ export const pages = {
                                                                                     ...layouts.row('end'),
                                                                                     children: [
                                                                                         components.buttons.formPrimary({
-                                                                                            color: 'blue',
+                                                                                            palette: 'blue',
                                                                                             text: 'Create',
                                                                                             onclick: async function (event) {
                                                                                                 nameValid = true;
