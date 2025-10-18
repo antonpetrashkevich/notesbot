@@ -5,7 +5,7 @@ import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collectio
 import { getStorage, ref, listAll, getMetadata, getDownloadURL, getBytes, uploadBytes, uploadBytesResumable } from "firebase/storage";
 // import { getAnalytics } from "firebase/analytics";
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
-import { colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
+import { colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/commons';
 // https://developers.google.com/fonts/docs/material_symbols
 // https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined
 import materialFontUrl from './material_symbols_outlined_default.woff2';
@@ -21,10 +21,10 @@ const firebaseConfig = {
     measurementId: "G-85D3XP1ZM8"
 };
 
-
 const firebase = {};
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
+
 let notebook;
 let key;
 let tree;
@@ -187,7 +187,7 @@ export async function init() {
         }
     })
 
-    stack.push(pages.loadingPage('', { replaceOnTreeUpdate: true }));
+    stack.push(pages.init());
     key = await loadKeyFromIDB('main');
     onAuthStateChanged(firebase.auth, async (user) => {
         if (user) {
@@ -199,25 +199,26 @@ export async function init() {
             tree = undefined;
             removeAllKeysFromIDB();
             await stack.pop(stack.length - 1);
-            stack.replace(pages.loginPage('/'));
+            stack.replace(pages.login('/'));
         }
     });
 }
 
 function startListenNotebook() {
     stopListenNotebook = onSnapshot(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid),
-        async (docSnap) => {
-            if (docSnap.exists()) {
-                notebook = docSnap.data();
+        async (documentSnapshot) => {
+            if (documentSnapshot.exists()) {
+                const snapshotStatus = notebook === undefined ? 'init' : 'update';
+                notebook = documentSnapshot.data();
                 if (notebook.status === 'deleted') {
                     key = undefined;
                     tree = undefined;
                     removeAllKeysFromIDB();
                     await stack.pop(stack.length - 1);
-                    stack.replace(pages.notebookDeletedPage('/'));
+                    stack.replace(pages.notebookDeleted('/'));
                 } else if (!key) {
                     await stack.pop(stack.length - 1);
-                    stack.replace(pages.keyphrasePage('/'));
+                    stack.replace(pages.keyphrase('/'));
                 } else if (notebook.status === 'active' && key) {
                     tree = {};
                     for (const id in notebook.tree) {
@@ -229,17 +230,24 @@ function startListenNotebook() {
                         };
                     }
                     for (const layer of stack) {
-                        layer.widgets['folder']?.update();
+                        if (layer.data.folderId) {
+                            layer.widgets['page'].update();
+                        }
                     }
-                    if (stack.top.data.replaceOnTreeUpdate) {
+                    for (const layer of stack) {
+                        if (layer.data.noteId) {
+                            layer.widgets['header'].update();
+                        }
+                    }
+                    if (snapshotStatus === 'init') {
                         const { segments, params, hash } = utils.pathCurrent();
                         if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
-                            stack.replace(pages.folderPage('', segments[1]));
+                            stack.replace(pages.folder('', segments[1]));
                         }
                         else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
-                            stack.replace(pages.notePage('', segments[1]));
+                            stack.replace(pages.note('', segments[1]));
                         } else {
-                            stack.replace({ path: '/', ...pages.folderPage('', 'root') });
+                            stack.replace({ path: '/', ...pages.folder('', 'root') });
                         }
                     }
                 }
@@ -249,7 +257,7 @@ function startListenNotebook() {
                 tree = undefined;
                 removeAllKeysFromIDB();
                 await stack.pop(stack.length - 1);
-                stack.replace(pages.setupPage('/'));
+                stack.replace(pages.setup('/'));
             }
         });
 }
@@ -371,12 +379,232 @@ export const components = {
                 ]
             },
         })
-    }
+    },
+    blockers: {
+        loading: ({ toggled, text } = {}) => components.blocker({
+            id: 'blocker-loading',
+            toggled,
+            child: {
+                width: '100%',
+                height: '100%',
+                padding: '1rem',
+                ...layouts.column('center', 'center', '2rem'),
+                children: [
+                    components.animations.spinner({
+                        width: '8vh',
+                        height: '8vh'
+                    }),
+                    text ? {
+                        text
+                    } : null
+                ]
+            }
+        }),
+        error: ({ error } = {}) => {
+            let text;
+            switch (error) {
+                case 'network':
+                    text = 'Network error. Check your connection and try again.';
+                case 'outofsync':
+                    text = 'Out of sync. Reload the page and try again.';
+                default:
+                    text = 'Something went wrong. Try reloading the page.';
+            }
+            return components.blocker({
+                id: 'blocker-error',
+                toggled: error,
+                child: {
+                    width: '100%',
+                    height: '100%',
+                    padding: '1rem',
+                    ...layouts.column('center', 'center'),
+                    text
+                }
+            });
+        }
+    },
+    header: ({ id, padding = '0.5rem', borderBottom, backgroundColor = colors.background1(), color, onclick, leading, title, trailing } = {}) => ({
+        id,
+        position: 'sticky',
+        top: 0,
+        left: 0,
+        zIndex: 10,
+        width: '100%',
+        minHeight: '3.25rem',
+        padding,
+        borderBottom,
+        backgroundColor,
+        ...styles.unselectable(),
+        cursor: onclick ? 'pointer' : undefined,
+        ...handlers.button(onclick),
+        ...layouts.row('space-between', 'center', '1rem'),
+        children: [
+            {
+                minWidth: 0,
+                ...layouts.row('start', 'center', '0.5rem'),
+                children: [
+                    leading,
+                    {
+                        fontSize: '1.25rem',
+                        fontWeight: 600,
+                        color,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        text: title
+                    }
+                ]
+            },
+            trailing
+        ]
+    })
 }
 
 export const pages = {
-    ...basePages,
-    notebookDeletedPage(path = '') {
+    init: (path = '', data = {}) => ({
+        path,
+        data,
+        meta: {
+            title: appName,
+        },
+        config: () => ({
+            width: '100%',
+            height: '100%',
+            padding: '1rem',
+            ...layouts.row('center', 'center'),
+            children: [components.animations.spinner({
+                width: '8vh',
+                height: '8vh',
+            })]
+        }),
+    }),
+    notFound: (path = '', data = {}) => ({
+        path,
+        data,
+        meta: {
+            title: `Page Not Found | ${appName}`,
+            description: 'Page Not Found (invalid URL).'
+        },
+        config: () => ({
+            width: '100%',
+            height: '100%',
+            padding: '1rem',
+            ...layouts.column('center', 'center'),
+            children: [
+                {
+                    text: 'Page Not Found (invalid URL).'
+                },
+            ]
+        }),
+    }),
+    // networkError: (path = '', data = {}) => ({
+    //     path,
+    //     data,
+    //     meta: {
+    //         title: `Network Error | ${appName}`,
+    //         description: 'Network error.'
+    //     },
+    //     config: () => ({
+    //         width: '100%',
+    //         height: '100%',
+    //         padding: '1rem',
+    //         ...layouts.column('center', 'center'),
+    //         children: [
+    //             {
+    //                 text: 'Network error. Check your connection and try again.'
+    //             },
+    //         ]
+    //     }),
+    // }),
+    // outOfSync(path = '') {
+    //     return {
+    //         path,
+    //         meta: {
+    //             title: `Out of Sync | ${appName}`,
+    //             description: 'Out of sync.'
+    //         },
+    //         config: () => ({
+    //             width: '100%',
+    //             height: '100%',
+    //             padding: '1rem',
+    //             ...layouts.column('center', 'center'),
+    //             children: [
+    //                 {
+    //                     text: 'Out of sync. Reload the page and try again.'
+    //                 },
+    //             ]
+    //         }),
+    //     };
+    // },
+    // generalError: (path = '', data = {}) => ({
+    //     path,
+    //     data,
+    //     meta: {
+    //         title: `Error | ${appName}`,
+    //         description: 'Something went wrong.'
+    //     },
+    //     config: () => ({
+    //         width: '100%',
+    //         height: '100%',
+    //         padding: '1rem',
+    //         ...layouts.column('center', 'center'),
+    //         children: [
+    //             {
+    //                 text: 'Something went wrong. Try reloading the page.'
+    //             }
+    //         ]
+    //     }),
+    // }),
+    login(path = '') {
+        let loggingIn = false;
+        return {
+            path,
+            meta: {
+                title: `Login | ${appName}`,
+                description: 'Login page.'
+            },
+            config: () => ({
+                id: 'page',
+                width: '100%',
+                height: '100%',
+                padding: '1rem',
+                ...layouts.column('center', 'center'),
+                children: [
+                    () => components.blockers.loading({
+                        toggled: loggingIn
+                    }),
+                    components.button({
+                        padding: '0.75rem',
+                        backgroundHoverColor: colors.background1(),
+                        onclick: function (event) {
+                            try {
+                                loggingIn = true;
+                                this.layer.widgets['blocker-loading'].update();
+                                signInWithPopup(firebase.auth, new GoogleAuthProvider());
+                            } catch (error) {
+                                loggingIn = false;
+                                this.layer.widgets['blocker-loading'].update();
+                            }
+                        },
+                        child: {
+                            ...layouts.row('center', 'center', '0.5rem'),
+                            children: [
+                                {
+                                    html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
+                                    width: '1.25rem',
+                                    height: '1.25rem',
+                                },
+                                {
+                                    text: 'Login with Google',
+                                }
+                            ]
+                        }
+                    }),
+                ]
+            }),
+        };
+    },
+    notebookDeleted(path = '') {
         return {
             path,
             meta: {
@@ -409,97 +637,33 @@ export const pages = {
             }),
         };
     },
-    notebookOutOfSyncPage(path = '') {
-        return {
-            path,
-            meta: {
-                title: `Notebook Out of Sync | ${appName}`,
-                description: 'Notebook out of sync.'
-            },
-            config: () => ({
-                width: '100%',
-                height: '100%',
-                padding: '1rem',
-                ...layouts.column('center', 'center'),
-                children: [
-                    {
-                        text: 'Notebook is out of sync. Reload the page and try again.'
-                    },
-                ]
-            }),
-        };
-    },
-    keyBuldingPage(path = '') {
-        return {
-            path,
-            meta: {
-                title: `Key Building | ${appName}`,
-                description: 'Building the encryption key.'
-            },
-            config: () => ({
-                width: '100%',
-                height: '100%',
-                padding: '1rem',
-                ...layouts.column('center', 'center'),
-                children: [
-                    {
-                        text: 'Building the encryption key... This may take over a minute on older devices.'
-                    },
-                ]
-            }),
-        };
-    },
-    loginPage(path = '') {
-        return {
-            path,
-            meta: {
-                title: `Login | ${appName}`,
-                description: 'Login page.'
-            },
-            config: () => ({
-                width: '100%',
-                height: '100%',
-                padding: '1rem',
-                ...layouts.column('center', 'center'),
-                children: [
-                    components.button({
-                        padding: '0.75rem',
-                        backgroundHoverColor: colors.background1(),
-                        onclick: function (event) {
-                            stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
-                            signInWithPopup(firebase.auth, new GoogleAuthProvider());
-                        },
-                        child: {
-                            ...layouts.row('center', 'center', '0.5rem'),
-                            children: [
-                                {
-                                    html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
-                                    width: '1.25rem',
-                                    height: '1.25rem',
-                                },
-                                {
-                                    text: 'Login with Google',
-                                }
-                            ]
-                        }
-                    }),
-                ]
-            }),
-        };
-    },
-    setupPage(path = '') {
+    setup(path = '') {
+        let error;
+        let keyBuilding = false;
         let keyphraseValid = true;
         let keyphraseRepeatValid = true;
+        let pageLayer;
         return {
             path,
             meta: {
                 title: `Setup | ${appName}`,
                 description: 'Setup page.'
             },
+            onPush: function () {
+                pageLayer = this;
+            },
             config: () => ({
+                id: 'page',
                 padding: '0.5rem 0',
                 ...layouts.base('center', 'center'),
                 children: [
+                    () => components.blockers.error({
+                        error
+                    }),
+                    () => components.blockers.loading({
+                        toggled: keyBuilding,
+                        text: 'Building the encryption key... This may take over a minute on older devices.'
+                    }),
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
@@ -548,7 +712,7 @@ export const pages = {
                                                 color: colors.foreground1('red'),
                                                 text: 'Required',
                                             }),
-                                            components.input.password({
+                                            components.inputs.password({
                                                 id: 'keyphrase-input',
                                                 maxlength: 64
                                             })
@@ -569,7 +733,7 @@ export const pages = {
                                                 color: colors.foreground1('red'),
                                                 text: 'Invalid',
                                             }),
-                                            components.input.password({
+                                            components.inputs.password({
                                                 id: 'keyphrase-repeat-input',
                                                 maxlength: 64
                                             })
@@ -604,38 +768,52 @@ export const pages = {
                                             if (!keyphraseValid || !keyphraseRepeatValid) {
                                                 return;
                                             }
-                                            const keyphrase = this.layer.widgets['keyphrase-input'].domElement.value;
-                                            stack.replace(pages.keyBuldingPage('', { replaceOnTreeUpdate: true }));
-                                            try {
-                                                const salt = Bytes.fromUint8Array(window.crypto.getRandomValues(new Uint8Array(32)));
-                                                key = await hashToKey(await passwordToHash(keyphrase, salt.toUint8Array()));
-                                                const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
-                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                const txResult = await runTransaction(firebase.firestore, async (transaction) => {
-                                                    const notebookDoc = await transaction.get(notebookDocRef);
-                                                    if (notebookDoc.exists()) {
-                                                        throw "Notebook already exists";
-                                                    }
-                                                    else {
-                                                        transaction.set(notebookDocRef, {
-                                                            timestamp: serverTimestamp(),
-                                                            status: 'active',
-                                                            salt,
-                                                            keytest: { iv: Bytes.fromUint8Array(keytestEncrypted.iv), data: Bytes.fromUint8Array(keytestEncrypted.data) },
-                                                            tree: {}
+                                            const salt = window.crypto.getRandomValues(new Uint8Array(32));
+                                            keyBuilding = true;
+                                            pageLayer.widgets['blocker-loading'].update();
+                                            const worker = new Argon2Worker();
+                                            worker.onmessage = async (event) => {
+                                                if (event.data.success) {
+                                                    try {
+                                                        key = await hashToKey(event.data.hash);
+                                                        const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
+                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                        await runTransaction(firebase.firestore, async (transaction) => {
+                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                            if (notebookDoc.exists()) {
+                                                                throw "Notebook already exists";
+                                                            }
+                                                            else {
+                                                                transaction.set(notebookDocRef, {
+                                                                    timestamp: serverTimestamp(),
+                                                                    status: 'active',
+                                                                    salt,
+                                                                    keytest: { iv: Bytes.fromUint8Array(keytestEncrypted.iv), data: Bytes.fromUint8Array(keytestEncrypted.data) },
+                                                                    tree: {}
+                                                                });
+                                                            }
                                                         });
                                                         await saveKeyToIDB('main', key);
+                                                    } catch (e) {
+                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                            error = 'network';
+                                                            pageLayer.widgets['blocker-error'].update();
+                                                        } else {
+                                                            console.error(error);
+                                                            error = true;
+                                                            pageLayer.widgets['blocker-error'].update();
+                                                        }
                                                     }
-                                                    return true;
-                                                });
-                                            } catch (error) {
-                                                if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                    stack.replace(pages.networkErrorPage());
                                                 } else {
-                                                    console.error(error);
-                                                    stack.replace(pages.generalErrorPage());
+                                                    console.error(event.data.error);
+                                                    error = true;
+                                                    pageLayer.widgets['blocker-error'].update();
                                                 }
-                                            }
+                                            };
+                                            worker.postMessage({
+                                                password: this.layer.widgets['keyphrase-input'].domElement.value,
+                                                salt: salt,
+                                            });
                                         }
                                     }),
                                 ]
@@ -646,18 +824,32 @@ export const pages = {
             }),
         };
     },
-    keyphrasePage(path = '') {
+    keyphrase(path = '') {
+        let error;
+        let keyBuilding = false;
         let keyphraseValid = true;
+        let pageLayer;
         return {
             path,
             meta: {
                 title: `Keyphrase | ${appName}`,
                 description: 'Keyphrase page.'
             },
+            onPush: function () {
+                pageLayer = this;
+            },
             config: () => ({
+                id: 'page',
                 padding: '0.5rem 0',
                 ...layouts.base('center', 'center'),
                 children: [
+                    () => components.blockers.error({
+                        error
+                    }),
+                    () => components.blockers.loading({
+                        toggled: keyBuilding,
+                        text: 'Building the encryption key... This may take over a minute on older devices.'
+                    }),
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
@@ -685,7 +877,7 @@ export const pages = {
                                         color: colors.foreground1('red'),
                                         text: 'Invalid'
                                     }),
-                                    components.input.password({
+                                    components.inputs.password({
                                         id: 'keyphrase-input',
                                         maxlength: 64
                                     }),
@@ -705,7 +897,8 @@ export const pages = {
                                         palette: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
-                                            // stack.replace(pages.keyBuldingPage(''));
+                                            keyBuilding = true;
+                                            pageLayer.widgets['blocker-loading'].update();
                                             const worker = new Argon2Worker();
                                             worker.onmessage = async (event) => {
                                                 if (event.data.success) {
@@ -722,15 +915,18 @@ export const pages = {
                                                                 name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
                                                             };
                                                         }
-                                                        stack.replace(pages.folderPage('/', 'root'));
-                                                    } catch (error) {
+                                                        if (stack.at(-1) === this.layer) {
+                                                            stack.replace(pages.folder('/', 'root'));
+                                                        }
+                                                    } catch (e) {
                                                         keyphraseValid = false;
-                                                        this.layer.widgets['keyphrase-hint'].update();
-                                                        this.layer.widgets['keyphrase-input'].update();
+                                                        keyBuilding = false;
+                                                        pageLayer.widgets['page'].update();
                                                     }
                                                 } else {
                                                     console.error(event.data.error);
-                                                    stack.replace(pages.generalErrorPage());
+                                                    error = true;
+                                                    pageLayer.widgets['blocker-error'].update();
                                                 }
                                             };
                                             worker.postMessage({
@@ -747,7 +943,7 @@ export const pages = {
             }),
         };
     },
-    folderPage(path = '', folderId) {
+    folder(path = '', folderId) {
         function generateTreeId() {
             while (true) {
                 const id = randomString(8);
@@ -757,6 +953,9 @@ export const pages = {
             }
         }
 
+        let error;
+        let treeUpdating = false;
+        let pageLayer;
         return {
             path,
             meta: {
@@ -766,13 +965,23 @@ export const pages = {
             data: {
                 folderId
             },
+            onPush: function () {
+                pageLayer = this;
+            },
             config: () => {
                 const children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
                 return {
-                    id: 'folder',
+                    id: 'page',
                     ...layouts.base('start', 'center'),
                     children: [
-                        components.header({
+                        () => components.blockers.error({
+                            error
+                        }),
+                        () => components.blockers.loading({
+                            toggled: treeUpdating
+                        }),
+                        () => components.header({
+                            id: 'header',
                             leading: folderId === 'root' ? null : components.button({
                                 backgroundHoverColor: colors.background2(),
                                 href: '/',
@@ -780,7 +989,7 @@ export const pages = {
                                     ligature: 'home'
                                 }),
                                 onclick: function (event) {
-                                    stack.push(pages.folderPage('/', 'root'));
+                                    stack.push(pages.folder('/', 'root'));
                                 }
                             }),
                             title: folderId === 'root' ? 'Home' : tree[folderId].name,
@@ -790,310 +999,324 @@ export const pages = {
                             width: 'min(640px, 100% - 1rem)',
                             padding: '1rem 0',
                             ...layouts.column('center', 'center', '1rem'),
-                            children: children.map(cid =>
-                                components.buttons.menu({
-                                    size: 'l',
-                                    text: tree[cid]['name'],
-                                    onclick: function (event) {
-                                        if (tree[cid].type === 'folder') {
-                                            stack.push(pages.folderPage(`/folder/${cid}`, cid));
-                                        } else if (tree[cid].type === 'note') {
-                                            stack.push(pages.notePage(`/note/${cid}`, cid));
-                                        }
-                                    },
-                                    oncontextmenu: function (event) {
-                                        const notebookTimestamp = notebook.timestamp.toMillis();
-                                        stack.push({
-                                            path: '#menu',
-                                            hidePrior: false,
-                                            config: () => components.modal.closeBackground({
-                                                child: components.modal.menu({
-                                                    buttons: [
-                                                        tree[cid].order > 0 ? components.buttons.menu({
-                                                            text: 'Move Up',
-                                                            onclick: async function (event) {
-                                                                await stack.pop();
-                                                                stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
-                                                                const neighborId = children[children.indexOf(cid) - 1];
-                                                                try {
-                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
-                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                            transaction.update(notebookDocRef, {
-                                                                                timestamp: serverTimestamp(),
-                                                                                [`tree.${cid}.order`]: increment(-1),
-                                                                                [`tree.${neighborId}.order`]: increment(1),
-                                                                            });
-                                                                            return true;
-                                                                        }
-                                                                        else {
-                                                                            stack.replace(pages.notebookOutOfSyncPage());
-                                                                            return false;
-                                                                        }
-                                                                    });
-                                                                } catch (error) {
-                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                        stack.replace(pages.networkErrorPage());
-                                                                    } else {
-                                                                        console.error(error);
-                                                                        stack.replace(pages.generalErrorPage());
+                            children: children.map(cid => components.buttons.menu({
+                                size: 'l',
+                                text: tree[cid]['name'],
+                                onclick: function (event) {
+                                    if (tree[cid].type === 'folder') {
+                                        stack.push(pages.folder(`/folder/${cid}`, cid));
+                                    } else if (tree[cid].type === 'note') {
+                                        stack.push(pages.note(`/note/${cid}`, cid));
+                                    }
+                                },
+                                oncontextmenu: function (event) {
+                                    const notebookTimestamp = notebook.timestamp.toMillis();
+                                    stack.push({
+                                        path: '#menu',
+                                        hidePrior: false,
+                                        config: () => components.modal.closeBackground({
+                                            child: components.modal.menu({
+                                                buttons: [
+                                                    tree[cid].order > 0 ? components.buttons.menu({
+                                                        text: 'Move Up',
+                                                        onclick: async function (event) {
+                                                            await stack.pop();
+                                                            treeUpdating = true;
+                                                            pageLayer.widgets['blocker-loading'].update();
+                                                            const neighborId = children[children.indexOf(cid) - 1];
+                                                            try {
+                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                        transaction.update(notebookDocRef, {
+                                                                            timestamp: serverTimestamp(),
+                                                                            [`tree.${cid}.order`]: increment(-1),
+                                                                            [`tree.${neighborId}.order`]: increment(1),
+                                                                        });
                                                                     }
-                                                                }
-                                                            }
-                                                        }) : null,
-                                                        tree[cid].order < children.length - 1 ? components.buttons.menu({
-                                                            text: 'Move Down',
-                                                            onclick: async function (event) {
-                                                                await stack.pop();
-                                                                stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
-                                                                const neighborId = children[children.indexOf(cid) + 1];
-                                                                try {
-                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
-                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                            transaction.update(notebookDocRef, {
-                                                                                timestamp: serverTimestamp(),
-                                                                                [`tree.${cid}.order`]: increment(1),
-                                                                                [`tree.${neighborId}.order`]: increment(-1),
-                                                                            });
-                                                                            return true;
-                                                                        }
-                                                                        else {
-                                                                            stack.replace(pages.notebookOutOfSyncPage());
-                                                                            return false;
-                                                                        }
-                                                                    });
-                                                                } catch (error) {
-                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                        stack.replace(pages.networkErrorPage());
-                                                                    } else {
-                                                                        console.error(error);
-                                                                        stack.replace(pages.generalErrorPage());
+                                                                    else {
+                                                                        error = 'outofsync';
+                                                                        pageLayer.widgets['blocker-error'].update();
                                                                     }
-                                                                }
-                                                            }
-                                                        }) : null,
-                                                        components.buttons.menu({
-                                                            text: 'Move to Folder',
-                                                            onclick: function (event) {
-                                                                function moveToFolderPage(targetFolderId) {
-                                                                    return {
-                                                                        path: `#moveto-${targetFolderId}`,
-                                                                        config: () => {
-                                                                            const children = Object.keys(tree).filter(id => tree[id].type === 'folder' && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                                                                            return {
-                                                                                ...layouts.base('start', 'center'),
-                                                                                children: [
-                                                                                    components.header({
-                                                                                        title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
-                                                                                        trailing: components.buttons.formPrimary({
-                                                                                            palette: 'blue',
-                                                                                            smallViewportGrow: false,
-                                                                                            text: 'Move',
-                                                                                            onclick: async function (event) {
-                                                                                                let steps = 0;
-                                                                                                for (let i = stack.length - 1; i > 0; i--) {
-                                                                                                    if (stack.at(i).data.folderId) {
-                                                                                                        break;
-                                                                                                    }
-                                                                                                    steps += 1;
-                                                                                                }
-                                                                                                await stack.pop(steps);
-                                                                                                stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
-                                                                                                try {
-                                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                            transaction.update(notebookDocRef, {
-                                                                                                                timestamp: serverTimestamp(),
-                                                                                                                [`tree.${cid}.parent`]: targetFolderId,
-                                                                                                                [`tree.${cid}.order`]: Object.keys(tree).filter(id => tree[id].parent === targetFolderId).length,
-                                                                                                            });
-                                                                                                            return true;
-                                                                                                        }
-                                                                                                        else {
-                                                                                                            stack.replace(pages.notebookOutOfSyncPage());
-                                                                                                            return false;
-                                                                                                        }
-                                                                                                    });
-                                                                                                } catch (error) {
-                                                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                                                        stack.replace(pages.networkErrorPage());
-                                                                                                    } else {
-                                                                                                        console.error(error);
-                                                                                                        stack.replace(pages.generalErrorPage());
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        })
-                                                                                    }),
-                                                                                    {
-                                                                                        flexGrow: 1,
-                                                                                        width: 'min(640px, 100% - 1rem)',
-                                                                                        padding: '1rem 0',
-                                                                                        ...layouts.column('center', 'center', '1rem'),
-                                                                                        children: children.map(cid => components.buttons.menu({
-                                                                                            size: 'l',
-                                                                                            text: tree[cid]['name'],
-                                                                                            onclick: function (event) {
-                                                                                                stack.push(moveToFolderPage(cid));
-                                                                                            },
-                                                                                        }))
-                                                                                    }
-                                                                                ]
-                                                                            };
-                                                                        }
-                                                                    };
-                                                                }
-                                                                stack.replace(moveToFolderPage('root'));
-                                                            }
-                                                        }),
-                                                        components.buttons.menu({
-                                                            text: 'Rename',
-                                                            onclick: async function (event) {
-                                                                let nameValid = true;
-                                                                stack.replace({
-                                                                    path: '#rename',
-                                                                    hidePrior: false,
-                                                                    config: () => components.modal.closeBackground({
-                                                                        child: {
-                                                                            ...styles.modal(),
-                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                            children: [
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.column('start', 'start', '0.5rem'),
-                                                                                    children: [{
-                                                                                        fontWeight: 600,
-                                                                                        text: 'New Name'
-                                                                                    },
-                                                                                    () => ({
-                                                                                        id: 'new-folder-name-hint',
-                                                                                        display: nameValid ? 'none' : 'block',
-                                                                                        fontWeight: 500,
-                                                                                        color: colors.foreground1('red'),
-                                                                                        text: 'Required'
-                                                                                    }),
-                                                                                    components.input.text({
-                                                                                        id: 'new-folder-name-input',
-                                                                                        maxlength: '64',
-                                                                                        value: tree[cid].name,
-                                                                                    })]
-                                                                                },
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.row('end'),
-                                                                                    children: [
-                                                                                        components.buttons.formPrimary({
-                                                                                            palette: 'blue',
-                                                                                            text: 'Rename',
-                                                                                            onclick: async function (event) {
-                                                                                                nameValid = true;
-                                                                                                if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                                                    nameValid = false;
-                                                                                                }
-                                                                                                this.layer.widgets['new-folder-name-hint'].update();
-                                                                                                if (!nameValid) {
-                                                                                                    return;
-                                                                                                }
-                                                                                                const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
-                                                                                                await stack.pop();
-                                                                                                stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
-                                                                                                try {
-                                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                            const nameEncrypted = await encrypt(key, textEncoder.encode(name));
-                                                                                                            transaction.update(notebookDocRef, {
-                                                                                                                timestamp: serverTimestamp(),
-                                                                                                                [`tree.${cid}.name`]: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) },
-                                                                                                            });
-                                                                                                            return true;
-                                                                                                        }
-                                                                                                        else {
-                                                                                                            stack.replace(pages.notebookOutOfSyncPage());
-                                                                                                            return false;
-                                                                                                        }
-                                                                                                    });
-                                                                                                } catch (error) {
-                                                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                                                        stack.replace(pages.networkErrorPage());
-                                                                                                    } else {
-                                                                                                        console.error(error);
-                                                                                                        stack.replace(pages.generalErrorPage());
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        })
-                                                                                    ]
-                                                                                },
-                                                                            ]
-                                                                        }
-                                                                    })
                                                                 });
+                                                                treeUpdating = false;
+                                                            } catch (e) {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                    error = 'network';
+                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                } else {
+                                                                    console.error(error);
+                                                                    error = true;
+                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                }
                                                             }
-                                                        }),
-                                                        components.buttons.menu({
-                                                            palette: 'red',
-                                                            text: 'Delete',
-                                                            onclick: async function (event) {
-                                                                stack.replace({
-                                                                    path: '#delete',
-                                                                    hidePrior: false,
-                                                                    config: () => components.modal.closeBackground({
-                                                                        child: components.modal.prompt({
-                                                                            title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
-                                                                            description: 'You won\'t be able to restore it.',
-                                                                            note: 'Consider moving it to an \'Archive\' folder instead — create one if you don’t have it yet.',
-                                                                            buttons: [
-                                                                                components.buttons.formPrimary({
-                                                                                    palette: 'red',
-                                                                                    text: 'Delete',
-                                                                                    onclick: async function (event) {
-                                                                                        await stack.pop();
-                                                                                        stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
-                                                                                        try {
-                                                                                            const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                            const txResult = await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                    transaction.update(notebookDocRef, {
-                                                                                                        timestamp: serverTimestamp(),
-                                                                                                        [`tree.${cid}.parent`]: 'deleted',
-                                                                                                    });
-                                                                                                    return true;
+                                                        }
+                                                    }) : null,
+                                                    tree[cid].order < children.length - 1 ? components.buttons.menu({
+                                                        text: 'Move Down',
+                                                        onclick: async function (event) {
+                                                            await stack.pop();
+                                                            treeUpdating = true;
+                                                            pageLayer.widgets['blocker-loading'].update();
+                                                            const neighborId = children[children.indexOf(cid) + 1];
+                                                            try {
+                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                        transaction.update(notebookDocRef, {
+                                                                            timestamp: serverTimestamp(),
+                                                                            [`tree.${cid}.order`]: increment(1),
+                                                                            [`tree.${neighborId}.order`]: increment(-1),
+                                                                        });
+                                                                    }
+                                                                    else {
+                                                                        error = 'outofsync';
+                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                    }
+                                                                });
+                                                                treeUpdating = false;
+                                                            } catch (e) {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                    error = 'network';
+                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                } else {
+                                                                    console.error(error);
+                                                                    error = true;
+                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                }
+                                                            }
+                                                        }
+                                                    }) : null,
+                                                    components.buttons.menu({
+                                                        text: 'Move to Folder',
+                                                        onclick: function (event) {
+                                                            function moveToFolderPage(targetFolderId) {
+                                                                return {
+                                                                    path: `#moveto-${targetFolderId}`,
+                                                                    config: () => {
+                                                                        const children = Object.keys(tree).filter(id => tree[id].type === 'folder' && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                        return {
+                                                                            ...layouts.base('start', 'center'),
+                                                                            children: [
+                                                                                components.header({
+                                                                                    title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
+                                                                                    trailing: components.buttons.formPrimary({
+                                                                                        palette: 'blue',
+                                                                                        smallViewportGrow: false,
+                                                                                        text: 'Move',
+                                                                                        onclick: async function (event) {
+                                                                                            let steps = 0;
+                                                                                            for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                if (stack.at(i).data.folderId) {
+                                                                                                    break;
                                                                                                 }
-                                                                                                else {
-                                                                                                    stack.replace(pages.notebookOutOfSyncPage());
-                                                                                                    return false;
+                                                                                                steps += 1;
+                                                                                            }
+                                                                                            await stack.pop(steps);
+                                                                                            treeUpdating = true;
+                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            try {
+                                                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                        transaction.update(notebookDocRef, {
+                                                                                                            timestamp: serverTimestamp(),
+                                                                                                            [`tree.${cid}.parent`]: targetFolderId,
+                                                                                                            [`tree.${cid}.order`]: Object.keys(tree).filter(id => tree[id].parent === targetFolderId).length,
+                                                                                                        });
+                                                                                                    }
+                                                                                                    else {
+                                                                                                        error = 'outofsync';
+                                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                                    }
+                                                                                                });
+                                                                                                treeUpdating = false;
+                                                                                            } catch (e) {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                    error = 'network';
+                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                } else {
+                                                                                                    console.error(error);
+                                                                                                    error = true;
+                                                                                                    pageLayer.widgets['blocker-error'].update();
                                                                                                 }
-                                                                                            });
-                                                                                        } catch (error) {
-                                                                                            if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                                                stack.replace(pages.networkErrorPage());
-                                                                                            } else {
-                                                                                                console.error(error);
-                                                                                                stack.replace(pages.generalErrorPage());
                                                                                             }
                                                                                         }
-                                                                                    }
-                                                                                })
+                                                                                    })
+                                                                                }),
+                                                                                {
+                                                                                    flexGrow: 1,
+                                                                                    width: 'min(640px, 100% - 1rem)',
+                                                                                    padding: '1rem 0',
+                                                                                    ...layouts.column('center', 'center', '1rem'),
+                                                                                    children: children.map(cid => components.buttons.menu({
+                                                                                        size: 'l',
+                                                                                        text: tree[cid]['name'],
+                                                                                        onclick: function (event) {
+                                                                                            stack.push(moveToFolderPage(cid));
+                                                                                        },
+                                                                                    }))
+                                                                                }
                                                                             ]
-                                                                        })
-                                                                    })
-                                                                });
+                                                                        };
+                                                                    }
+                                                                };
                                                             }
-                                                        }),
-                                                    ]
-                                                })
+                                                            stack.replace(moveToFolderPage('root'));
+                                                        }
+                                                    }),
+                                                    components.buttons.menu({
+                                                        text: 'Rename',
+                                                        onclick: async function (event) {
+                                                            let nameValid = true;
+                                                            stack.replace({
+                                                                path: '#rename',
+                                                                hidePrior: false,
+                                                                config: () => components.modal.closeBackground({
+                                                                    child: {
+                                                                        ...styles.modal(),
+                                                                        ...layouts.column('start', 'start', '1rem'),
+                                                                        children: [
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                                                children: [{
+                                                                                    fontWeight: 600,
+                                                                                    text: 'New Name'
+                                                                                },
+                                                                                () => ({
+                                                                                    id: 'new-folder-name-hint',
+                                                                                    display: nameValid ? 'none' : 'block',
+                                                                                    fontWeight: 500,
+                                                                                    color: colors.foreground1('red'),
+                                                                                    text: 'Required'
+                                                                                }),
+                                                                                components.inputs.text({
+                                                                                    id: 'new-folder-name-input',
+                                                                                    maxlength: '64',
+                                                                                    value: tree[cid].name,
+                                                                                })]
+                                                                            },
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.row('end'),
+                                                                                children: [
+                                                                                    components.buttons.formPrimary({
+                                                                                        palette: 'blue',
+                                                                                        text: 'Rename',
+                                                                                        onclick: async function (event) {
+                                                                                            nameValid = true;
+                                                                                            if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                                                nameValid = false;
+                                                                                            }
+                                                                                            this.layer.widgets['new-folder-name-hint'].update();
+                                                                                            if (!nameValid) {
+                                                                                                return;
+                                                                                            }
+                                                                                            const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
+                                                                                            await stack.pop();
+                                                                                            treeUpdating = true;
+                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            try {
+                                                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                        const nameEncrypted = await encrypt(key, textEncoder.encode(name));
+                                                                                                        transaction.update(notebookDocRef, {
+                                                                                                            timestamp: serverTimestamp(),
+                                                                                                            [`tree.${cid}.name`]: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) },
+                                                                                                        });
+                                                                                                    }
+                                                                                                    else {
+                                                                                                        error = 'outofsync';
+                                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                                    }
+                                                                                                });
+                                                                                                treeUpdating = false;
+                                                                                            } catch (e) {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                    error = 'network';
+                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                } else {
+                                                                                                    console.error(error);
+                                                                                                    error = true;
+                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    })
+                                                                                ]
+                                                                            },
+                                                                        ]
+                                                                    }
+                                                                })
+                                                            });
+                                                        }
+                                                    }),
+                                                    components.buttons.menu({
+                                                        palette: 'red',
+                                                        text: 'Delete',
+                                                        onclick: async function (event) {
+                                                            stack.replace({
+                                                                path: '#delete',
+                                                                hidePrior: false,
+                                                                config: () => components.modal.closeBackground({
+                                                                    child: components.modal.prompt({
+                                                                        title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
+                                                                        description: 'You won\'t be able to restore it.',
+                                                                        note: 'Consider moving it to an \'Archive\' folder instead — create one if you don’t have it yet.',
+                                                                        buttons: [
+                                                                            components.buttons.formPrimary({
+                                                                                palette: 'red',
+                                                                                text: 'Delete',
+                                                                                onclick: async function (event) {
+                                                                                    await stack.pop();
+                                                                                    treeUpdating = true;
+                                                                                    pageLayer.widgets['blocker-loading'].update();
+                                                                                    try {
+                                                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                        await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                            if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                transaction.update(notebookDocRef, {
+                                                                                                    timestamp: serverTimestamp(),
+                                                                                                    [`tree.${cid}.parent`]: 'deleted',
+                                                                                                });
+                                                                                            }
+                                                                                            else {
+                                                                                                error = 'outofsync';
+                                                                                                pageLayer.widgets['blocker-error'].update();
+                                                                                            }
+                                                                                        });
+                                                                                        treeUpdating = false;
+                                                                                    } catch (e) {
+                                                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                            error = 'network';
+                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                        } else {
+                                                                                            console.error(error);
+                                                                                            error = true;
+                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            })
+                                                                        ]
+                                                                    })
+                                                                })
+                                                            });
+                                                        }
+                                                    }),
+                                                ]
                                             })
-                                        });
-                                    }
-                                })
+                                        })
+                                    });
+                                }
+                            })
                             )
                         },
                         {
@@ -1136,7 +1359,7 @@ export const pages = {
                                                                                         fontWeight: 600,
                                                                                         text: 'Theme'
                                                                                     },
-                                                                                    components.input.radioButton({
+                                                                                    components.inputs.toggle({
                                                                                         id: 'theme-system',
                                                                                         value: window.localStorage.getItem('theme') === 'auto',
                                                                                         iconFalse: components.icon({
@@ -1155,7 +1378,7 @@ export const pages = {
                                                                                             }));
                                                                                         }
                                                                                     }),
-                                                                                    components.input.radioButton({
+                                                                                    components.inputs.toggle({
                                                                                         id: 'theme-light',
                                                                                         value: window.localStorage.getItem('theme') === 'light',
                                                                                         iconFalse: components.icon({
@@ -1174,7 +1397,7 @@ export const pages = {
                                                                                             }));
                                                                                         }
                                                                                     }),
-                                                                                    components.input.radioButton({
+                                                                                    components.inputs.toggle({
                                                                                         id: 'theme-dark',
                                                                                         value: window.localStorage.getItem('theme') === 'dark',
                                                                                         iconFalse: components.icon({
@@ -1217,29 +1440,32 @@ export const pages = {
                                                                                         text: 'Delete',
                                                                                         onclick: async function (event) {
                                                                                             await stack.pop();
-                                                                                            stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
+                                                                                            treeUpdating = true;
+                                                                                            pageLayer.widgets['blocker-loading'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                await runTransaction(firebase.firestore, async (transaction) => {
                                                                                                     const notebookDoc = await transaction.get(notebookDocRef);
                                                                                                     if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                                         transaction.update(notebookDocRef, {
                                                                                                             timestamp: serverTimestamp(),
                                                                                                             status: 'deleted',
                                                                                                         });
-                                                                                                        return true;
                                                                                                     }
                                                                                                     else {
-                                                                                                        stack.replace(pages.notebookOutOfSyncPage());
-                                                                                                        return false;
+                                                                                                        error = 'outofsync';
+                                                                                                        pageLayer.widgets['blocker-error'].update();
                                                                                                     }
                                                                                                 });
-                                                                                            } catch (error) {
-                                                                                                if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                                                    stack.replace(pages.networkErrorPage());
+                                                                                                treeUpdating = false;
+                                                                                            } catch (e) {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                    error = 'network';
+                                                                                                    pageLayer.widgets['blocker-error'].update();
                                                                                                 } else {
                                                                                                     console.error(error);
-                                                                                                    stack.replace(pages.generalErrorPage());
+                                                                                                    error = true;
+                                                                                                    pageLayer.widgets['blocker-error'].update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1319,7 +1545,7 @@ export const pages = {
                                                                                             color: colors.foreground1('red'),
                                                                                             text: 'Required'
                                                                                         }),
-                                                                                        components.input.text({
+                                                                                        components.inputs.text({
                                                                                             id: 'new-folder-name-input',
                                                                                             maxlength: '64'
                                                                                         }),
@@ -1343,10 +1569,11 @@ export const pages = {
                                                                                                 }
                                                                                                 const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
                                                                                                 await stack.pop();
-                                                                                                stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
+                                                                                                treeUpdating = true;
+                                                                                                pageLayer.widgets['blocker-loading'].update();
                                                                                                 try {
                                                                                                     const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                    await runTransaction(firebase.firestore, async (transaction) => {
                                                                                                         const notebookDoc = await transaction.get(notebookDocRef);
                                                                                                         if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                                             const nameEncrypted = await encrypt(key, textEncoder.encode(name));
@@ -1354,19 +1581,21 @@ export const pages = {
                                                                                                                 timestamp: serverTimestamp(),
                                                                                                                 [`tree.${generateTreeId()}`]: { type: 'folder', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
                                                                                                             });
-                                                                                                            return true;
                                                                                                         }
                                                                                                         else {
-                                                                                                            stack.replace(pages.notebookOutOfSyncPage());
-                                                                                                            return false;
+                                                                                                            error = 'outofsync';
+                                                                                                            pageLayer.widgets['blocker-error'].update();
                                                                                                         }
                                                                                                     });
-                                                                                                } catch (error) {
-                                                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                                                        stack.replace(pages.networkErrorPage());
+                                                                                                    treeUpdating = false;
+                                                                                                } catch (e) {
+                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                        error = 'network';
+                                                                                                        pageLayer.widgets['blocker-error'].update();
                                                                                                     } else {
                                                                                                         console.error(error);
-                                                                                                        stack.replace(pages.generalErrorPage());
+                                                                                                        error = true;
+                                                                                                        pageLayer.widgets['blocker-error'].update();
                                                                                                     }
                                                                                                 }
                                                                                             }
@@ -1406,7 +1635,7 @@ export const pages = {
                                                                                             color: colors.foreground1('red'),
                                                                                             text: 'Required'
                                                                                         }),
-                                                                                        components.input.text({
+                                                                                        components.inputs.text({
                                                                                             id: 'new-note-name-input',
                                                                                             maxlength: '64'
                                                                                         }),
@@ -1430,10 +1659,11 @@ export const pages = {
                                                                                                 }
                                                                                                 const name = this.layer.widgets['new-note-name-input'].domElement.value.trim();
                                                                                                 await stack.pop();
-                                                                                                stack.replace(pages.loadingPage('', { replaceOnTreeUpdate: true }));
+                                                                                                treeUpdating = true;
+                                                                                                pageLayer.widgets['blocker-loading'].update();
                                                                                                 try {
                                                                                                     const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    const txResult = await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                    await runTransaction(firebase.firestore, async (transaction) => {
                                                                                                         const notebookDoc = await transaction.get(notebookDocRef);
                                                                                                         if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                                             const nameEncrypted = await encrypt(key, textEncoder.encode(name));
@@ -1441,19 +1671,21 @@ export const pages = {
                                                                                                                 timestamp: serverTimestamp(),
                                                                                                                 [`tree.${generateTreeId()}`]: { type: 'note', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
                                                                                                             });
-                                                                                                            return true;
                                                                                                         }
                                                                                                         else {
-                                                                                                            stack.replace(pages.notebookOutOfSyncPage());
-                                                                                                            return false;
+                                                                                                            error = 'outofsync';
+                                                                                                            pageLayer.widgets['blocker-error'].update();
                                                                                                         }
                                                                                                     });
-                                                                                                } catch (error) {
-                                                                                                    if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-                                                                                                        stack.replace(pages.networkErrorPage());
+                                                                                                    treeUpdating = false;
+                                                                                                } catch (e) {
+                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                        error = 'network';
+                                                                                                        pageLayer.widgets['blocker-error'].update();
                                                                                                     } else {
                                                                                                         console.error(error);
-                                                                                                        stack.replace(pages.generalErrorPage());
+                                                                                                        error = true;
+                                                                                                        pageLayer.widgets['blocker-error'].update();
                                                                                                     }
                                                                                                 }
                                                                                             }
@@ -1479,7 +1711,8 @@ export const pages = {
             },
         };
     },
-    notePage(path = '', noteId) {
+    note(path = '', noteId) {
+        let error;
         const paragraphs = [];
         let stopListenParagraphs;
         let limitParagraphs = true;
@@ -1490,6 +1723,7 @@ export const pages = {
         let editParagraphHeight;
         let editParagraphValid;
         let editParagraphText;
+        let pageLayer;
         return {
             path,
             meta: {
@@ -1524,15 +1758,20 @@ export const pages = {
                         this.widgets['paragraphs'].update();
                     }
                 );
+                pageLayer = this;
             },
             onPop: function () {
                 stopListenParagraphs();
             },
             config: () => ({
-                id: 'note',
+                id: 'page',
                 ...layouts.base('start', 'center'),
                 children: [
-                    components.header({
+                    () => components.blockers.error({
+                        error
+                    }),
+                    () => components.header({
+                        id: 'header',
                         leading: components.button({
                             backgroundHoverColor: colors.background2(),
                             href: '/',
@@ -1540,7 +1779,7 @@ export const pages = {
                                 ligature: 'home'
                             }),
                             onclick: function (event) {
-                                stack.push(pages.folderPage('/', 'root'));
+                                stack.push(pages.folder('/', 'root'));
                             }
                         }),
                         title: tree[noteId].name
@@ -1557,7 +1796,7 @@ export const pages = {
                                 color: colors.foreground1('red'),
                                 text: 'Required'
                             }),
-                            components.input.textArea({
+                            components.inputs.textArea({
                                 id: 'add-paragraph-input',
                                 height: '16rem',
                             }),
@@ -1699,7 +1938,7 @@ export const pages = {
                                                                                                         notes: docData.notes,
                                                                                                         color: docData.color,
                                                                                                         text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
-                                                                                                        files: docData.files ? await Promise.all(docData.files.map(async f => ({
+                                                                                                        files: docData.files ? await Promise.all(docData.files.map(async (f) => ({
                                                                                                             id: f.id,
                                                                                                             size: f.size,
                                                                                                             type: f.type,
@@ -1871,7 +2110,6 @@ export const pages = {
                                                                                                                     }
                                                                                                                 ]
                                                                                                             }))
-
                                                                                                         });
                                                                                                     }
                                                                                                 ]
@@ -2079,7 +2317,7 @@ export const pages = {
                                                 color: colors.foreground1('red'),
                                                 text: 'Required'
                                             }),
-                                            components.input.textArea({
+                                            components.inputs.textArea({
                                                 id: 'edit-paragraph-input',
                                                 palette: paragraph.color,
                                                 width: '100%',
@@ -2202,7 +2440,7 @@ export const pages = {
                                                                     }
                                                                 }) : null,
                                                                 downloads[f.id]?.status === 'downloading' ? {
-                                                                    html: '<svg viewBox="0 0 100 100" stroke-width="10"><circle cx="50" cy="50" r="45" stroke-dasharray="270" stroke-dashoffset="90"> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="0.75s" repeatCount="indefinite"/></circle></svg>',
+                                                                    html: animations.spinner(),
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
                                                                     padding: '0.5rem',
@@ -2259,7 +2497,7 @@ export const pages = {
                                                                                     }
                                                                                 ]
                                                                             }
-                                                                        })
+                                                                        });
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
@@ -2291,7 +2529,7 @@ export const pages = {
                                                                                     }
                                                                                 ]
                                                                             }
-                                                                        })
+                                                                        });
                                                                     }
                                                                 }) : null,
                                                                 downloads[f.id]?.status === 'ready' ? components.button({
@@ -2321,7 +2559,7 @@ export const pages = {
                                                     href: `/note/${nid}`,
                                                     text: tree[nid].name,
                                                     onclick: function (event) {
-                                                        stack.push(pages.notePage(`/note/${nid}`, nid));
+                                                        stack.push(pages.note(`/note/${nid}`, nid));
                                                     }
                                                 }))
                                             } : null,
