@@ -28,10 +28,11 @@ const firebase = {};
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+let authInitialized = false;
+let notebookInitialized = false;
 let notebook;
 let key;
 let tree;
-let stopListenNotebook;
 const uploads = {};
 const downloads = {};
 
@@ -150,7 +151,33 @@ async function removeAllKeysFromIDB() {
     });
 }
 
+async function wipeCache() {
+    await removeAllKeysFromIDB();
+}
 
+function treeNodeExists(nodeId) {
+    let deleted = false;
+    while (nodeId !== 'root') {
+        if (!tree[nodeId] || tree[nodeId].parent === 'deleted') {
+            deleted = true;
+            break;
+        }
+        nodeId = tree[nodeId].parent;
+    }
+    return deleted;
+}
+
+function resolveCurrentPath() {
+    const { segments, params, hash } = utils.pathCurrent();
+    if (segments.length === 2 && segments[0] === 'folder' && treeNodeExists(segments[1])) {
+        stack.replace(pages.folder('', segments[1]));
+    }
+    else if (segments.length === 2 && segments[0] === 'note' && treeNodeExists(segments[1])) {
+        stack.replace(pages.note('', segments[1]));
+    } else {
+        stack.replace({ path: '/', ...pages.folder('', 'root') });
+    }
+}
 
 export async function init() {
     firebase.app = initializeFirebase(firebaseConfig);
@@ -196,64 +223,64 @@ export async function init() {
         if (user) {
             startListenNotebook();
         } else {
-            stopListenNotebook?.();
-            notebook = undefined;
-            key = undefined;
-            tree = undefined;
-            removeAllKeysFromIDB();
-            await stack.pop(stack.length - 1);
-            stack.replace(pages.login('/'));
+            if (authInitialized) {
+                await wipeCache();
+                window.location.reload();
+            }
+            else {
+                stack.replace(pages.login('/'));
+            }
         }
+        authInitialized = true;
     });
 }
 
 function startListenNotebook() {
-    stopListenNotebook = onSnapshot(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid),
+    onSnapshot(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid),
         async (documentSnapshot) => {
             if (documentSnapshot.exists()) {
-                const snapshotStatus = notebook === undefined ? 'init' : 'update';
                 notebook = documentSnapshot.data();
                 if (notebook.status === 'deleted') {
-                    key = undefined;
-                    tree = undefined;
-                    removeAllKeysFromIDB();
-                    await stack.pop(stack.length - 1);
-                    stack.replace(pages.notebookDeleted('/'));
+                    if (notebookInitialized) {
+                        await wipeCache();
+                        window.location.reload();
+                    }
+                    else {
+                        stack.replace(pages.notebookDeleted('/'));
+                    }
                 } else if (!key) {
-                    await stack.pop(stack.length - 1);
                     stack.replace(pages.keyphrase('/'));
                 } else if (notebook.status === 'active' && key) {
-                    tree = {};
-                    for (const id in notebook.tree) {
-                        tree[id] = {
-                            type: notebook.tree[id].type,
-                            parent: notebook.tree[id].parent,
-                            order: notebook.tree[id].order,
-                            name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
-                        };
-                    }
-                    stack.updateAll({
-                        type: 'tree'
-                    });
-                    if (snapshotStatus === 'init') {
-                        const { segments, params, hash } = utils.pathCurrent();
-                        if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
-                            stack.replace(pages.folder('', segments[1]));
+                    try {
+                        tree = {};
+                        for (const id in notebook.tree) {
+                            tree[id] = {
+                                type: notebook.tree[id].type,
+                                parent: notebook.tree[id].parent,
+                                order: notebook.tree[id].order,
+                                name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
+                            };
                         }
-                        else if (segments.length === 2 && segments[0] === 'note' && tree[segments[1]]) {
-                            stack.replace(pages.note('', segments[1]));
-                        } else {
-                            stack.replace({ path: '/', ...pages.folder('', 'root') });
+                        stack.updateAll({
+                            type: 'tree'
+                        });
+                        if (!notebookInitialized) {
+                            resolveCurrentPath();
+                            notebookInitialized = true;
                         }
+                    } catch (e) {
+                        await wipeCache();
+                        window.location.reload();
                     }
                 }
             } else {
-                notebook = undefined;
-                key = undefined;
-                tree = undefined;
-                removeAllKeysFromIDB();
-                await stack.pop(stack.length - 1);
-                stack.replace(pages.setup('/'));
+                if (notebookInitialized) {
+                    await wipeCache();
+                    window.location.reload();
+                }
+                else {
+                    stack.replace(pages.setup('/'));
+                }
             }
         });
 }
@@ -715,6 +742,7 @@ export const pages = {
                                                 if (event.data.success) {
                                                     try {
                                                         key = await hashToKey(event.data.hash);
+                                                        await saveKeyToIDB('main', key);
                                                         const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                         await runTransaction(firebase.firestore, async (transaction) => {
@@ -732,7 +760,6 @@ export const pages = {
                                                                 });
                                                             }
                                                         });
-                                                        await saveKeyToIDB('main', key);
                                                     } catch (e) {
                                                         if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                             error = 'network';
@@ -854,8 +881,9 @@ export const pages = {
                                                                 name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
                                                             };
                                                         }
-                                                        if (stack.at(-1) === this.layer) {
-                                                            stack.replace(pages.folder('/', 'root'));
+                                                        if (stack.at(-1) === pageLayer) {
+                                                            resolveCurrentPath();
+                                                            notebookInitialized = true;
                                                         }
                                                     } catch (e) {
                                                         keyphraseValid = false;
@@ -907,16 +935,7 @@ export const pages = {
             },
             update: function (message) {
                 if (message.type === 'tree') {
-                    let deleted = false;
-                    let id = folderId;
-                    while (id !== 'root') {
-                        if (!tree[id] || tree[id].parent === 'deleted') {
-                            deleted = true;
-                            break;
-                        }
-                        id = tree[id].parent;
-                    }
-                    if (deleted) {
+                    if (!treeNodeExists(folderId)) {
                         error = 'outofsync';
                         this.widgets['blocker-error'].update();
                     } else {
@@ -1723,16 +1742,7 @@ export const pages = {
             },
             update: function (message) {
                 if (message.type === 'tree') {
-                    let deleted = false;
-                    let id = noteId;
-                    while (id !== 'root') {
-                        if (!tree[id] || tree[id].parent === 'deleted') {
-                            deleted = true;
-                            break;
-                        }
-                        id = tree[id].parent;
-                    }
-                    if (deleted) {
+                    if (!treeNodeExists(noteId)) {
                         error = 'outofsync';
                         this.widgets['blocker-error'].update();
                     }
