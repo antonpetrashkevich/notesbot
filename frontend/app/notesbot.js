@@ -232,11 +232,9 @@ function startListenNotebook() {
                             name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
                         };
                     }
-                    for (const layer of stack) {
-                        layer.update?.({
-                            type: 'tree'
-                        });
-                    }
+                    stack.updateAll({
+                        type: 'tree'
+                    });
                     if (snapshotStatus === 'init') {
                         const { segments, params, hash } = utils.pathCurrent();
                         if (segments.length === 2 && segments[0] === 'folder' && tree[segments[1]]) {
@@ -2141,12 +2139,10 @@ export const pages = {
                                                 filesAttached = undefined;
                                                 this.layer.widgets['files-attached'].update();
                                                 this.layer.widgets['attach_button'].update();
-                                                for (const layer of stack) {
-                                                    layer.update?.({
-                                                        type: 'upload',
-                                                        noteId
-                                                    });
-                                                }
+                                                stack.updateAll({
+                                                    type: 'upload',
+                                                    noteId
+                                                });
                                                 try {
                                                     await Promise.all(uploads[noteId].map(fu => new Promise(async (resolve, reject) => {
                                                         const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
@@ -2162,12 +2158,10 @@ export const pages = {
                                                             "state_changed",
                                                             (snapshot) => {
                                                                 fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                                                for (const layer of stack) {
-                                                                    layer.update?.({
-                                                                        type: 'upload',
-                                                                        noteId
-                                                                    });
-                                                                }
+                                                                stack.updateAll({
+                                                                    type: 'upload',
+                                                                    noteId
+                                                                });
                                                             },
                                                             (error) => {
                                                                 reject(error);
@@ -2197,21 +2191,17 @@ export const pages = {
                                                         files
                                                     });
                                                     uploads[noteId] = undefined;
-                                                    for (const layer of stack) {
-                                                        layer.update?.({
-                                                            type: 'upload',
-                                                            noteId
-                                                        });
-                                                    }
+                                                    stack.updateAll({
+                                                        type: 'upload',
+                                                        noteId
+                                                    });
                                                 } catch (e) {
                                                     console.error(e);
                                                     uploads[noteId] = undefined;
-                                                    for (const layer of stack) {
-                                                        layer.update?.({
-                                                            type: 'upload',
-                                                            noteId
-                                                        });
-                                                    }
+                                                    stack.updateAll({
+                                                        type: 'upload',
+                                                        noteId
+                                                    });
                                                 }
                                             } else {
                                                 const textEncrypted = await encrypt(key, textEncoder.encode(text));
@@ -2412,12 +2402,10 @@ export const pages = {
                                                                         downloads[f.id] = {
                                                                             status: 'downloading'
                                                                         };
-                                                                        for (const layer of stack) {
-                                                                            layer.update?.({
-                                                                                type: 'download',
-                                                                                fileId: f.id
-                                                                            });
-                                                                        }
+                                                                        stack.updateAll({
+                                                                            type: 'download',
+                                                                            fileId: f.id
+                                                                        });
                                                                         try {
                                                                             const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
                                                                             const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
@@ -2428,21 +2416,17 @@ export const pages = {
                                                                                     lastModified: f.lastModified,
                                                                                 })
                                                                             };
-                                                                            for (const layer of stack) {
-                                                                                layer.update?.({
-                                                                                    type: 'download',
-                                                                                    fileId: f.id
-                                                                                });
-                                                                            }
+                                                                            stack.updateAll({
+                                                                                type: 'download',
+                                                                                fileId: f.id
+                                                                            });
                                                                         } catch (e) {
                                                                             console.error(e);
                                                                             downloads[f.id] = undefined;
-                                                                            for (const layer of stack) {
-                                                                                layer.update?.({
-                                                                                    type: 'download',
-                                                                                    fileId: f.id
-                                                                                });
-                                                                            }
+                                                                            stack.updateAll({
+                                                                                type: 'download',
+                                                                                fileId: f.id
+                                                                            });
                                                                         }
                                                                     }
                                                                 }) : null,
