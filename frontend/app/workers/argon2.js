@@ -31,7 +31,7 @@ async function passwordToHash(password, salt) {
 }
 
 self.onmessage = async (event) => {
-    const { password, salt, options } = event.data;
+    const { password, salt } = event.data;
     try {
         self.postMessage({ success: true, hash: await passwordToHash(password, salt) });
     } catch (error) {
