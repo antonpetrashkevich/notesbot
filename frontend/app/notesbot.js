@@ -164,7 +164,7 @@ function treeNodeExists(nodeId) {
         }
         nodeId = tree[nodeId].parent;
     }
-    return deleted;
+    return !deleted;
 }
 
 function resolveCurrentPath() {
