@@ -2024,7 +2024,7 @@ export const pages = {
                                                                                                                 border: `1px solid ${colors.foreground3(paragraph.color)}`,
                                                                                                                 borderRadius: '0.5rem',
                                                                                                                 backgroundColor: paragraph.color ? colors.background1(paragraph.color) : colors.background(),
-                                                                                                                color: colors.foreground1(paragraph.color),
+                                                                                                                color: paragraph.color ? colors.foreground1(paragraph.color) : colors.foreground(),
                                                                                                                 ...styles.unselectable(),
                                                                                                                 cursor: 'pointer',
                                                                                                                 ...handlers.hover({
