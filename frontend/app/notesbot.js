@@ -303,7 +303,7 @@ export const handlers = {
 
 export const components = {
     ...baseComponents,
-    icon: ({ id, fontSize = '1.25rem', color = colors.foreground1(), ligature } = {}) => ({
+    icon: ({ id, fontSize = '1.25rem', color = colors.foreground(2), ligature } = {}) => ({
         id,
         fontFamily: 'material',
         fontSize,
@@ -316,15 +316,15 @@ export const components = {
         text: ligature
     }),
     buttons: {
-        formPrimary: ({ id, palette, smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button({
+        formPrimary: ({ id, palette = 'blue', smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button({
             id,
             minWidth: '6rem',
             height: '2.5rem',
             flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
             flexBasis: smallViewportGrow && smallViewport ? 0 : undefined,
             padding: '0 0.75rem',
-            backgroundColor: darkMode ? colors.foreground2(palette) : colors.foreground1(palette),
-            backgroundHoverColor: darkMode ? colors.foreground3(palette) : colors.foreground2(palette),
+            backgroundColor: colors.raw[palette](600),
+            backgroundHoverColor: colors.raw[palette](700),
             disabled,
             href,
             onclick,
@@ -351,8 +351,8 @@ export const components = {
             flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
             flexBasis: smallViewportGrow && smallViewport ? 0 : undefined,
             padding: '0 0.75rem',
-            backgroundColor: colors.background2(),
-            backgroundHoverColor: colors.background3(),
+            backgroundColor: colors.background(2),
+            backgroundHoverColor: colors.background(3),
             disabled,
             href,
             onclick,
@@ -364,7 +364,7 @@ export const components = {
                     }) : null,
                     text ? {
                         fontWeight: 600,
-                        color: colors.foreground1(),
+                        color: colors.foreground(2),
                         whiteSpace: 'nowrap',
                         text
                     } : null
@@ -376,7 +376,7 @@ export const components = {
             width: '100%',
             padding: size === 's' ? '0.25rem' : size === 'm' ? '0.5rem' : '0.75rem',
             borderRadius,
-            backgroundHoverColor: colors.background1(palette),
+            backgroundHoverColor: palette ? colors.backgroundColored(palette) : colors.background(2),
             disabled,
             href,
             onclick,
@@ -387,13 +387,13 @@ export const components = {
                 children: [
                     ligature ? components.icon({
                         fontSize: size === 's' ? '1rem' : size === 'm' ? '1.25rem' : '1.5rem',
-                        color: palette ? colors.foreground1(palette) : colors.foreground(),
+                        color: palette ? colors.foregroundColored(palette) : colors.foreground(),
                         ligature
                     }) : null,
                     text ? {
                         minWidth: wrap ? undefined : 0,
                         fontSize: size === 's' ? '0.875rem' : size === 'm' ? '1rem' : '1.125rem',
-                        color: palette ? colors.foreground1(palette) : colors.foreground(),
+                        color: palette ? colors.foregroundColored(palette) : colors.foreground(),
                         whiteSpace: wrap ? undefined : 'nowrap',
                         overflow: wrap ? undefined : 'hidden',
                         textOverflow: wrap ? undefined : 'ellipsis',
@@ -449,7 +449,7 @@ export const components = {
             });
         }
     },
-    header: ({ id, padding = '0.5rem', borderBottom, backgroundColor = colors.background1(), color, onclick, leading, title, trailing } = {}) => ({
+    header: ({ id, padding = '0.5rem', borderBottom, backgroundColor = colors.background(2), color, onclick, leading, title, trailing } = {}) => ({
         id,
         position: 'sticky',
         top: 0,
@@ -541,7 +541,7 @@ export const pages = {
                     }),
                     components.button({
                         padding: '0.75rem',
-                        backgroundHoverColor: colors.background1(),
+                        backgroundHoverColor: colors.background(2),
                         onclick: function (event) {
                             try {
                                 loggingIn = true;
@@ -633,7 +633,7 @@ export const pages = {
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        border: `1px solid ${colors.foreground3()}`,
+                        border: `1px solid ${colors.foreground(4)}`,
                         borderRadius: '0.5rem',
                         ...layouts.column('center', 'start', '2rem'),
                         children: [
@@ -675,7 +675,7 @@ export const pages = {
                                                 id: 'keyphrase-hint',
                                                 display: keyphraseValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foreground1('red'),
+                                                color: colors.foregroundColored('red'),
                                                 text: 'Required',
                                             }),
                                             components.inputs.password({
@@ -696,7 +696,7 @@ export const pages = {
                                                 id: 'keyphrase-repeat-hint',
                                                 display: keyphraseRepeatValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foreground1('red'),
+                                                color: colors.foregroundColored('red'),
                                                 text: 'Invalid',
                                             }),
                                             components.inputs.password({
@@ -819,7 +819,7 @@ export const pages = {
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        border: `1px solid ${colors.foreground3()}`,
+                        border: `1px solid ${colors.foreground(4)}`,
                         borderRadius: '0.5rem',
                         ...layouts.column('center', 'start', '2rem'),
                         children: [
@@ -840,7 +840,7 @@ export const pages = {
                                         id: 'keyphrase-hint',
                                         display: keyphraseValid ? 'none' : 'block',
                                         fontWeight: 500,
-                                        color: colors.foreground1('red'),
+                                        color: colors.foregroundColored('red'),
                                         text: 'Invalid'
                                     }),
                                     components.inputs.password({
@@ -960,7 +960,7 @@ export const pages = {
                         () => components.header({
                             id: 'header',
                             leading: folderId === 'root' ? null : components.button({
-                                backgroundHoverColor: colors.background2(),
+                                backgroundHoverColor: colors.background(3),
                                 href: '/',
                                 child: components.icon({
                                     ligature: 'home'
@@ -1170,7 +1170,7 @@ export const pages = {
                                                                                         id: 'new-folder-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: colors.foreground1('red'),
+                                                                                        color: colors.foregroundColored('red'),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1310,8 +1310,8 @@ export const pages = {
                                     {
                                         padding: '0.5rem',
                                         borderRadius: '2rem',
-                                        backgroundColor: colors.background1(),
-                                        backgroundHoverColor: colors.background2(),
+                                        backgroundColor: colors.background(2),
+                                        backgroundHoverColor: colors.background(3),
                                         child: components.icon({
                                             fontSize: '2rem',
                                             ligature: 'menu'
@@ -1346,7 +1346,7 @@ export const pages = {
                                                                                             ligature: 'radio_button_unchecked'
                                                                                         }),
                                                                                         iconTrue: components.icon({
-                                                                                            color: colors.foreground1('blue'),
+                                                                                            color: colors.foregroundColored('blue'),
                                                                                             ligature: 'radio_button_checked'
                                                                                         }),
                                                                                         text: 'System',
@@ -1365,7 +1365,7 @@ export const pages = {
                                                                                             ligature: 'radio_button_unchecked'
                                                                                         }),
                                                                                         iconTrue: components.icon({
-                                                                                            color: colors.foreground1('blue'),
+                                                                                            color: colors.foregroundColored('blue'),
                                                                                             ligature: 'radio_button_checked'
                                                                                         }),
                                                                                         text: 'Light',
@@ -1384,7 +1384,7 @@ export const pages = {
                                                                                             ligature: 'radio_button_unchecked'
                                                                                         }),
                                                                                         iconTrue: components.icon({
-                                                                                            color: colors.foreground1('blue'),
+                                                                                            color: colors.foregroundColored('blue'),
                                                                                             ligature: 'radio_button_checked'
                                                                                         }),
                                                                                         text: 'Dark',
@@ -1483,11 +1483,11 @@ export const pages = {
                                     color: 'blue',
                                     padding: '0.5rem',
                                     borderRadius: '2rem',
-                                    backgroundColor: colors.background1('blue'),
-                                    backgroundHoverColor: colors.background2('blue'),
+                                    backgroundColor: colors.backgroundColored('blue'),
+                                    backgroundHoverColor: colors.backgroundColored('blue', 2),
                                     child: components.icon({
                                         fontSize: '2rem',
-                                        color: colors.foreground1('blue'),
+                                        color: colors.foregroundColored('blue'),
                                         ligature: 'add_2'
                                     }),
                                     onclick: function (event) {
@@ -1522,7 +1522,7 @@ export const pages = {
                                                                                             id: 'new-folder-name-hint',
                                                                                             display: nameValid ? 'none' : 'block',
                                                                                             fontWeight: 500,
-                                                                                            color: colors.foreground1('red'),
+                                                                                            color: colors.foregroundColored('red'),
                                                                                             text: 'Required'
                                                                                         }),
                                                                                         components.inputs.text({
@@ -1612,7 +1612,7 @@ export const pages = {
                                                                                             id: 'new-note-name-hint',
                                                                                             display: nameValid ? 'none' : 'block',
                                                                                             fontWeight: 500,
-                                                                                            color: colors.foreground1('red'),
+                                                                                            color: colors.foregroundColored('red'),
                                                                                             text: 'Required'
                                                                                         }),
                                                                                         components.inputs.text({
@@ -1767,7 +1767,7 @@ export const pages = {
                     () => components.header({
                         id: 'header',
                         leading: components.button({
-                            backgroundHoverColor: colors.background2(),
+                            backgroundHoverColor: colors.background(3),
                             href: '/',
                             child: components.icon({
                                 ligature: 'home'
@@ -1787,7 +1787,7 @@ export const pages = {
                                 id: 'add-paragraph-hint',
                                 display: addParagraphValid ? 'none' : 'block',
                                 fontWeight: 500,
-                                color: colors.foreground1('red'),
+                                color: colors.foregroundColored('red'),
                                 text: 'Required'
                             }),
                             components.inputs.textArea({
@@ -1966,7 +1966,7 @@ export const pages = {
                                                                                                         id: 'filter-paragraphs',
                                                                                                         width: '100%',
                                                                                                         padding: '0 0.25rem 0 0.5rem',
-                                                                                                        border: `1px solid ${colors.foreground3()}`,
+                                                                                                        border: `1px solid ${colors.foreground(4)}`,
                                                                                                         borderRadius: '0.5rem',
                                                                                                         ...layouts.row('start', 'center'),
                                                                                                         children: [
@@ -1986,7 +1986,7 @@ export const pages = {
                                                                                                                 },
                                                                                                             },
                                                                                                             components.button({
-                                                                                                                backgroundHoverColor: colors.background1(),
+                                                                                                                backgroundHoverColor: colors.background(2),
                                                                                                                 padding: '0.25rem',
                                                                                                                 child: components.icon({
                                                                                                                     ligature: 'close'
@@ -2021,14 +2021,14 @@ export const pages = {
                                                                                                                 id: `paragraph-${paragraph.id}`,
                                                                                                                 width: '100%',
                                                                                                                 padding: '0.5rem',
-                                                                                                                border: `1px solid ${colors.foreground3(paragraph.color)}`,
+                                                                                                                border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground(4)}`,
                                                                                                                 borderRadius: '0.5rem',
-                                                                                                                backgroundColor: paragraph.color ? colors.background1(paragraph.color) : colors.background(),
-                                                                                                                color: paragraph.color ? colors.foreground1(paragraph.color) : colors.foreground(),
+                                                                                                                backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background(),
+                                                                                                                color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground(),
                                                                                                                 ...styles.unselectable(),
                                                                                                                 cursor: 'pointer',
                                                                                                                 ...handlers.hover({
-                                                                                                                    backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background1(),
+                                                                                                                    backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
                                                                                                                 }),
                                                                                                                 ...handlers.button(function (event) {
                                                                                                                     stack.push({
@@ -2076,9 +2076,9 @@ export const pages = {
                                                                                                                             width: '100%',
                                                                                                                             padding: '0.5rem',
                                                                                                                             borderRadius: '0.5rem',
-                                                                                                                            backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background1(),
+                                                                                                                            backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
                                                                                                                             fontWeight: 600,
-                                                                                                                            color: colors.foreground1(paragraph.color),
+                                                                                                                            color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground(2),
                                                                                                                             ...styles.unselectable(),
                                                                                                                             whiteSpace: 'nowrap',
                                                                                                                             overflow: 'hidden',
@@ -2092,7 +2092,7 @@ export const pages = {
                                                                                                                         children: [
                                                                                                                             {
                                                                                                                                 fontSize: '0.875rem',
-                                                                                                                                color: colors.foreground2(paragraph.color),
+                                                                                                                                color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground(3),
                                                                                                                                 ...styles.unselectable(),
                                                                                                                                 text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                                                                                             },
@@ -2234,13 +2234,13 @@ export const pages = {
                                     id: `file-upload-${fu.id}`,
                                     width: '100%',
                                     height: '1rem',
-                                    backgroundColor: colors.background1(),
+                                    backgroundColor: colors.background(2),
                                     ...layouts.row(),
                                     children: [
                                         {
                                             width: `max(5%, ${fu.completed}%)`,
                                             height: '100%',
-                                            backgroundColor: colors.background3()
+                                            backgroundColor: colors.background(3)
                                         }
                                     ]
                                 }))
@@ -2249,7 +2249,7 @@ export const pages = {
                                 id: 'filter-paragraphs',
                                 width: '100%',
                                 padding: '0 0.25rem 0 0.5rem',
-                                border: `1px solid ${colors.foreground3()}`,
+                                border: `1px solid ${colors.foreground(4)}`,
                                 borderRadius: '0.5rem',
                                 ...layouts.row('start', 'center'),
                                 children: [
@@ -2269,7 +2269,7 @@ export const pages = {
                                         },
                                     },
                                     components.button({
-                                        backgroundHoverColor: colors.background1(),
+                                        backgroundHoverColor: colors.background(2),
                                         padding: '0.25rem',
                                         child: components.icon({
                                             ligature: 'close'
@@ -2312,7 +2312,7 @@ export const pages = {
                                                 id: 'edit-paragraph-hint',
                                                 display: editParagraphValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foreground1('red'),
+                                                color: colors.foregroundColored('red'),
                                                 text: 'Required'
                                             }),
                                             components.inputs.textArea({
@@ -2366,10 +2366,10 @@ export const pages = {
                                         id: `paragraph-${paragraph.id}`,
                                         width: '100%',
                                         padding: '0.5rem',
-                                        border: `1px solid ${colors.foreground3(paragraph.color)}`,
+                                        border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground(4)}`,
                                         borderRadius: '0.5rem',
-                                        backgroundColor: paragraph.color ? colors.background1(paragraph.color) : colors.background(),
-                                        color: paragraph.color ? colors.foreground1(paragraph.color) : colors.foreground(),
+                                        backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background(),
+                                        color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground(),
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
                                             paragraph.text ? {
@@ -2385,13 +2385,13 @@ export const pages = {
                                                     width: '100%',
                                                     padding: '0.25rem 0.25rem 0.25rem 0.5rem',
                                                     borderRadius: '0.5rem',
-                                                    backgroundColor: paragraph.color ? colors.background2(paragraph.color) : colors.background1(),
+                                                    backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
                                                     ...layouts.row('space-between', 'center'),
                                                     children: [
                                                         {
                                                             minWidth: 0,
                                                             fontWeight: 600,
-                                                            color: colors.foreground1(paragraph.color),
+                                                            color: paragraph.color ? colors.foreground(paragraph.color) : colors.foreground(2),
                                                             ...styles.unselectable(),
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
@@ -2403,9 +2403,9 @@ export const pages = {
                                                             ...layouts.row('start', 'center'),
                                                             children: [
                                                                 !downloads[f.id] ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
                                                                     child: components.icon({
-                                                                        color: colors.foreground1(paragraph.color),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                         ligature: 'cloud_download'
                                                                     }),
                                                                     onclick: async function (event) {
@@ -2444,12 +2444,12 @@ export const pages = {
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
                                                                     padding: '0.5rem',
-                                                                    color: colors.foreground1(paragraph.color),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
                                                                     child: components.icon({
-                                                                        color: colors.foreground1(paragraph.color),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2471,9 +2471,9 @@ export const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
                                                                     child: components.icon({
-                                                                        color: colors.foreground1(paragraph.color),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2500,9 +2500,9 @@ export const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
                                                                     child: components.icon({
-                                                                        color: colors.foreground1(paragraph.color),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2532,9 +2532,9 @@ export const pages = {
                                                                     }
                                                                 }) : null,
                                                                 downloads[f.id]?.status === 'ready' ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.background3(paragraph.color) : colors.background2(),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
                                                                     child: components.icon({
-                                                                        color: colors.foreground1(paragraph.color),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2568,7 +2568,7 @@ export const pages = {
                                                 children: [
                                                     {
                                                         fontSize: '0.875rem',
-                                                        color: colors.foreground2(paragraph.color),
+                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground(3),
                                                         ...styles.unselectable(),
                                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                     },
@@ -2576,9 +2576,9 @@ export const pages = {
                                                         ...layouts.row(),
                                                         children: [
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.background2(paragraph.color) : colors.background1(),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
                                                                 child: components.icon({
-                                                                    color: colors.foreground1(paragraph.color),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                     ligature: 'content_copy',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2586,9 +2586,9 @@ export const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.background2(paragraph.color) : colors.background1(),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
                                                                 child: components.icon({
-                                                                    color: colors.foreground1(paragraph.color),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                     ligature: 'palette',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2614,11 +2614,11 @@ export const pages = {
                                                                                         children: [undefined, 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => components.button({
                                                                                             padding: '0.25rem',
                                                                                             borderRadius: '2rem',
-                                                                                            backgroundColor: colors.background2(color),
-                                                                                            backgroundHoverColor: colors.background3(color),
+                                                                                            backgroundColor: color ? colors.backgroundColored(color, 2) : colors.background(2),
+                                                                                            backgroundHoverColor: color ? colors.backgroundColored(color, 3) : colors.background(3),
                                                                                             child: components.icon({
                                                                                                 fontSize: '2.5rem',
-                                                                                                color: colors.foreground1(color),
+                                                                                                color: color ? colors.foregroundColored(color) : colors.foreground(2),
                                                                                                 ligature: 'circle',
                                                                                             }),
                                                                                             onclick: async function (event) {
@@ -2637,9 +2637,9 @@ export const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.background2(paragraph.color) : colors.background1(),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
                                                                 child: components.icon({
-                                                                    color: colors.foreground1(paragraph.color),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                     ligature: 'edit',
                                                                 }),
                                                                 disabled: editParagraphId,
@@ -2654,9 +2654,9 @@ export const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.background2(paragraph.color) : colors.background1(),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
                                                                 child: components.icon({
-                                                                    color: colors.foreground1(paragraph.color),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
                                                                     ligature: 'delete',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2698,15 +2698,15 @@ export const pages = {
                                         width: '100%',
                                         height: '2.5rem',
                                         padding: '0 0.75rem',
-                                        backgroundColor: colors.background1(),
-                                        backgroundHoverColor: colors.background2(),
+                                        backgroundColor: colors.background(2),
+                                        backgroundHoverColor: colors.background(3),
                                         onclick: function (event) {
                                             limitParagraphs = false;
                                             this.layer.widgets['paragraphs'].update();
                                         },
                                         child: {
                                             fontWeight: 600,
-                                            color: colors.foreground1(),
+                                            color: colors.foreground(2),
                                             text: 'More'
                                         }
                                     }) : null]
