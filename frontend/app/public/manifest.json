@@ -4,6 +4,11 @@
     "description": "End-to-end encrypted notes",
     "start_url": "/",
     "display": "standalone",
+    "display_override": [
+        "window-controls-overlay",
+        "standalone"
+    ],
+    "theme_color": "transparent",
     "background_color": "oklch(.424 .199 265.638)",
     "icons": [
         {
