@@ -188,25 +188,25 @@ export async function init() {
     firebase.storage = getStorage(firebase.app);
     // firebase.analytics = getAnalytics(firebase.app);
 
-    setColorsBase('gray');
+    setColorsBase('slate');
     startApp('XPL');
     startViewportSizeController();
     startThemeController(function () {
         updateMetaTags({
-            'theme-color': colors.backgroundPanel()
+            'theme-color': colors.background.panel()
         });
         updateBodyStyle({
-            backgroundColor: colors.background(),
-            color: colors.foreground(),
+            backgroundColor: colors.background.body(),
+            color: colors.foreground.m(),
         });
     });
     updateMetaTags({
-        'theme-color': colors.backgroundPanel()
+        'theme-color': colors.background.panel()
     });
     updateBodyStyle({
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-        backgroundColor: colors.background(),
-        color: colors.foreground(),
+        backgroundColor: colors.background.body(),
+        color: colors.foreground.m(),
     });
     await utils.loadFont({
         fontFamily: 'material',
@@ -360,7 +360,7 @@ const pages = {
                     }),
                     components.button({
                         padding: '0.75rem',
-                        backgroundHoverColor: colors.background(2),
+                        backgroundHoverColor: colors.background1(2),
                         onclick: function (event) {
                             try {
                                 loggingIn = true;
@@ -452,7 +452,7 @@ const pages = {
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        border: `1px solid ${colors.foreground(4)}`,
+                        border: `1px solid ${colors.foreground2(4)}`,
                         borderRadius: '0.5rem',
                         ...layouts.column('center', 'start', '2rem'),
                         children: [
@@ -638,13 +638,14 @@ const pages = {
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        border: `1px solid ${colors.foreground(4)}`,
+                        border: `1px solid ${colors.border.m()}`,
                         borderRadius: '0.5rem',
                         ...layouts.column('center', 'start', '2rem'),
                         children: [
                             {
                                 fontSize: '2rem',
                                 fontWeight: 600,
+                                color: colors.foreground.l(),
                                 text: 'Keyphrase'
                             },
                             {
@@ -653,6 +654,7 @@ const pages = {
                                 children: [
                                     {
                                         fontWeight: 600,
+                                        color: colors.foreground.l(),
                                         text: 'Your keyphrase'
                                     },
                                     () => ({
@@ -779,7 +781,7 @@ const pages = {
                         () => components.header({
                             id: 'header',
                             leading: folderId === 'root' ? null : components.button({
-                                backgroundHoverColor: c(colorsBase.neutral, 3),
+                                backgroundHoverColor: colors.background.overlay.m(),
                                 href: '/',
                                 child: components.icon({
                                     ligature: 'home'
@@ -812,433 +814,106 @@ const pages = {
                                         stack.push({
                                             path: '#menu',
                                             hidePrior: false,
-                                            config: () => components.modalCloseBackground({
-                                                child: components.modals.menu({
-                                                    buttons: [
-                                                        tree[cid].order > 0 ? components.buttons.menu({
-                                                            text: 'Move Up',
-                                                            onclick: async function (event) {
-                                                                await stack.pop();
-                                                                treeUpdating = true;
-                                                                pageLayer.widgets['blocker-loading'].update();
-                                                                const neighborId = children[children.indexOf(cid) - 1];
-                                                                try {
-                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                    await runTransaction(firebase.firestore, async (transaction) => {
-                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                            transaction.update(notebookDocRef, {
-                                                                                timestamp: serverTimestamp(),
-                                                                                [`tree.${cid}.order`]: increment(-1),
-                                                                                [`tree.${neighborId}.order`]: increment(1),
-                                                                            });
-                                                                        }
-                                                                        else {
-                                                                            error = 'outofsync';
-                                                                            pageLayer.widgets['blocker-error'].update();
-                                                                        }
-                                                                    });
-                                                                    treeUpdating = false;
-                                                                } catch (e) {
-                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                        error = 'network';
-                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                    } else {
-                                                                        console.error(e);
-                                                                        error = true;
+                                            config: () => components.modals.menu({
+                                                buttons: [
+                                                    tree[cid].order > 0 ? components.buttons.menu({
+                                                        text: 'Move Up',
+                                                        onclick: async function (event) {
+                                                            await stack.pop();
+                                                            treeUpdating = true;
+                                                            pageLayer.widgets['blocker-loading'].update();
+                                                            const neighborId = children[children.indexOf(cid) - 1];
+                                                            try {
+                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                        transaction.update(notebookDocRef, {
+                                                                            timestamp: serverTimestamp(),
+                                                                            [`tree.${cid}.order`]: increment(-1),
+                                                                            [`tree.${neighborId}.order`]: increment(1),
+                                                                        });
+                                                                    }
+                                                                    else {
+                                                                        error = 'outofsync';
                                                                         pageLayer.widgets['blocker-error'].update();
                                                                     }
+                                                                });
+                                                                treeUpdating = false;
+                                                            } catch (e) {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                    error = 'network';
+                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                } else {
+                                                                    console.error(e);
+                                                                    error = true;
+                                                                    pageLayer.widgets['blocker-error'].update();
                                                                 }
                                                             }
-                                                        }) : null,
-                                                        tree[cid].order < children.length - 1 ? components.buttons.menu({
-                                                            text: 'Move Down',
-                                                            onclick: async function (event) {
-                                                                await stack.pop();
-                                                                treeUpdating = true;
-                                                                pageLayer.widgets['blocker-loading'].update();
-                                                                const neighborId = children[children.indexOf(cid) + 1];
-                                                                try {
-                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                    await runTransaction(firebase.firestore, async (transaction) => {
-                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                            transaction.update(notebookDocRef, {
-                                                                                timestamp: serverTimestamp(),
-                                                                                [`tree.${cid}.order`]: increment(1),
-                                                                                [`tree.${neighborId}.order`]: increment(-1),
-                                                                            });
-                                                                        }
-                                                                        else {
-                                                                            error = 'outofsync';
-                                                                            pageLayer.widgets['blocker-error'].update();
-                                                                        }
-                                                                    });
-                                                                    treeUpdating = false;
-                                                                } catch (e) {
-                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                        error = 'network';
-                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                    } else {
-                                                                        console.error(e);
-                                                                        error = true;
+                                                        }
+                                                    }) : null,
+                                                    tree[cid].order < children.length - 1 ? components.buttons.menu({
+                                                        text: 'Move Down',
+                                                        onclick: async function (event) {
+                                                            await stack.pop();
+                                                            treeUpdating = true;
+                                                            pageLayer.widgets['blocker-loading'].update();
+                                                            const neighborId = children[children.indexOf(cid) + 1];
+                                                            try {
+                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                        transaction.update(notebookDocRef, {
+                                                                            timestamp: serverTimestamp(),
+                                                                            [`tree.${cid}.order`]: increment(1),
+                                                                            [`tree.${neighborId}.order`]: increment(-1),
+                                                                        });
+                                                                    }
+                                                                    else {
+                                                                        error = 'outofsync';
                                                                         pageLayer.widgets['blocker-error'].update();
                                                                     }
+                                                                });
+                                                                treeUpdating = false;
+                                                            } catch (e) {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                    error = 'network';
+                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                } else {
+                                                                    console.error(e);
+                                                                    error = true;
+                                                                    pageLayer.widgets['blocker-error'].update();
                                                                 }
                                                             }
-                                                        }) : null,
-                                                        components.buttons.menu({
-                                                            text: 'Move to Folder',
-                                                            onclick: function (event) {
-                                                                function moveToFolderPage(targetFolderId) {
-                                                                    return {
-                                                                        path: `#moveto-${targetFolderId}`,
-                                                                        config: () => {
-                                                                            const children = Object.keys(tree).filter(id => tree[id].type === 'folder' && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                                                                            return {
-                                                                                ...layouts.base('start', 'center'),
-                                                                                children: [
-                                                                                    components.header({
-                                                                                        title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
-                                                                                        trailing: components.buttons.formPrimary({
-                                                                                            palette: 'blue',
-                                                                                            smallViewportGrow: false,
-                                                                                            text: 'Move',
-                                                                                            onclick: async function (event) {
-                                                                                                let steps = 0;
-                                                                                                for (let i = stack.length - 1; i > 0; i--) {
-                                                                                                    if (stack.at(i) === pageLayer) {
-                                                                                                        break;
-                                                                                                    }
-                                                                                                    steps += 1;
-                                                                                                }
-                                                                                                await stack.pop(steps);
-                                                                                                treeUpdating = true;
-                                                                                                pageLayer.widgets['blocker-loading'].update();
-                                                                                                try {
-                                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                            transaction.update(notebookDocRef, {
-                                                                                                                timestamp: serverTimestamp(),
-                                                                                                                [`tree.${cid}.parent`]: targetFolderId,
-                                                                                                                [`tree.${cid}.order`]: Object.keys(tree).filter(id => tree[id].parent === targetFolderId).length,
-                                                                                                            });
-                                                                                                        }
-                                                                                                        else {
-                                                                                                            error = 'outofsync';
-                                                                                                            pageLayer.widgets['blocker-error'].update();
-                                                                                                        }
-                                                                                                    });
-                                                                                                    treeUpdating = false;
-                                                                                                } catch (e) {
-                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                        error = 'network';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                                                    } else {
-                                                                                                        console.error(e);
-                                                                                                        error = true;
-                                                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        })
-                                                                                    }),
-                                                                                    {
-                                                                                        flexGrow: 1,
-                                                                                        width: 'min(640px, 100% - 1rem)',
-                                                                                        padding: '1rem 0',
-                                                                                        ...layouts.column('center', 'center', '1rem'),
-                                                                                        children: children.map(cid => components.buttons.menu({
-                                                                                            size: 'l',
-                                                                                            text: tree[cid]['name'],
-                                                                                            onclick: function (event) {
-                                                                                                stack.push(moveToFolderPage(cid));
-                                                                                            },
-                                                                                        }))
-                                                                                    }
-                                                                                ]
-                                                                            };
-                                                                        }
-                                                                    };
-                                                                }
-                                                                stack.replace(moveToFolderPage('root'));
-                                                            }
-                                                        }),
-                                                        components.buttons.menu({
-                                                            text: 'Rename',
-                                                            onclick: async function (event) {
-                                                                let nameValid = true;
-                                                                stack.replace({
-                                                                    path: '#rename',
-                                                                    hidePrior: false,
-                                                                    config: () => components.modalCloseBackground({
-                                                                        child: {
-                                                                            ...styles.modal(),
-                                                                            ...layouts.column('start', 'start', '1rem'),
+                                                        }
+                                                    }) : null,
+                                                    components.buttons.menu({
+                                                        text: 'Move to Folder',
+                                                        onclick: function (event) {
+                                                            function moveToFolderPage(targetFolderId) {
+                                                                return {
+                                                                    path: `#moveto-${targetFolderId}`,
+                                                                    config: () => {
+                                                                        const children = Object.keys(tree).filter(id => tree[id].type === 'folder' && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                        return {
+                                                                            ...layouts.base('start', 'center'),
                                                                             children: [
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.column('start', 'start', '0.5rem'),
-                                                                                    children: [{
-                                                                                        fontWeight: 600,
-                                                                                        text: 'New Name'
-                                                                                    },
-                                                                                    () => ({
-                                                                                        id: 'new-folder-name-hint',
-                                                                                        display: nameValid ? 'none' : 'block',
-                                                                                        fontWeight: 500,
-                                                                                        color: c(colorsBase.danger, 11),
-                                                                                        text: 'Required'
-                                                                                    }),
-                                                                                    components.inputs.text({
-                                                                                        id: 'new-folder-name-input',
-                                                                                        maxlength: '64',
-                                                                                        value: tree[cid].name,
-                                                                                    })]
-                                                                                },
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.row('end'),
-                                                                                    children: [
-                                                                                        components.buttons.formPrimary({
-                                                                                            palette: 'blue',
-                                                                                            text: 'Rename',
-                                                                                            onclick: async function (event) {
-                                                                                                nameValid = true;
-                                                                                                if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                                                    nameValid = false;
-                                                                                                }
-                                                                                                this.layer.widgets['new-folder-name-hint'].update();
-                                                                                                if (!nameValid) {
-                                                                                                    return;
-                                                                                                }
-                                                                                                const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
-                                                                                                await stack.pop();
-                                                                                                treeUpdating = true;
-                                                                                                pageLayer.widgets['blocker-loading'].update();
-                                                                                                try {
-                                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                            const nameEncrypted = await encrypt(key, textEncoder.encode(name));
-                                                                                                            transaction.update(notebookDocRef, {
-                                                                                                                timestamp: serverTimestamp(),
-                                                                                                                [`tree.${cid}.name`]: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) },
-                                                                                                            });
-                                                                                                        }
-                                                                                                        else {
-                                                                                                            error = 'outofsync';
-                                                                                                            pageLayer.widgets['blocker-error'].update();
-                                                                                                        }
-                                                                                                    });
-                                                                                                    treeUpdating = false;
-                                                                                                } catch (e) {
-                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                        error = 'network';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                                                    } else {
-                                                                                                        console.error(e);
-                                                                                                        error = true;
-                                                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        })
-                                                                                    ]
-                                                                                },
-                                                                            ]
-                                                                        }
-                                                                    })
-                                                                });
-                                                            }
-                                                        }),
-                                                        components.buttons.menu({
-                                                            palette: 'red',
-                                                            text: 'Delete',
-                                                            onclick: async function (event) {
-                                                                stack.replace({
-                                                                    path: '#delete',
-                                                                    hidePrior: false,
-                                                                    config: () => components.modalCloseBackground({
-                                                                        child: components.modal.prompt({
-                                                                            title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
-                                                                            description: 'You won\'t be able to restore it.',
-                                                                            note: 'Consider moving it to an \'Archive\' folder instead — create one if you don’t have it yet.',
-                                                                            buttons: [
-                                                                                components.buttons.formPrimary({
-                                                                                    palette: 'red',
-                                                                                    text: 'Delete',
-                                                                                    onclick: async function (event) {
-                                                                                        await stack.pop();
-                                                                                        treeUpdating = true;
-                                                                                        pageLayer.widgets['blocker-loading'].update();
-                                                                                        try {
-                                                                                            const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                            await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                    transaction.update(notebookDocRef, {
-                                                                                                        timestamp: serverTimestamp(),
-                                                                                                        [`tree.${cid}.parent`]: 'deleted',
-                                                                                                    });
-                                                                                                }
-                                                                                                else {
-                                                                                                    error = 'outofsync';
-                                                                                                    pageLayer.widgets['blocker-error'].update();
-                                                                                                }
-                                                                                            });
-                                                                                            treeUpdating = false;
-                                                                                        } catch (e) {
-                                                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                error = 'network';
-                                                                                                pageLayer.widgets['blocker-error'].update();
-                                                                                            } else {
-                                                                                                console.error(e);
-                                                                                                error = true;
-                                                                                                pageLayer.widgets['blocker-error'].update();
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                })
-                                                                            ]
-                                                                        })
-                                                                    })
-                                                                });
-                                                            }
-                                                        }),
-                                                    ]
-                                                })
-                                            })
-                                        });
-                                    }
-                                })
-                                )
-                            });
-                        },
-                        {
-                            position: 'fixed',
-                            bottom: '1rem',
-                            left: '1rem',
-                            zIndex: 10,
-                            ...layouts.column('start', 'start', '1rem'),
-                            children: [
-                                components.button(
-                                    {
-                                        padding: '0.5rem',
-                                        borderRadius: '2rem',
-                                        backgroundColor: c(colorsBase.neutral, 3),
-                                        backgroundHoverColor: c(colorsBase.neutral, 4),
-                                        child: components.icon({
-                                            fontSize: '2rem',
-                                            ligature: 'menu'
-                                        }),
-                                        onclick: function (event) {
-                                            const notebookTimestamp = notebook.timestamp.toMillis();
-                                            stack.push({
-                                                path: '#menu',
-                                                hidePrior: false,
-                                                config: () => components.modalCloseBackground({
-                                                    child: components.modals.menu({
-                                                        buttons: [
-                                                            components.buttons.menu({
-                                                                text: 'Theme',
-                                                                onclick: function (event) {
-                                                                    stack.replace({
-                                                                        path: '#theme',
-                                                                        hidePrior: false,
-                                                                        config: () => components.modalCloseBackground({
-                                                                            child: {
-                                                                                ...styles.modal(),
-                                                                                ...layouts.column('start', 'start', '1rem'),
-                                                                                children: [
-                                                                                    {
-                                                                                        fontWeight: 600,
-                                                                                        text: 'Theme'
-                                                                                    },
-                                                                                    components.inputs.toggle({
-                                                                                        id: 'theme-system',
-                                                                                        value: window.localStorage.getItem('theme') === 'auto',
-                                                                                        iconFalse: components.icon({
-                                                                                            ligature: 'radio_button_unchecked'
-                                                                                        }),
-                                                                                        iconTrue: components.icon({
-                                                                                            color: c('blue', 9),
-                                                                                            ligature: 'radio_button_checked'
-                                                                                        }),
-                                                                                        text: 'System',
-                                                                                        onclick: function (event) {
-                                                                                            window.document.dispatchEvent(new CustomEvent('switch-theme', {
-                                                                                                detail: {
-                                                                                                    theme: 'auto'
-                                                                                                }
-                                                                                            }));
-                                                                                        }
-                                                                                    }),
-                                                                                    components.inputs.toggle({
-                                                                                        id: 'theme-light',
-                                                                                        value: window.localStorage.getItem('theme') === 'light',
-                                                                                        iconFalse: components.icon({
-                                                                                            ligature: 'radio_button_unchecked'
-                                                                                        }),
-                                                                                        iconTrue: components.icon({
-                                                                                            color: c('blue', 9),
-                                                                                            ligature: 'radio_button_checked'
-                                                                                        }),
-                                                                                        text: 'Light',
-                                                                                        onclick: function (event) {
-                                                                                            window.document.dispatchEvent(new CustomEvent('switch-theme', {
-                                                                                                detail: {
-                                                                                                    theme: 'light'
-                                                                                                }
-                                                                                            }));
-                                                                                        }
-                                                                                    }),
-                                                                                    components.inputs.toggle({
-                                                                                        id: 'theme-dark',
-                                                                                        value: window.localStorage.getItem('theme') === 'dark',
-                                                                                        iconFalse: components.icon({
-                                                                                            ligature: 'radio_button_unchecked'
-                                                                                        }),
-                                                                                        iconTrue: components.icon({
-                                                                                            color: c('blue', 9),
-                                                                                            ligature: 'radio_button_checked'
-                                                                                        }),
-                                                                                        text: 'Dark',
-                                                                                        onclick: function (event) {
-                                                                                            window.document.dispatchEvent(new CustomEvent('switch-theme', {
-                                                                                                detail: {
-                                                                                                    theme: 'dark'
-                                                                                                }
-                                                                                            }));
-                                                                                        }
-                                                                                    }),
-                                                                                ]
-                                                                            }
-                                                                        })
-                                                                    });
-                                                                }
-                                                            }),
-                                                            components.buttons.menu({
-                                                                palette: 'red',
-                                                                text: 'Delete account',
-                                                                onclick: function (event) {
-                                                                    stack.replace({
-                                                                        path: '#delete',
-                                                                        hidePrior: false,
-                                                                        config: () => components.modalCloseBackground({
-                                                                            child: components.modal.prompt({
-                                                                                title: 'Delete account',
-                                                                                description: 'Are you sure?',
-                                                                                note: 'Your account and all it\'s data will be permanently deleted in 30 days. Contact support before then to stop the process.',
-                                                                                buttons: [
-                                                                                    components.buttons.formPrimary({
-                                                                                        palette: 'red',
-                                                                                        text: 'Delete',
+                                                                                components.header({
+                                                                                    title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
+                                                                                    trailing: components.buttons.formPrimary({
+                                                                                        palette: 'blue',
+                                                                                        smallViewportGrow: false,
+                                                                                        text: 'Move',
                                                                                         onclick: async function (event) {
-                                                                                            await stack.pop();
+                                                                                            let steps = 0;
+                                                                                            for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                if (stack.at(i) === pageLayer) {
+                                                                                                    break;
+                                                                                                }
+                                                                                                steps += 1;
+                                                                                            }
+                                                                                            await stack.pop(steps);
                                                                                             treeUpdating = true;
                                                                                             pageLayer.widgets['blocker-loading'].update();
                                                                                             try {
@@ -1248,7 +923,111 @@ const pages = {
                                                                                                     if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
                                                                                                         transaction.update(notebookDocRef, {
                                                                                                             timestamp: serverTimestamp(),
-                                                                                                            status: 'deleted',
+                                                                                                            [`tree.${cid}.parent`]: targetFolderId,
+                                                                                                            [`tree.${cid}.order`]: Object.keys(tree).filter(id => tree[id].parent === targetFolderId).length,
+                                                                                                        });
+                                                                                                    }
+                                                                                                    else {
+                                                                                                        error = 'outofsync';
+                                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                                    }
+                                                                                                });
+                                                                                                treeUpdating = false;
+                                                                                            } catch (e) {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                    error = 'network';
+                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                } else {
+                                                                                                    console.error(e);
+                                                                                                    error = true;
+                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    })
+                                                                                }),
+                                                                                {
+                                                                                    flexGrow: 1,
+                                                                                    width: 'min(640px, 100% - 1rem)',
+                                                                                    padding: '1rem 0',
+                                                                                    ...layouts.column('center', 'center', '1rem'),
+                                                                                    children: children.map(cid => components.buttons.menu({
+                                                                                        size: 'l',
+                                                                                        text: tree[cid]['name'],
+                                                                                        onclick: function (event) {
+                                                                                            stack.push(moveToFolderPage(cid));
+                                                                                        },
+                                                                                    }))
+                                                                                }
+                                                                            ]
+                                                                        };
+                                                                    }
+                                                                };
+                                                            }
+                                                            stack.replace(moveToFolderPage('root'));
+                                                        }
+                                                    }),
+                                                    components.buttons.menu({
+                                                        text: 'Rename',
+                                                        onclick: async function (event) {
+                                                            let nameValid = true;
+                                                            stack.replace({
+                                                                path: '#rename',
+                                                                hidePrior: false,
+                                                                config: () => components.modalCloseBackground({
+                                                                    child: {
+                                                                        ...styles.modal(),
+                                                                        ...layouts.column('start', 'start', '1rem'),
+                                                                        children: [
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                                                children: [{
+                                                                                    fontWeight: 600,
+                                                                                    text: 'New Name'
+                                                                                },
+                                                                                () => ({
+                                                                                    id: 'new-folder-name-hint',
+                                                                                    display: nameValid ? 'none' : 'block',
+                                                                                    fontWeight: 500,
+                                                                                    color: c(colorsBase.danger, 11),
+                                                                                    text: 'Required'
+                                                                                }),
+                                                                                components.inputs.text({
+                                                                                    id: 'new-folder-name-input',
+                                                                                    maxlength: '64',
+                                                                                    value: tree[cid].name,
+                                                                                })]
+                                                                            },
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.row('end'),
+                                                                                children: [
+                                                                                    components.buttons.formPrimary({
+                                                                                        palette: 'blue',
+                                                                                        text: 'Rename',
+                                                                                        onclick: async function (event) {
+                                                                                            nameValid = true;
+                                                                                            if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                                                nameValid = false;
+                                                                                            }
+                                                                                            this.layer.widgets['new-folder-name-hint'].update();
+                                                                                            if (!nameValid) {
+                                                                                                return;
+                                                                                            }
+                                                                                            const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
+                                                                                            await stack.pop();
+                                                                                            treeUpdating = true;
+                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            try {
+                                                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                        const nameEncrypted = await encrypt(key, textEncoder.encode(name));
+                                                                                                        transaction.update(notebookDocRef, {
+                                                                                                            timestamp: serverTimestamp(),
+                                                                                                            [`tree.${cid}.name`]: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) },
                                                                                                         });
                                                                                                     }
                                                                                                     else {
@@ -1270,20 +1049,235 @@ const pages = {
                                                                                         }
                                                                                     })
                                                                                 ]
-                                                                            })
+                                                                            },
+                                                                        ]
+                                                                    }
+                                                                })
+                                                            });
+                                                        }
+                                                    }),
+                                                    components.buttons.menu({
+                                                        palette: 'red',
+                                                        text: 'Delete',
+                                                        onclick: async function (event) {
+                                                            stack.replace({
+                                                                path: '#delete',
+                                                                hidePrior: false,
+                                                                config: () => components.modals.prompt({
+                                                                    title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
+                                                                    description: 'You won\'t be able to restore it.',
+                                                                    note: 'Consider moving it to an \'Archive\' folder instead — create one if you don’t have it yet.',
+                                                                    buttons: [
+                                                                        components.buttons.formPrimary({
+                                                                            palette: 'red',
+                                                                            text: 'Delete',
+                                                                            onclick: async function (event) {
+                                                                                await stack.pop();
+                                                                                treeUpdating = true;
+                                                                                pageLayer.widgets['blocker-loading'].update();
+                                                                                try {
+                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                    await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                            transaction.update(notebookDocRef, {
+                                                                                                timestamp: serverTimestamp(),
+                                                                                                [`tree.${cid}.parent`]: 'deleted',
+                                                                                            });
+                                                                                        }
+                                                                                        else {
+                                                                                            error = 'outofsync';
+                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                        }
+                                                                                    });
+                                                                                    treeUpdating = false;
+                                                                                } catch (e) {
+                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                        error = 'network';
+                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                    } else {
+                                                                                        console.error(e);
+                                                                                        error = true;
+                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                    }
+                                                                                }
+                                                                            }
                                                                         })
-                                                                    });
-                                                                }
-                                                            }),
-                                                            components.buttons.menu({
-                                                                palette: 'red',
-                                                                text: 'Log out',
-                                                                onclick: function (event) {
-                                                                    signOut(firebase.auth);
-                                                                }
-                                                            }),
-                                                        ]
-                                                    })
+                                                                    ]
+                                                                })
+                                                            });
+                                                        }
+                                                    }),
+                                                ]
+                                            })
+                                        });
+                                    }
+                                })
+                                )
+                            });
+                        },
+                        {
+                            position: 'fixed',
+                            bottom: '1rem',
+                            left: '1rem',
+                            zIndex: 10,
+                            ...layouts.column('start', 'start', '1rem'),
+                            children: [
+                                components.button(
+                                    {
+                                        padding: '0.5rem',
+                                        borderRadius: '2rem',
+                                        backgroundColor: colors.background.overlay.m(),
+                                        backgroundHoverColor: colors.background.overlay.l(),
+                                        child: components.icon({
+                                            fontSize: '2rem',
+                                            ligature: 'menu'
+                                        }),
+                                        onclick: function (event) {
+                                            const notebookTimestamp = notebook.timestamp.toMillis();
+                                            stack.push({
+                                                path: '#menu',
+                                                hidePrior: false,
+                                                config: () => components.modals.menu({
+                                                    buttons: [
+                                                        components.buttons.menu({
+                                                            text: 'Theme',
+                                                            onclick: function (event) {
+                                                                stack.replace({
+                                                                    path: '#theme',
+                                                                    hidePrior: false,
+                                                                    config: () => components.modalCloseBackground({
+                                                                        child: {
+                                                                            ...styles.modal(),
+                                                                            ...layouts.column('start', 'start', '1rem'),
+                                                                            children: [
+                                                                                {
+                                                                                    fontWeight: 600,
+                                                                                    text: 'Theme'
+                                                                                },
+                                                                                components.inputs.toggle({
+                                                                                    id: 'theme-system',
+                                                                                    value: window.localStorage.getItem('theme') === 'auto',
+                                                                                    iconFalse: components.icon({
+                                                                                        ligature: 'radio_button_unchecked'
+                                                                                    }),
+                                                                                    iconTrue: components.icon({
+                                                                                        color: c('blue', 9),
+                                                                                        ligature: 'radio_button_checked'
+                                                                                    }),
+                                                                                    text: 'System',
+                                                                                    onclick: function (event) {
+                                                                                        window.document.dispatchEvent(new CustomEvent('switch-theme', {
+                                                                                            detail: {
+                                                                                                theme: 'auto'
+                                                                                            }
+                                                                                        }));
+                                                                                    }
+                                                                                }),
+                                                                                components.inputs.toggle({
+                                                                                    id: 'theme-light',
+                                                                                    value: window.localStorage.getItem('theme') === 'light',
+                                                                                    iconFalse: components.icon({
+                                                                                        ligature: 'radio_button_unchecked'
+                                                                                    }),
+                                                                                    iconTrue: components.icon({
+                                                                                        color: c('blue', 9),
+                                                                                        ligature: 'radio_button_checked'
+                                                                                    }),
+                                                                                    text: 'Light',
+                                                                                    onclick: function (event) {
+                                                                                        window.document.dispatchEvent(new CustomEvent('switch-theme', {
+                                                                                            detail: {
+                                                                                                theme: 'light'
+                                                                                            }
+                                                                                        }));
+                                                                                    }
+                                                                                }),
+                                                                                components.inputs.toggle({
+                                                                                    id: 'theme-dark',
+                                                                                    value: window.localStorage.getItem('theme') === 'dark',
+                                                                                    iconFalse: components.icon({
+                                                                                        ligature: 'radio_button_unchecked'
+                                                                                    }),
+                                                                                    iconTrue: components.icon({
+                                                                                        color: c('blue', 9),
+                                                                                        ligature: 'radio_button_checked'
+                                                                                    }),
+                                                                                    text: 'Dark',
+                                                                                    onclick: function (event) {
+                                                                                        window.document.dispatchEvent(new CustomEvent('switch-theme', {
+                                                                                            detail: {
+                                                                                                theme: 'dark'
+                                                                                            }
+                                                                                        }));
+                                                                                    }
+                                                                                }),
+                                                                            ]
+                                                                        }
+                                                                    })
+                                                                });
+                                                            }
+                                                        }),
+                                                        components.buttons.menu({
+                                                            palette: 'red',
+                                                            text: 'Delete account',
+                                                            onclick: function (event) {
+                                                                stack.replace({
+                                                                    path: '#delete',
+                                                                    hidePrior: false,
+                                                                    config: () => components.modals.prompt({
+                                                                        title: 'Delete account',
+                                                                        description: 'Are you sure?',
+                                                                        note: 'Your account and all it\'s data will be permanently deleted in 30 days. Contact support before then to stop the process.',
+                                                                        buttons: [
+                                                                            components.buttons.formPrimary({
+                                                                                palette: 'red',
+                                                                                text: 'Delete',
+                                                                                onclick: async function (event) {
+                                                                                    await stack.pop();
+                                                                                    treeUpdating = true;
+                                                                                    pageLayer.widgets['blocker-loading'].update();
+                                                                                    try {
+                                                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                        await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                            const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                            if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                transaction.update(notebookDocRef, {
+                                                                                                    timestamp: serverTimestamp(),
+                                                                                                    status: 'deleted',
+                                                                                                });
+                                                                                            }
+                                                                                            else {
+                                                                                                error = 'outofsync';
+                                                                                                pageLayer.widgets['blocker-error'].update();
+                                                                                            }
+                                                                                        });
+                                                                                        treeUpdating = false;
+                                                                                    } catch (e) {
+                                                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                            error = 'network';
+                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                        } else {
+                                                                                            console.error(e);
+                                                                                            error = true;
+                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            })
+                                                                        ]
+                                                                    })
+                                                                });
+                                                            }
+                                                        }),
+                                                        components.buttons.menu({
+                                                            palette: 'red',
+                                                            text: 'Log out',
+                                                            onclick: function (event) {
+                                                                signOut(firebase.auth);
+                                                            }
+                                                        }),
+                                                    ]
                                                 })
                                             });
                                         }
@@ -1314,191 +1308,189 @@ const pages = {
                                         stack.push({
                                             path: '#name',
                                             hidePrior: false,
-                                            config: () => components.modalCloseBackground({
-                                                child: components.modals.menu({
-                                                    buttons: [
-                                                        components.buttons.menu({
-                                                            text: 'New Folder',
-                                                            onclick: function (event) {
-                                                                let nameValid = true;
-                                                                stack.replace({
-                                                                    path: '#newfolder',
-                                                                    hidePrior: false,
-                                                                    config: () => components.modalCloseBackground({
-                                                                        child: {
-                                                                            ...styles.modal(),
-                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                            children: [
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.column('start', 'start', '0.5rem'),
-                                                                                    children: [
-                                                                                        {
-                                                                                            fontWeight: 600,
-                                                                                            text: 'Name'
-                                                                                        },
-                                                                                        () => ({
-                                                                                            id: 'new-folder-name-hint',
-                                                                                            display: nameValid ? 'none' : 'block',
-                                                                                            fontWeight: 500,
-                                                                                            color: c(colorsBase.danger, 11),
-                                                                                            text: 'Required'
-                                                                                        }),
-                                                                                        components.inputs.text({
-                                                                                            id: 'new-folder-name-input',
-                                                                                            maxlength: '64'
-                                                                                        }),
-                                                                                    ]
-                                                                                },
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.row('end'),
-                                                                                    children: [
-                                                                                        components.buttons.formPrimary({
-                                                                                            palette: 'blue',
-                                                                                            text: 'Create',
-                                                                                            onclick: async function (event) {
-                                                                                                nameValid = true;
-                                                                                                if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
-                                                                                                    nameValid = false;
-                                                                                                }
-                                                                                                this.layer.widgets['new-folder-name-hint'].update();
-                                                                                                if (!nameValid) {
-                                                                                                    return;
-                                                                                                }
-                                                                                                const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
-                                                                                                await stack.pop();
-                                                                                                treeUpdating = true;
-                                                                                                pageLayer.widgets['blocker-loading'].update();
-                                                                                                try {
-                                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                            const nameEncrypted = await encrypt(key, textEncoder.encode(name));
-                                                                                                            transaction.update(notebookDocRef, {
-                                                                                                                timestamp: serverTimestamp(),
-                                                                                                                [`tree.${generateTreeId()}`]: { type: 'folder', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
-                                                                                                            });
-                                                                                                        }
-                                                                                                        else {
-                                                                                                            error = 'outofsync';
-                                                                                                            pageLayer.widgets['blocker-error'].update();
-                                                                                                        }
-                                                                                                    });
-                                                                                                    treeUpdating = false;
-                                                                                                } catch (e) {
-                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                        error = 'network';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                                                    } else {
-                                                                                                        console.error(e);
-                                                                                                        error = true;
+                                            config: () => components.modals.menu({
+                                                buttons: [
+                                                    components.buttons.menu({
+                                                        text: 'New Folder',
+                                                        onclick: function (event) {
+                                                            let nameValid = true;
+                                                            stack.replace({
+                                                                path: '#newfolder',
+                                                                hidePrior: false,
+                                                                config: () => components.modalCloseBackground({
+                                                                    child: {
+                                                                        ...styles.modal(),
+                                                                        ...layouts.column('start', 'start', '1rem'),
+                                                                        children: [
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                                                children: [
+                                                                                    {
+                                                                                        fontWeight: 600,
+                                                                                        text: 'Name'
+                                                                                    },
+                                                                                    () => ({
+                                                                                        id: 'new-folder-name-hint',
+                                                                                        display: nameValid ? 'none' : 'block',
+                                                                                        fontWeight: 500,
+                                                                                        color: c(colorsBase.danger, 11),
+                                                                                        text: 'Required'
+                                                                                    }),
+                                                                                    components.inputs.text({
+                                                                                        id: 'new-folder-name-input',
+                                                                                        maxlength: '64'
+                                                                                    }),
+                                                                                ]
+                                                                            },
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.row('end'),
+                                                                                children: [
+                                                                                    components.buttons.formPrimary({
+                                                                                        palette: 'blue',
+                                                                                        text: 'Create',
+                                                                                        onclick: async function (event) {
+                                                                                            nameValid = true;
+                                                                                            if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                                                nameValid = false;
+                                                                                            }
+                                                                                            this.layer.widgets['new-folder-name-hint'].update();
+                                                                                            if (!nameValid) {
+                                                                                                return;
+                                                                                            }
+                                                                                            const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
+                                                                                            await stack.pop();
+                                                                                            treeUpdating = true;
+                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            try {
+                                                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                        const nameEncrypted = await encrypt(key, textEncoder.encode(name));
+                                                                                                        transaction.update(notebookDocRef, {
+                                                                                                            timestamp: serverTimestamp(),
+                                                                                                            [`tree.${generateTreeId()}`]: { type: 'folder', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
+                                                                                                        });
+                                                                                                    }
+                                                                                                    else {
+                                                                                                        error = 'outofsync';
                                                                                                         pageLayer.widgets['blocker-error'].update();
                                                                                                     }
+                                                                                                });
+                                                                                                treeUpdating = false;
+                                                                                            } catch (e) {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                    error = 'network';
+                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                } else {
+                                                                                                    console.error(e);
+                                                                                                    error = true;
+                                                                                                    pageLayer.widgets['blocker-error'].update();
                                                                                                 }
                                                                                             }
-                                                                                        })
-                                                                                    ]
-                                                                                },
-                                                                            ]
-                                                                        }
-                                                                    })
-                                                                });
-                                                            }
-                                                        }),
-                                                        components.buttons.menu({
-                                                            text: 'New Note',
-                                                            onclick: function (event) {
-                                                                let nameValid = true;
-                                                                stack.replace({
-                                                                    path: '#newnote',
-                                                                    hidePrior: false,
-                                                                    config: () => components.modalCloseBackground({
-                                                                        child: {
-                                                                            ...styles.modal(),
-                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                            children: [
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.column('start', 'start', '0.5rem'),
-                                                                                    children: [
-                                                                                        {
-                                                                                            fontWeight: 600,
-                                                                                            text: 'Name'
-                                                                                        },
-                                                                                        () => ({
-                                                                                            id: 'new-note-name-hint',
-                                                                                            display: nameValid ? 'none' : 'block',
-                                                                                            fontWeight: 500,
-                                                                                            color: c(colorsBase.danger, 11),
-                                                                                            text: 'Required'
-                                                                                        }),
-                                                                                        components.inputs.text({
-                                                                                            id: 'new-note-name-input',
-                                                                                            maxlength: '64'
-                                                                                        }),
-                                                                                    ]
-                                                                                },
-                                                                                {
-                                                                                    width: '100%',
-                                                                                    ...layouts.row('end'),
-                                                                                    children: [
-                                                                                        components.buttons.formPrimary({
-                                                                                            palette: 'blue',
-                                                                                            text: 'Create',
-                                                                                            onclick: async function (event) {
-                                                                                                nameValid = true;
-                                                                                                if (!this.layer.widgets['new-note-name-input'].domElement.value?.trim()) {
-                                                                                                    nameValid = false;
-                                                                                                }
-                                                                                                this.layer.widgets['new-note-name-hint'].update();
-                                                                                                if (!nameValid) {
-                                                                                                    return;
-                                                                                                }
-                                                                                                const name = this.layer.widgets['new-note-name-input'].domElement.value.trim();
-                                                                                                await stack.pop();
-                                                                                                treeUpdating = true;
-                                                                                                pageLayer.widgets['blocker-loading'].update();
-                                                                                                try {
-                                                                                                    const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                                                                    await runTransaction(firebase.firestore, async (transaction) => {
-                                                                                                        const notebookDoc = await transaction.get(notebookDocRef);
-                                                                                                        if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
-                                                                                                            const nameEncrypted = await encrypt(key, textEncoder.encode(name));
-                                                                                                            transaction.update(notebookDocRef, {
-                                                                                                                timestamp: serverTimestamp(),
-                                                                                                                [`tree.${generateTreeId()}`]: { type: 'note', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
-                                                                                                            });
-                                                                                                        }
-                                                                                                        else {
-                                                                                                            error = 'outofsync';
-                                                                                                            pageLayer.widgets['blocker-error'].update();
-                                                                                                        }
-                                                                                                    });
-                                                                                                    treeUpdating = false;
-                                                                                                } catch (e) {
-                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                        error = 'network';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
-                                                                                                    } else {
-                                                                                                        console.error(e);
-                                                                                                        error = true;
+                                                                                        }
+                                                                                    })
+                                                                                ]
+                                                                            },
+                                                                        ]
+                                                                    }
+                                                                })
+                                                            });
+                                                        }
+                                                    }),
+                                                    components.buttons.menu({
+                                                        text: 'New Note',
+                                                        onclick: function (event) {
+                                                            let nameValid = true;
+                                                            stack.replace({
+                                                                path: '#newnote',
+                                                                hidePrior: false,
+                                                                config: () => components.modalCloseBackground({
+                                                                    child: {
+                                                                        ...styles.modal(),
+                                                                        ...layouts.column('start', 'start', '1rem'),
+                                                                        children: [
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                                                children: [
+                                                                                    {
+                                                                                        fontWeight: 600,
+                                                                                        text: 'Name'
+                                                                                    },
+                                                                                    () => ({
+                                                                                        id: 'new-note-name-hint',
+                                                                                        display: nameValid ? 'none' : 'block',
+                                                                                        fontWeight: 500,
+                                                                                        color: c(colorsBase.danger, 11),
+                                                                                        text: 'Required'
+                                                                                    }),
+                                                                                    components.inputs.text({
+                                                                                        id: 'new-note-name-input',
+                                                                                        maxlength: '64'
+                                                                                    }),
+                                                                                ]
+                                                                            },
+                                                                            {
+                                                                                width: '100%',
+                                                                                ...layouts.row('end'),
+                                                                                children: [
+                                                                                    components.buttons.formPrimary({
+                                                                                        palette: 'blue',
+                                                                                        text: 'Create',
+                                                                                        onclick: async function (event) {
+                                                                                            nameValid = true;
+                                                                                            if (!this.layer.widgets['new-note-name-input'].domElement.value?.trim()) {
+                                                                                                nameValid = false;
+                                                                                            }
+                                                                                            this.layer.widgets['new-note-name-hint'].update();
+                                                                                            if (!nameValid) {
+                                                                                                return;
+                                                                                            }
+                                                                                            const name = this.layer.widgets['new-note-name-input'].domElement.value.trim();
+                                                                                            await stack.pop();
+                                                                                            treeUpdating = true;
+                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            try {
+                                                                                                const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                                                                await runTransaction(firebase.firestore, async (transaction) => {
+                                                                                                    const notebookDoc = await transaction.get(notebookDocRef);
+                                                                                                    if (notebookDoc.data().timestamp.toMillis() === notebookTimestamp) {
+                                                                                                        const nameEncrypted = await encrypt(key, textEncoder.encode(name));
+                                                                                                        transaction.update(notebookDocRef, {
+                                                                                                            timestamp: serverTimestamp(),
+                                                                                                            [`tree.${generateTreeId()}`]: { type: 'note', parent: folderId, order: children.length, name: { iv: Bytes.fromUint8Array(nameEncrypted.iv), data: Bytes.fromUint8Array(nameEncrypted.data) } },
+                                                                                                        });
+                                                                                                    }
+                                                                                                    else {
+                                                                                                        error = 'outofsync';
                                                                                                         pageLayer.widgets['blocker-error'].update();
                                                                                                     }
+                                                                                                });
+                                                                                                treeUpdating = false;
+                                                                                            } catch (e) {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                    error = 'network';
+                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                } else {
+                                                                                                    console.error(e);
+                                                                                                    error = true;
+                                                                                                    pageLayer.widgets['blocker-error'].update();
                                                                                                 }
                                                                                             }
-                                                                                        })
-                                                                                    ]
-                                                                                },
-                                                                            ]
-                                                                        }
-                                                                    })
-                                                                });
-                                                            }
-                                                        })
-                                                    ]
-                                                })
+                                                                                        }
+                                                                                    })
+                                                                                ]
+                                                                            },
+                                                                        ]
+                                                                    }
+                                                                })
+                                                            });
+                                                        }
+                                                    })
+                                                ]
                                             })
                                         });
                                     }
@@ -1586,7 +1578,7 @@ const pages = {
                     () => components.header({
                         id: 'header',
                         leading: components.button({
-                            backgroundHoverColor: colors.background(3),
+                            backgroundHoverColor: colors.background1(3),
                             href: '/',
                             child: components.icon({
                                 ligature: 'home'
@@ -1644,25 +1636,21 @@ const pages = {
                                                 stack.push({
                                                     path: '#invalid',
                                                     hidePrior: false,
-                                                    config: () => components.modalCloseBackground({
-                                                        child: components.modal.prompt({
-                                                            palette: 'red',
-                                                            title: 'Invalid',
-                                                            description: 'Maximum 8 files, 1GB total'
-                                                        })
+                                                    config: () => components.modals.prompt({
+                                                        palette: 'red',
+                                                        title: 'Invalid',
+                                                        description: 'Maximum 8 files, 1GB total'
                                                     })
                                                 });
                                             } else if (notebook.quotas?.storage?.used + sizeTotal > 10737418240) {
                                                 stack.push({
                                                     path: '#invalid',
                                                     hidePrior: false,
-                                                    config: () => components.modalCloseBackground({
-                                                        child: components.modal.prompt({
-                                                            palette: 'red',
-                                                            title: 'Invalid',
-                                                            description: '10 GB limit reached. Delete existing files to free up space.',
-                                                            note: 'Limit update could take up to 24 hours.'
-                                                        })
+                                                    config: () => components.modals.prompt({
+                                                        palette: 'red',
+                                                        title: 'Invalid',
+                                                        description: '10 GB limit reached. Delete existing files to free up space.',
+                                                        note: 'Limit update could take up to 24 hours.'
                                                     })
                                                 });
                                             } else {
@@ -1685,258 +1673,254 @@ const pages = {
                                                 stack.push({
                                                     path: '#attach',
                                                     hidePrior: false,
-                                                    config: () => components.modalCloseBackground({
-                                                        child: components.modals.menu({
-                                                            buttons: [
-                                                                components.buttons.menu({
-                                                                    disabled: uploads[noteId],
-                                                                    text: 'Files',
-                                                                    onclick: async function (event) {
-                                                                        await stack.pop();
-                                                                        stack.at(-1).widgets['files-input'].domElement.click();
+                                                    config: () => components.modals.menu({
+                                                        buttons: [
+                                                            components.buttons.menu({
+                                                                disabled: uploads[noteId],
+                                                                text: 'Files',
+                                                                onclick: async function (event) {
+                                                                    await stack.pop();
+                                                                    stack.at(-1).widgets['files-input'].domElement.click();
+                                                                }
+                                                            }),
+                                                            components.buttons.menu({
+                                                                text: 'Paragraph',
+                                                                onclick: function (event) {
+                                                                    function attachParagraphFolder(targetFolderId) {
+                                                                        return {
+                                                                            path: `#attach-${targetFolderId}`,
+                                                                            config: () => {
+                                                                                const children = Object.keys(tree).filter(id => id !== noteId && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                                return {
+                                                                                    ...layouts.base('start', 'center'),
+                                                                                    children: [
+                                                                                        components.header({
+                                                                                            title: 'Attach Paragraph',
+                                                                                        }),
+                                                                                        {
+                                                                                            flexGrow: 1,
+                                                                                            width: 'min(640px, 100% - 1rem)',
+                                                                                            padding: '1rem 0',
+                                                                                            ...layouts.column('center', 'center', '1rem'),
+                                                                                            children: children.map(cid => components.buttons.menu({
+                                                                                                size: 'l',
+                                                                                                text: tree[cid]['name'],
+                                                                                                onclick: function (event) {
+                                                                                                    if (tree[cid].type === 'folder') {
+                                                                                                        stack.push(attachParagraphFolder(cid));
+                                                                                                    } else {
+                                                                                                        stack.push(attachParagraphNote(cid));
+                                                                                                    }
+                                                                                                },
+                                                                                            }))
+                                                                                        }
+                                                                                    ]
+                                                                                };
+                                                                            }
+                                                                        };
                                                                     }
-                                                                }),
-                                                                components.buttons.menu({
-                                                                    text: 'Paragraph',
-                                                                    onclick: function (event) {
-                                                                        function attachParagraphFolder(targetFolderId) {
-                                                                            return {
-                                                                                path: `#attach-${targetFolderId}`,
-                                                                                config: () => {
-                                                                                    const children = Object.keys(tree).filter(id => id !== noteId && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                                                                                    return {
-                                                                                        ...layouts.base('start', 'center'),
-                                                                                        children: [
-                                                                                            components.header({
-                                                                                                title: 'Attach Paragraph',
-                                                                                            }),
-                                                                                            {
-                                                                                                flexGrow: 1,
-                                                                                                width: 'min(640px, 100% - 1rem)',
-                                                                                                padding: '1rem 0',
-                                                                                                ...layouts.column('center', 'center', '1rem'),
-                                                                                                children: children.map(cid => components.buttons.menu({
-                                                                                                    size: 'l',
-                                                                                                    text: tree[cid]['name'],
-                                                                                                    onclick: function (event) {
-                                                                                                        if (tree[cid].type === 'folder') {
-                                                                                                            stack.push(attachParagraphFolder(cid));
-                                                                                                        } else {
-                                                                                                            stack.push(attachParagraphNote(cid));
-                                                                                                        }
-                                                                                                    },
-                                                                                                }))
+                                                                    function attachParagraphNote(targetNoteId) {
+                                                                        const paragraphs = [];
+                                                                        let filterParagraphQuery;
+                                                                        let stopListenParagraphs;
+                                                                        return {
+                                                                            path: `#attach-${targetNoteId}`,
+                                                                            onPush: function () {
+                                                                                stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
+                                                                                    async (querySnapshot) => {
+                                                                                        paragraphs.length = 0;
+                                                                                        for (const docSnap of querySnapshot.docs) {
+                                                                                            const docData = docSnap.data();
+                                                                                            if (!docData.notes.includes(noteId)) {
+                                                                                                paragraphs.push({
+                                                                                                    id: docSnap.id,
+                                                                                                    timestamp: docData.timestamp,
+                                                                                                    notes: docData.notes,
+                                                                                                    color: docData.color,
+                                                                                                    text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
+                                                                                                    files: docData.files ? await Promise.all(docData.files.map(async (f) => ({
+                                                                                                        id: f.id,
+                                                                                                        size: f.size,
+                                                                                                        type: f.type,
+                                                                                                        lastModified: f.lastModified,
+                                                                                                        name: textDecoder.decode(await decrypt(key, f.name.iv.toUint8Array(), f.name.data.toUint8Array())),
+                                                                                                        iv: f.iv.toUint8Array()
+                                                                                                    }))) : undefined
+                                                                                                });
                                                                                             }
-                                                                                        ]
-                                                                                    };
-                                                                                }
-                                                                            };
-                                                                        }
-                                                                        function attachParagraphNote(targetNoteId) {
-                                                                            const paragraphs = [];
-                                                                            let filterParagraphQuery;
-                                                                            let stopListenParagraphs;
-                                                                            return {
-                                                                                path: `#attach-${targetNoteId}`,
-                                                                                onPush: function () {
-                                                                                    stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
-                                                                                        async (querySnapshot) => {
-                                                                                            paragraphs.length = 0;
-                                                                                            for (const docSnap of querySnapshot.docs) {
-                                                                                                const docData = docSnap.data();
-                                                                                                if (!docData.notes.includes(noteId)) {
-                                                                                                    paragraphs.push({
-                                                                                                        id: docSnap.id,
-                                                                                                        timestamp: docData.timestamp,
-                                                                                                        notes: docData.notes,
-                                                                                                        color: docData.color,
-                                                                                                        text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
-                                                                                                        files: docData.files ? await Promise.all(docData.files.map(async (f) => ({
-                                                                                                            id: f.id,
-                                                                                                            size: f.size,
-                                                                                                            type: f.type,
-                                                                                                            lastModified: f.lastModified,
-                                                                                                            name: textDecoder.decode(await decrypt(key, f.name.iv.toUint8Array(), f.name.data.toUint8Array())),
-                                                                                                            iv: f.iv.toUint8Array()
-                                                                                                        }))) : undefined
+                                                                                        }
+                                                                                        this.widgets['paragraphs'].update();
+                                                                                    }
+                                                                                );
+                                                                            },
+                                                                            onPop: function () {
+                                                                                stopListenParagraphs();
+                                                                            },
+                                                                            config: () => {
+                                                                                return {
+                                                                                    ...layouts.base('start', 'center'),
+                                                                                    children: [
+                                                                                        components.header({
+                                                                                            title: tree[targetNoteId].name,
+                                                                                        }),
+                                                                                        {
+                                                                                            width: 'min(640px, 100% - 1rem)',
+                                                                                            padding: '1rem 0',
+                                                                                            ...layouts.column('start', 'start', '1rem'),
+                                                                                            children: [
+                                                                                                () => ({
+                                                                                                    id: 'filter-paragraphs',
+                                                                                                    width: '100%',
+                                                                                                    padding: '0 0.25rem 0 0.5rem',
+                                                                                                    border: `1px solid ${colors.foreground2(4)}`,
+                                                                                                    borderRadius: '0.5rem',
+                                                                                                    ...layouts.row('start', 'center'),
+                                                                                                    children: [
+                                                                                                        components.icon({
+                                                                                                            ligature: 'search'
+                                                                                                        }),
+                                                                                                        {
+                                                                                                            tag: 'input',
+                                                                                                            flexGrow: 1,
+                                                                                                            ...styles.input(),
+                                                                                                            border: 'none',
+                                                                                                            type: 'text',
+                                                                                                            value: filterParagraphQuery,
+                                                                                                            oninput: function (event) {
+                                                                                                                filterParagraphQuery = event.target.value;
+                                                                                                                this.layer.widgets['paragraphs'].update();
+                                                                                                            },
+                                                                                                        },
+                                                                                                        components.button({
+                                                                                                            backgroundHoverColor: colors.background1(2),
+                                                                                                            padding: '0.25rem',
+                                                                                                            child: components.icon({
+                                                                                                                ligature: 'close'
+                                                                                                            }),
+                                                                                                            onclick: function (event) {
+                                                                                                                filterParagraphQuery = undefined;
+                                                                                                                this.layer.widgets['filter-paragraphs'].update();
+                                                                                                                this.layer.widgets['paragraphs'].update();
+                                                                                                            }
+                                                                                                        }),
+                                                                                                    ]
+                                                                                                }),
+                                                                                                () => {
+                                                                                                    return ({
+                                                                                                        id: 'paragraphs',
+                                                                                                        width: '100%',
+                                                                                                        ...layouts.column('start', 'start', '1rem'),
+                                                                                                        children: paragraphs.filter(p => {
+                                                                                                            if (!filterParagraphQuery) {
+                                                                                                                return true;
+                                                                                                            }
+                                                                                                            if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                                                                                return true;
+                                                                                                            }
+                                                                                                            for (const file of p.files || []) {
+                                                                                                                if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                                                                                    return true;
+                                                                                                                }
+                                                                                                            }
+                                                                                                            return false;
+                                                                                                        }).map((paragraph, index) => ({
+                                                                                                            id: `paragraph-${paragraph.id}`,
+                                                                                                            width: '100%',
+                                                                                                            padding: '0.5rem',
+                                                                                                            border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground2(4)}`,
+                                                                                                            borderRadius: '0.5rem',
+                                                                                                            backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background1(),
+                                                                                                            color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground2(),
+                                                                                                            ...styles.unselectable(),
+                                                                                                            cursor: 'pointer',
+                                                                                                            ...handlers.hover({
+                                                                                                                backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                                                            }),
+                                                                                                            ...handlers.button(function (event) {
+                                                                                                                stack.push({
+                                                                                                                    path: '#confirm',
+                                                                                                                    hidePrior: false,
+                                                                                                                    config: () => components.modals.prompt({
+                                                                                                                        title: 'Attach Paragraph',
+                                                                                                                        description: 'Are you sure?',
+                                                                                                                        buttons: [
+                                                                                                                            components.buttons.formPrimary({
+                                                                                                                                palette: 'blue',
+                                                                                                                                text: 'Attach',
+                                                                                                                                onclick: async function (event) {
+                                                                                                                                    let steps = 0;
+                                                                                                                                    for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                                                        if (stack.at(i) === pageLayer) {
+                                                                                                                                            break;
+                                                                                                                                        }
+                                                                                                                                        steps += 1;
+                                                                                                                                    }
+                                                                                                                                    await stack.pop(steps);
+                                                                                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                                        notes: arrayUnion(noteId),
+                                                                                                                                    });
+                                                                                                                                }
+                                                                                                                            })
+                                                                                                                        ]
+                                                                                                                    })
+                                                                                                                });
+                                                                                                            }),
+                                                                                                            ...layouts.column('start', 'start', '1rem'),
+                                                                                                            children: [
+                                                                                                                paragraph.text ? {
+                                                                                                                    width: '100%',
+                                                                                                                    whiteSpace: 'pre-wrap',
+                                                                                                                    wordBreak: 'break-word',
+                                                                                                                    text: paragraph.text
+                                                                                                                } : null,
+                                                                                                                paragraph.files ? {
+                                                                                                                    width: '100%',
+                                                                                                                    ...layouts.column('start', 'start', '0.5rem'),
+                                                                                                                    children: paragraph.files.map(f => ({
+                                                                                                                        width: '100%',
+                                                                                                                        padding: '0.5rem',
+                                                                                                                        borderRadius: '0.5rem',
+                                                                                                                        backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                                                                        fontWeight: 600,
+                                                                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground2(2),
+                                                                                                                        ...styles.unselectable(),
+                                                                                                                        whiteSpace: 'nowrap',
+                                                                                                                        overflow: 'hidden',
+                                                                                                                        textOverflow: 'ellipsis',
+                                                                                                                        text: f.name
+                                                                                                                    }))
+                                                                                                                } : null,
+                                                                                                                {
+                                                                                                                    width: '100%',
+                                                                                                                    ...layouts.row('space-between', 'center', '1rem'),
+                                                                                                                    children: [
+                                                                                                                        {
+                                                                                                                            fontSize: '0.875rem',
+                                                                                                                            color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground2(3),
+                                                                                                                            ...styles.unselectable(),
+                                                                                                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                                                                        },
+                                                                                                                        {
+                                                                                                                            ...layouts.row(),
+                                                                                                                            children: null
+                                                                                                                        }
+                                                                                                                    ]
+                                                                                                                }
+                                                                                                            ]
+                                                                                                        }))
                                                                                                     });
                                                                                                 }
-                                                                                            }
-                                                                                            this.widgets['paragraphs'].update();
+                                                                                            ]
                                                                                         }
-                                                                                    );
-                                                                                },
-                                                                                onPop: function () {
-                                                                                    stopListenParagraphs();
-                                                                                },
-                                                                                config: () => {
-                                                                                    return {
-                                                                                        ...layouts.base('start', 'center'),
-                                                                                        children: [
-                                                                                            components.header({
-                                                                                                title: tree[targetNoteId].name,
-                                                                                            }),
-                                                                                            {
-                                                                                                width: 'min(640px, 100% - 1rem)',
-                                                                                                padding: '1rem 0',
-                                                                                                ...layouts.column('start', 'start', '1rem'),
-                                                                                                children: [
-                                                                                                    () => ({
-                                                                                                        id: 'filter-paragraphs',
-                                                                                                        width: '100%',
-                                                                                                        padding: '0 0.25rem 0 0.5rem',
-                                                                                                        border: `1px solid ${colors.foreground(4)}`,
-                                                                                                        borderRadius: '0.5rem',
-                                                                                                        ...layouts.row('start', 'center'),
-                                                                                                        children: [
-                                                                                                            components.icon({
-                                                                                                                ligature: 'search'
-                                                                                                            }),
-                                                                                                            {
-                                                                                                                tag: 'input',
-                                                                                                                flexGrow: 1,
-                                                                                                                ...styles.input(),
-                                                                                                                border: 'none',
-                                                                                                                type: 'text',
-                                                                                                                value: filterParagraphQuery,
-                                                                                                                oninput: function (event) {
-                                                                                                                    filterParagraphQuery = event.target.value;
-                                                                                                                    this.layer.widgets['paragraphs'].update();
-                                                                                                                },
-                                                                                                            },
-                                                                                                            components.button({
-                                                                                                                backgroundHoverColor: colors.background(2),
-                                                                                                                padding: '0.25rem',
-                                                                                                                child: components.icon({
-                                                                                                                    ligature: 'close'
-                                                                                                                }),
-                                                                                                                onclick: function (event) {
-                                                                                                                    filterParagraphQuery = undefined;
-                                                                                                                    this.layer.widgets['filter-paragraphs'].update();
-                                                                                                                    this.layer.widgets['paragraphs'].update();
-                                                                                                                }
-                                                                                                            }),
-                                                                                                        ]
-                                                                                                    }),
-                                                                                                    () => {
-                                                                                                        return ({
-                                                                                                            id: 'paragraphs',
-                                                                                                            width: '100%',
-                                                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                                                            children: paragraphs.filter(p => {
-                                                                                                                if (!filterParagraphQuery) {
-                                                                                                                    return true;
-                                                                                                                }
-                                                                                                                if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                                                                                                    return true;
-                                                                                                                }
-                                                                                                                for (const file of p.files || []) {
-                                                                                                                    if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                                                                                                        return true;
-                                                                                                                    }
-                                                                                                                }
-                                                                                                                return false;
-                                                                                                            }).map((paragraph, index) => ({
-                                                                                                                id: `paragraph-${paragraph.id}`,
-                                                                                                                width: '100%',
-                                                                                                                padding: '0.5rem',
-                                                                                                                border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground(4)}`,
-                                                                                                                borderRadius: '0.5rem',
-                                                                                                                backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background(),
-                                                                                                                color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground(),
-                                                                                                                ...styles.unselectable(),
-                                                                                                                cursor: 'pointer',
-                                                                                                                ...handlers.hover({
-                                                                                                                    backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
-                                                                                                                }),
-                                                                                                                ...handlers.button(function (event) {
-                                                                                                                    stack.push({
-                                                                                                                        path: '#confirm',
-                                                                                                                        hidePrior: false,
-                                                                                                                        config: () => components.modalCloseBackground({
-                                                                                                                            child: components.modal.prompt({
-                                                                                                                                title: 'Attach Paragraph',
-                                                                                                                                description: 'Are you sure?',
-                                                                                                                                buttons: [
-                                                                                                                                    components.buttons.formPrimary({
-                                                                                                                                        palette: 'blue',
-                                                                                                                                        text: 'Attach',
-                                                                                                                                        onclick: async function (event) {
-                                                                                                                                            let steps = 0;
-                                                                                                                                            for (let i = stack.length - 1; i > 0; i--) {
-                                                                                                                                                if (stack.at(i) === pageLayer) {
-                                                                                                                                                    break;
-                                                                                                                                                }
-                                                                                                                                                steps += 1;
-                                                                                                                                            }
-                                                                                                                                            await stack.pop(steps);
-                                                                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                                                notes: arrayUnion(noteId),
-                                                                                                                                            });
-                                                                                                                                        }
-                                                                                                                                    })
-                                                                                                                                ]
-                                                                                                                            })
-                                                                                                                        })
-                                                                                                                    });
-                                                                                                                }),
-                                                                                                                ...layouts.column('start', 'start', '1rem'),
-                                                                                                                children: [
-                                                                                                                    paragraph.text ? {
-                                                                                                                        width: '100%',
-                                                                                                                        whiteSpace: 'pre-wrap',
-                                                                                                                        wordBreak: 'break-word',
-                                                                                                                        text: paragraph.text
-                                                                                                                    } : null,
-                                                                                                                    paragraph.files ? {
-                                                                                                                        width: '100%',
-                                                                                                                        ...layouts.column('start', 'start', '0.5rem'),
-                                                                                                                        children: paragraph.files.map(f => ({
-                                                                                                                            width: '100%',
-                                                                                                                            padding: '0.5rem',
-                                                                                                                            borderRadius: '0.5rem',
-                                                                                                                            backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
-                                                                                                                            fontWeight: 600,
-                                                                                                                            color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground(2),
-                                                                                                                            ...styles.unselectable(),
-                                                                                                                            whiteSpace: 'nowrap',
-                                                                                                                            overflow: 'hidden',
-                                                                                                                            textOverflow: 'ellipsis',
-                                                                                                                            text: f.name
-                                                                                                                        }))
-                                                                                                                    } : null,
-                                                                                                                    {
-                                                                                                                        width: '100%',
-                                                                                                                        ...layouts.row('space-between', 'center', '1rem'),
-                                                                                                                        children: [
-                                                                                                                            {
-                                                                                                                                fontSize: '0.875rem',
-                                                                                                                                color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground(3),
-                                                                                                                                ...styles.unselectable(),
-                                                                                                                                text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                                                                                            },
-                                                                                                                            {
-                                                                                                                                ...layouts.row(),
-                                                                                                                                children: null
-                                                                                                                            }
-                                                                                                                        ]
-                                                                                                                    }
-                                                                                                                ]
-                                                                                                            }))
-                                                                                                        });
-                                                                                                    }
-                                                                                                ]
-                                                                                            }
-                                                                                        ]
-                                                                                    };
-                                                                                }
-                                                                            };
-                                                                        }
-                                                                        stack.replace(attachParagraphFolder('root'));
+                                                                                    ]
+                                                                                };
+                                                                            }
+                                                                        };
                                                                     }
-                                                                }),
-                                                            ]
-                                                        })
+                                                                    stack.replace(attachParagraphFolder('root'));
+                                                                }
+                                                            }),
+                                                        ]
                                                     })
                                                 });
                                             }
@@ -2053,13 +2037,13 @@ const pages = {
                                     id: `file-upload-${fu.id}`,
                                     width: '100%',
                                     height: '1rem',
-                                    backgroundColor: colors.background(2),
+                                    backgroundColor: colors.background1(2),
                                     ...layouts.row(),
                                     children: [
                                         {
                                             width: `max(5%, ${fu.completed}%)`,
                                             height: '100%',
-                                            backgroundColor: colors.background(3)
+                                            backgroundColor: colors.background1(3)
                                         }
                                     ]
                                 }))
@@ -2068,7 +2052,7 @@ const pages = {
                                 id: 'filter-paragraphs',
                                 width: '100%',
                                 padding: '0 0.25rem 0 0.5rem',
-                                border: `1px solid ${colors.foreground(4)}`,
+                                border: `1px solid ${colors.foreground2(4)}`,
                                 borderRadius: '0.5rem',
                                 ...layouts.row('start', 'center'),
                                 children: [
@@ -2088,7 +2072,7 @@ const pages = {
                                         },
                                     },
                                     components.button({
-                                        backgroundHoverColor: colors.background(2),
+                                        backgroundHoverColor: colors.background1(2),
                                         padding: '0.25rem',
                                         child: components.icon({
                                             ligature: 'close'
@@ -2185,10 +2169,10 @@ const pages = {
                                         id: `paragraph-${paragraph.id}`,
                                         width: '100%',
                                         padding: '0.5rem',
-                                        border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground(4)}`,
+                                        border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground2(4)}`,
                                         borderRadius: '0.5rem',
-                                        backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background(),
-                                        color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground(),
+                                        backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background1(),
+                                        color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground2(),
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
                                             paragraph.text ? {
@@ -2204,13 +2188,13 @@ const pages = {
                                                     width: '100%',
                                                     padding: '0.25rem 0.25rem 0.25rem 0.5rem',
                                                     borderRadius: '0.5rem',
-                                                    backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
+                                                    backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
                                                     ...layouts.row('space-between', 'center'),
                                                     children: [
                                                         {
                                                             minWidth: 0,
                                                             fontWeight: 600,
-                                                            color: paragraph.color ? colors.foreground(paragraph.color) : colors.foreground(2),
+                                                            color: paragraph.color ? colors.foreground2(paragraph.color) : colors.foreground2(2),
                                                             ...styles.unselectable(),
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
@@ -2222,9 +2206,9 @@ const pages = {
                                                             ...layouts.row('start', 'center'),
                                                             children: [
                                                                 !downloads[f.id] ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                         ligature: 'cloud_download'
                                                                     }),
                                                                     onclick: async function (event) {
@@ -2263,12 +2247,12 @@ const pages = {
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
                                                                     padding: '0.5rem',
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2290,9 +2274,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2319,9 +2303,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2351,9 +2335,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 downloads[f.id]?.status === 'ready' ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background(3),
+                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2388,7 +2372,7 @@ const pages = {
                                                 children: [
                                                     {
                                                         fontSize: '0.875rem',
-                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground(3),
+                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground2(3),
                                                         ...styles.unselectable(),
                                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                     },
@@ -2396,9 +2380,9 @@ const pages = {
                                                         ...layouts.row(),
                                                         children: [
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                     ligature: 'content_copy',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2406,9 +2390,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                     ligature: 'palette',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2434,11 +2418,11 @@ const pages = {
                                                                                         children: [undefined, 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => components.button({
                                                                                             padding: '0.25rem',
                                                                                             borderRadius: '2rem',
-                                                                                            backgroundColor: color ? colors.backgroundColored(color, 2) : colors.background(2),
-                                                                                            backgroundHoverColor: color ? colors.backgroundColored(color, 3) : colors.background(3),
+                                                                                            backgroundColor: color ? colors.backgroundColored(color, 2) : colors.background1(2),
+                                                                                            backgroundHoverColor: color ? colors.backgroundColored(color, 3) : colors.background1(3),
                                                                                             child: components.icon({
                                                                                                 fontSize: '2.5rem',
-                                                                                                color: color ? colors.foregroundColored(color) : colors.foreground(2),
+                                                                                                color: color ? colors.foregroundColored(color) : colors.foreground2(2),
                                                                                                 ligature: 'circle',
                                                                                             }),
                                                                                             onclick: async function (event) {
@@ -2457,9 +2441,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                     ligature: 'edit',
                                                                 }),
                                                                 disabled: editParagraphId,
@@ -2474,36 +2458,34 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background(2),
+                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground(2),
+                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
                                                                     ligature: 'delete',
                                                                 }),
                                                                 onclick: function (event) {
                                                                     stack.push({
                                                                         path: '#delete',
                                                                         hidePrior: false,
-                                                                        config: () => components.modalCloseBackground({
-                                                                            child: components.modal.prompt({
-                                                                                title: 'Delete',
-                                                                                description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
-                                                                                buttons: [
-                                                                                    components.buttons.formPrimary({
-                                                                                        palette: 'red',
-                                                                                        text: 'Delete',
-                                                                                        onclick: function (event) {
-                                                                                            stack.pop();
-                                                                                            if (paragraph.notes.length > 1) {
-                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                    notes: arrayRemove(noteId),
-                                                                                                });
-                                                                                            } else {
-                                                                                                deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
-                                                                                            }
+                                                                        config: () => components.modals.prompt({
+                                                                            title: 'Delete',
+                                                                            description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
+                                                                            buttons: [
+                                                                                components.buttons.formPrimary({
+                                                                                    palette: 'red',
+                                                                                    text: 'Delete',
+                                                                                    onclick: function (event) {
+                                                                                        stack.pop();
+                                                                                        if (paragraph.notes.length > 1) {
+                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                notes: arrayRemove(noteId),
+                                                                                            });
+                                                                                        } else {
+                                                                                            deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
                                                                                         }
-                                                                                    })
-                                                                                ]
-                                                                            })
+                                                                                    }
+                                                                                })
+                                                                            ]
                                                                         })
                                                                     });
                                                                 }
@@ -2518,15 +2500,15 @@ const pages = {
                                         width: '100%',
                                         height: '2.5rem',
                                         padding: '0 0.75rem',
-                                        backgroundColor: colors.background(2),
-                                        backgroundHoverColor: colors.background(3),
+                                        backgroundColor: colors.background1(2),
+                                        backgroundHoverColor: colors.background1(3),
                                         onclick: function (event) {
                                             limitParagraphs = false;
                                             this.layer.widgets['paragraphs'].update();
                                         },
                                         child: {
                                             fontWeight: 600,
-                                            color: colors.foreground(2),
+                                            color: colors.foreground2(2),
                                             text: 'More'
                                         }
                                     }) : null]
