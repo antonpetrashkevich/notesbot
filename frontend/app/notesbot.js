@@ -1,7 +1,7 @@
 import Argon2Worker from './workers/argon2.js?worker';
 
-import { colors as baseColors, components as baseComponents, handlers as baseHandlers, layouts as baseLayouts, styles as baseStyles } from '/home/n1/projects/xpl_kit/commons';
-import { appName, darkMode, smallViewport, stack, startApp, startThemeController, startViewportSizeController, updateBodyStyle, updateMetaTags, utils } from '/home/n1/projects/xpl_kit/core.js';
+import { colorsBase, setColorsBase, c, colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/commons';
+import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
 
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -12,7 +12,6 @@ import { getBytes, getStorage, ref, uploadBytesResumable } from "firebase/storag
 // https://developers.google.com/fonts/docs/material_symbols
 // https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined
 import materialFontUrl from './material_symbols_outlined_default.woff2';
-
 
 const firebaseConfig = {
     apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
@@ -189,11 +188,12 @@ export async function init() {
     firebase.storage = getStorage(firebase.app);
     // firebase.analytics = getAnalytics(firebase.app);
 
+    setColorsBase('gray');
     startApp('XPL');
     startViewportSizeController();
     startThemeController(function () {
         updateMetaTags({
-            'theme-color': colors.metaTheme()
+            'theme-color': colors.backgroundPanel()
         });
         updateBodyStyle({
             backgroundColor: colors.background(),
@@ -201,7 +201,7 @@ export async function init() {
         });
     });
     updateMetaTags({
-        'theme-color': colors.metaTheme()
+        'theme-color': colors.backgroundPanel()
     });
     updateBodyStyle({
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
@@ -285,208 +285,27 @@ function startListenNotebook() {
         });
 }
 
-export const colors = {
-    ...baseColors,
+const colors = {
+    ...baseColors
 }
 
-export const styles = {
-    ...baseStyles,
+const styles = {
+    ...baseStyles
 }
 
-export const layouts = {
-    ...baseLayouts,
+const handlers = {
+    ...baseHandlers
 }
 
-export const handlers = {
-    ...baseHandlers,
+const layouts = {
+    ...baseLayouts
 }
 
-export const components = {
-    ...baseComponents,
-    icon: ({ id, fontSize = '1.25rem', color = colors.foreground(2), ligature } = {}) => ({
-        id,
-        fontFamily: 'material',
-        fontSize,
-        lineHeight: 1,
-        fontWeight: 400,
-        color,
-        webkitFontFeatureSettings: 'liga',
-        webkitFontSmoothing: 'antialiased',
-        ...styles.unselectable(),
-        text: ligature
-    }),
-    buttons: {
-        formPrimary: ({ id, palette = 'blue', smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button({
-            id,
-            minWidth: '6rem',
-            height: '2.5rem',
-            flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
-            flexBasis: smallViewportGrow && smallViewport ? 0 : undefined,
-            padding: '0 0.75rem',
-            backgroundColor: colors.raw[palette](600),
-            backgroundHoverColor: colors.raw[palette](700),
-            disabled,
-            href,
-            onclick,
-            child: {
-                ...layouts.row('center', 'center', '0.5rem'),
-                children: [
-                    ligature ? components.icon({
-                        color: 'white',
-                        ligature
-                    }) : null,
-                    text ? {
-                        fontWeight: 600,
-                        color: 'white',
-                        whiteSpace: 'nowrap',
-                        text
-                    } : null
-                ]
-            },
-        }),
-        formSecondary: ({ id, smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => components.button({
-            id,
-            minWidth: '6rem',
-            height: '2.5rem',
-            flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
-            flexBasis: smallViewportGrow && smallViewport ? 0 : undefined,
-            padding: '0 0.75rem',
-            backgroundColor: colors.background(2),
-            backgroundHoverColor: colors.background(3),
-            disabled,
-            href,
-            onclick,
-            child: {
-                ...layouts.row('center', 'center', '0.5rem'),
-                children: [
-                    ligature ? components.icon({
-                        ligature
-                    }) : null,
-                    text ? {
-                        fontWeight: 600,
-                        color: colors.foreground(2),
-                        whiteSpace: 'nowrap',
-                        text
-                    } : null
-                ]
-            },
-        }),
-        menu: ({ id, palette, size = 'm', wrap = false, borderRadius = '0.5rem', disabled, href, onclick, oncontextmenu, justifyContent = 'center', ligature, text } = {}) => components.button({
-            id,
-            width: '100%',
-            padding: size === 's' ? '0.25rem' : size === 'm' ? '0.5rem' : '0.75rem',
-            borderRadius,
-            backgroundHoverColor: palette ? colors.backgroundColored(palette) : colors.background(2),
-            disabled,
-            href,
-            onclick,
-            oncontextmenu,
-            child: {
-                width: '100%',
-                ...layouts.row(justifyContent, 'center', '0.5rem'),
-                children: [
-                    ligature ? components.icon({
-                        fontSize: size === 's' ? '1rem' : size === 'm' ? '1.25rem' : '1.5rem',
-                        color: palette ? colors.foregroundColored(palette) : colors.foreground(),
-                        ligature
-                    }) : null,
-                    text ? {
-                        minWidth: wrap ? undefined : 0,
-                        fontSize: size === 's' ? '0.875rem' : size === 'm' ? '1rem' : '1.125rem',
-                        color: palette ? colors.foregroundColored(palette) : colors.foreground(),
-                        whiteSpace: wrap ? undefined : 'nowrap',
-                        overflow: wrap ? undefined : 'hidden',
-                        textOverflow: wrap ? undefined : 'ellipsis',
-                        text
-                    } : null
-                ]
-            },
-        })
-    },
-    blockers: {
-        loading: ({ toggled, text } = {}) => components.blocker({
-            id: 'blocker-loading',
-            toggled,
-            child: {
-                width: '100%',
-                height: '100%',
-                padding: '1rem',
-                ...layouts.column('center', 'center', '2rem'),
-                children: [
-                    components.animations.spinner({
-                        width: '8vh',
-                        height: '8vh'
-                    }),
-                    text ? {
-                        text
-                    } : null
-                ]
-            }
-        }),
-        error: ({ error } = {}) => {
-            let text;
-            switch (error) {
-                case 'network':
-                    text = 'Network error. Check your connection and try again.';
-                    break;
-                case 'outofsync':
-                    text = 'Out of sync. Reload the page and try again.';
-                    break;
-                default:
-                    text = 'Something went wrong. Try reloading the page.';
-                    break;
-            }
-            return components.blocker({
-                id: 'blocker-error',
-                toggled: error,
-                child: {
-                    width: '100%',
-                    height: '100%',
-                    padding: '1rem',
-                    ...layouts.column('center', 'center'),
-                    text
-                }
-            });
-        }
-    },
-    header: ({ id, padding = '0.5rem', borderBottom, backgroundColor = colors.background(2), color, onclick, leading, title, trailing } = {}) => ({
-        id,
-        position: 'sticky',
-        top: 0,
-        left: 0,
-        zIndex: 10,
-        width: '100%',
-        minHeight: '3.25rem',
-        padding,
-        borderBottom,
-        backgroundColor,
-        ...styles.unselectable(),
-        cursor: onclick ? 'pointer' : undefined,
-        ...handlers.button(onclick),
-        ...layouts.row('space-between', 'center', '1rem'),
-        children: [
-            {
-                minWidth: 0,
-                ...layouts.row('start', 'center', '0.5rem'),
-                children: [
-                    leading,
-                    {
-                        fontSize: '1.25rem',
-                        fontWeight: 600,
-                        color,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        text: title
-                    }
-                ]
-            },
-            trailing
-        ]
-    })
+const components = {
+    ...baseComponents
 }
 
-export const pages = {
+const pages = {
     init: (path = '') => ({
         path,
         meta: {
@@ -547,7 +366,7 @@ export const pages = {
                                 loggingIn = true;
                                 this.layer.widgets['blocker-loading'].update();
                                 signInWithPopup(firebase.auth, new GoogleAuthProvider());
-                            } catch (error) {
+                            } catch (e) {
                                 loggingIn = false;
                                 this.layer.widgets['blocker-loading'].update();
                             }
@@ -675,7 +494,7 @@ export const pages = {
                                                 id: 'keyphrase-hint',
                                                 display: keyphraseValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foregroundColored('red'),
+                                                color: c(colorsBase.danger, 11),
                                                 text: 'Required',
                                             }),
                                             components.inputs.password({
@@ -696,7 +515,7 @@ export const pages = {
                                                 id: 'keyphrase-repeat-hint',
                                                 display: keyphraseRepeatValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foregroundColored('red'),
+                                                color: c(colorsBase.danger, 11),
                                                 text: 'Invalid',
                                             }),
                                             components.inputs.password({
@@ -840,7 +659,7 @@ export const pages = {
                                         id: 'keyphrase-hint',
                                         display: keyphraseValid ? 'none' : 'block',
                                         fontWeight: 500,
-                                        color: colors.foregroundColored('red'),
+                                        color: c(colorsBase.danger, 11),
                                         text: 'Invalid'
                                     }),
                                     components.inputs.password({
@@ -960,7 +779,7 @@ export const pages = {
                         () => components.header({
                             id: 'header',
                             leading: folderId === 'root' ? null : components.button({
-                                backgroundHoverColor: colors.background(3),
+                                backgroundHoverColor: c(colorsBase.neutral, 3),
                                 href: '/',
                                 child: components.icon({
                                     ligature: 'home'
@@ -993,8 +812,8 @@ export const pages = {
                                         stack.push({
                                             path: '#menu',
                                             hidePrior: false,
-                                            config: () => components.modal.closeBackground({
-                                                child: components.modal.menu({
+                                            config: () => components.modalCloseBackground({
+                                                child: components.modals.menu({
                                                     buttons: [
                                                         tree[cid].order > 0 ? components.buttons.menu({
                                                             text: 'Move Up',
@@ -1154,7 +973,7 @@ export const pages = {
                                                                 stack.replace({
                                                                     path: '#rename',
                                                                     hidePrior: false,
-                                                                    config: () => components.modal.closeBackground({
+                                                                    config: () => components.modalCloseBackground({
                                                                         child: {
                                                                             ...styles.modal(),
                                                                             ...layouts.column('start', 'start', '1rem'),
@@ -1170,7 +989,7 @@ export const pages = {
                                                                                         id: 'new-folder-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: colors.foregroundColored('red'),
+                                                                                        color: c(colorsBase.danger, 11),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1243,7 +1062,7 @@ export const pages = {
                                                                 stack.replace({
                                                                     path: '#delete',
                                                                     hidePrior: false,
-                                                                    config: () => components.modal.closeBackground({
+                                                                    config: () => components.modalCloseBackground({
                                                                         child: components.modal.prompt({
                                                                             title: tree[cid].type === 'note' ? 'Delete note' : 'Delete folder',
                                                                             description: 'You won\'t be able to restore it.',
@@ -1310,8 +1129,8 @@ export const pages = {
                                     {
                                         padding: '0.5rem',
                                         borderRadius: '2rem',
-                                        backgroundColor: colors.background(2),
-                                        backgroundHoverColor: colors.background(3),
+                                        backgroundColor: c(colorsBase.neutral, 3),
+                                        backgroundHoverColor: c(colorsBase.neutral, 4),
                                         child: components.icon({
                                             fontSize: '2rem',
                                             ligature: 'menu'
@@ -1321,8 +1140,8 @@ export const pages = {
                                             stack.push({
                                                 path: '#menu',
                                                 hidePrior: false,
-                                                config: () => components.modal.closeBackground({
-                                                    child: components.modal.menu({
+                                                config: () => components.modalCloseBackground({
+                                                    child: components.modals.menu({
                                                         buttons: [
                                                             components.buttons.menu({
                                                                 text: 'Theme',
@@ -1330,7 +1149,7 @@ export const pages = {
                                                                     stack.replace({
                                                                         path: '#theme',
                                                                         hidePrior: false,
-                                                                        config: () => components.modal.closeBackground({
+                                                                        config: () => components.modalCloseBackground({
                                                                             child: {
                                                                                 ...styles.modal(),
                                                                                 ...layouts.column('start', 'start', '1rem'),
@@ -1346,7 +1165,7 @@ export const pages = {
                                                                                             ligature: 'radio_button_unchecked'
                                                                                         }),
                                                                                         iconTrue: components.icon({
-                                                                                            color: colors.foregroundColored('blue'),
+                                                                                            color: c('blue', 9),
                                                                                             ligature: 'radio_button_checked'
                                                                                         }),
                                                                                         text: 'System',
@@ -1365,7 +1184,7 @@ export const pages = {
                                                                                             ligature: 'radio_button_unchecked'
                                                                                         }),
                                                                                         iconTrue: components.icon({
-                                                                                            color: colors.foregroundColored('blue'),
+                                                                                            color: c('blue', 9),
                                                                                             ligature: 'radio_button_checked'
                                                                                         }),
                                                                                         text: 'Light',
@@ -1384,7 +1203,7 @@ export const pages = {
                                                                                             ligature: 'radio_button_unchecked'
                                                                                         }),
                                                                                         iconTrue: components.icon({
-                                                                                            color: colors.foregroundColored('blue'),
+                                                                                            color: c('blue', 9),
                                                                                             ligature: 'radio_button_checked'
                                                                                         }),
                                                                                         text: 'Dark',
@@ -1409,7 +1228,7 @@ export const pages = {
                                                                     stack.replace({
                                                                         path: '#delete',
                                                                         hidePrior: false,
-                                                                        config: () => components.modal.closeBackground({
+                                                                        config: () => components.modalCloseBackground({
                                                                             child: components.modal.prompt({
                                                                                 title: 'Delete account',
                                                                                 description: 'Are you sure?',
@@ -1483,11 +1302,11 @@ export const pages = {
                                     color: 'blue',
                                     padding: '0.5rem',
                                     borderRadius: '2rem',
-                                    backgroundColor: colors.backgroundColored('blue'),
-                                    backgroundHoverColor: colors.backgroundColored('blue', 2),
+                                    backgroundColor: c('blue', 3),
+                                    backgroundHoverColor: c('blue', 4),
                                     child: components.icon({
                                         fontSize: '2rem',
-                                        color: colors.foregroundColored('blue'),
+                                        color: c('blue', 9),
                                         ligature: 'add_2'
                                     }),
                                     onclick: function (event) {
@@ -1495,8 +1314,8 @@ export const pages = {
                                         stack.push({
                                             path: '#name',
                                             hidePrior: false,
-                                            config: () => components.modal.closeBackground({
-                                                child: components.modal.menu({
+                                            config: () => components.modalCloseBackground({
+                                                child: components.modals.menu({
                                                     buttons: [
                                                         components.buttons.menu({
                                                             text: 'New Folder',
@@ -1505,7 +1324,7 @@ export const pages = {
                                                                 stack.replace({
                                                                     path: '#newfolder',
                                                                     hidePrior: false,
-                                                                    config: () => components.modal.closeBackground({
+                                                                    config: () => components.modalCloseBackground({
                                                                         child: {
                                                                             ...styles.modal(),
                                                                             ...layouts.column('start', 'start', '1rem'),
@@ -1522,7 +1341,7 @@ export const pages = {
                                                                                             id: 'new-folder-name-hint',
                                                                                             display: nameValid ? 'none' : 'block',
                                                                                             fontWeight: 500,
-                                                                                            color: colors.foregroundColored('red'),
+                                                                                            color: c(colorsBase.danger, 11),
                                                                                             text: 'Required'
                                                                                         }),
                                                                                         components.inputs.text({
@@ -1595,7 +1414,7 @@ export const pages = {
                                                                 stack.replace({
                                                                     path: '#newnote',
                                                                     hidePrior: false,
-                                                                    config: () => components.modal.closeBackground({
+                                                                    config: () => components.modalCloseBackground({
                                                                         child: {
                                                                             ...styles.modal(),
                                                                             ...layouts.column('start', 'start', '1rem'),
@@ -1612,7 +1431,7 @@ export const pages = {
                                                                                             id: 'new-note-name-hint',
                                                                                             display: nameValid ? 'none' : 'block',
                                                                                             fontWeight: 500,
-                                                                                            color: colors.foregroundColored('red'),
+                                                                                            color: c(colorsBase.danger, 11),
                                                                                             text: 'Required'
                                                                                         }),
                                                                                         components.inputs.text({
@@ -1787,7 +1606,7 @@ export const pages = {
                                 id: 'add-paragraph-hint',
                                 display: addParagraphValid ? 'none' : 'block',
                                 fontWeight: 500,
-                                color: colors.foregroundColored('red'),
+                                color: c(colorsBase.danger, 11),
                                 text: 'Required'
                             }),
                             components.inputs.textArea({
@@ -1825,7 +1644,7 @@ export const pages = {
                                                 stack.push({
                                                     path: '#invalid',
                                                     hidePrior: false,
-                                                    config: () => components.modal.closeBackground({
+                                                    config: () => components.modalCloseBackground({
                                                         child: components.modal.prompt({
                                                             palette: 'red',
                                                             title: 'Invalid',
@@ -1837,7 +1656,7 @@ export const pages = {
                                                 stack.push({
                                                     path: '#invalid',
                                                     hidePrior: false,
-                                                    config: () => components.modal.closeBackground({
+                                                    config: () => components.modalCloseBackground({
                                                         child: components.modal.prompt({
                                                             palette: 'red',
                                                             title: 'Invalid',
@@ -1866,8 +1685,8 @@ export const pages = {
                                                 stack.push({
                                                     path: '#attach',
                                                     hidePrior: false,
-                                                    config: () => components.modal.closeBackground({
-                                                        child: components.modal.menu({
+                                                    config: () => components.modalCloseBackground({
+                                                        child: components.modals.menu({
                                                             buttons: [
                                                                 components.buttons.menu({
                                                                     disabled: uploads[noteId],
@@ -2034,7 +1853,7 @@ export const pages = {
                                                                                                                     stack.push({
                                                                                                                         path: '#confirm',
                                                                                                                         hidePrior: false,
-                                                                                                                        config: () => components.modal.closeBackground({
+                                                                                                                        config: () => components.modalCloseBackground({
                                                                                                                             child: components.modal.prompt({
                                                                                                                                 title: 'Attach Paragraph',
                                                                                                                                 description: 'Are you sure?',
@@ -2312,7 +2131,7 @@ export const pages = {
                                                 id: 'edit-paragraph-hint',
                                                 display: editParagraphValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: colors.foregroundColored('red'),
+                                                color: c(colorsBase.danger, 11),
                                                 text: 'Required'
                                             }),
                                             components.inputs.textArea({
@@ -2555,6 +2374,7 @@ export const pages = {
                                                 width: '100%',
                                                 ...layouts.column('start', 'start', '0.5rem'),
                                                 children: paragraph.notes.filter(nid => nid !== noteId).map(nid => components.textLink({
+                                                    color: c('blue', 9),
                                                     href: `/note/${nid}`,
                                                     text: tree[nid].name,
                                                     onclick: function (event) {
@@ -2595,7 +2415,7 @@ export const pages = {
                                                                     stack.push({
                                                                         path: '#color',
                                                                         hidePrior: false,
-                                                                        config: () => components.modal.closeBackground({
+                                                                        config: () => components.modalCloseBackground({
                                                                             child: {
                                                                                 ...styles.modal(),
                                                                                 ...layouts.column('start', 'start', '1rem'),
@@ -2663,7 +2483,7 @@ export const pages = {
                                                                     stack.push({
                                                                         path: '#delete',
                                                                         hidePrior: false,
-                                                                        config: () => components.modal.closeBackground({
+                                                                        config: () => components.modalCloseBackground({
                                                                             child: components.modal.prompt({
                                                                                 title: 'Delete',
                                                                                 description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
