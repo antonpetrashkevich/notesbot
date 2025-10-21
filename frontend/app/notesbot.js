@@ -1,6 +1,6 @@
 import Argon2Worker from './workers/argon2.js?worker';
 
-import { colorsBase, setColorsBase, c, colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/commons';
+import { baseColors, setBaseColors, c, colors as baseColors_, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/commons';
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
 
 import { initializeApp as initializeFirebase } from "firebase/app";
@@ -188,7 +188,7 @@ export async function init() {
     firebase.storage = getStorage(firebase.app);
     // firebase.analytics = getAnalytics(firebase.app);
 
-    setColorsBase('slate');
+    setBaseColors('slate');
     startApp('XPL');
     startViewportSizeController();
     startThemeController(function () {
@@ -286,7 +286,7 @@ function startListenNotebook() {
 }
 
 const colors = {
-    ...baseColors
+    ...baseColors_
 }
 
 const styles = {
@@ -360,7 +360,7 @@ const pages = {
                     }),
                     components.button({
                         padding: '0.75rem',
-                        backgroundHoverColor: colors.background1(2),
+                        backgroundHoverColor: colors.background.overlay.s(),
                         onclick: function (event) {
                             try {
                                 loggingIn = true;
@@ -452,7 +452,7 @@ const pages = {
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        border: `1px solid ${colors.foreground2(4)}`,
+                        border: `1px solid ${colors.border.m()}`,
                         borderRadius: '0.5rem',
                         ...layouts.column('center', 'start', '2rem'),
                         children: [
@@ -494,7 +494,7 @@ const pages = {
                                                 id: 'keyphrase-hint',
                                                 display: keyphraseValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: c(colorsBase.danger, 11),
+                                                color: c(baseColors.danger, 11),
                                                 text: 'Required',
                                             }),
                                             components.inputs.password({
@@ -515,7 +515,7 @@ const pages = {
                                                 id: 'keyphrase-repeat-hint',
                                                 display: keyphraseRepeatValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: c(colorsBase.danger, 11),
+                                                color: c(baseColors.danger, 11),
                                                 text: 'Invalid',
                                             }),
                                             components.inputs.password({
@@ -537,7 +537,6 @@ const pages = {
                                         }
                                     }),
                                     components.buttons.formPrimary({
-                                        palette: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
                                             keyphraseValid = true;
@@ -661,7 +660,7 @@ const pages = {
                                         id: 'keyphrase-hint',
                                         display: keyphraseValid ? 'none' : 'block',
                                         fontWeight: 500,
-                                        color: c(colorsBase.danger, 11),
+                                        color: c(baseColors.danger, 11),
                                         text: 'Invalid'
                                     }),
                                     components.inputs.password({
@@ -681,7 +680,6 @@ const pages = {
                                         }
                                     }),
                                     components.buttons.formPrimary({
-                                        palette: 'blue',
                                         text: 'Save',
                                         onclick: async function (event) {
                                             keyBuilding = true;
@@ -902,7 +900,6 @@ const pages = {
                                                                                 components.header({
                                                                                     title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
                                                                                     trailing: components.buttons.formPrimary({
-                                                                                        palette: 'blue',
                                                                                         smallViewportGrow: false,
                                                                                         text: 'Move',
                                                                                         onclick: async function (event) {
@@ -975,6 +972,7 @@ const pages = {
                                                                 path: '#rename',
                                                                 hidePrior: false,
                                                                 config: () => components.modalCloseBackground({
+                                                                    backgroundColor: colors.background.overlay.s(),
                                                                     child: {
                                                                         ...styles.modal(),
                                                                         ...layouts.column('start', 'start', '1rem'),
@@ -990,7 +988,7 @@ const pages = {
                                                                                     id: 'new-folder-name-hint',
                                                                                     display: nameValid ? 'none' : 'block',
                                                                                     fontWeight: 500,
-                                                                                    color: c(colorsBase.danger, 11),
+                                                                                    color: c(baseColors.danger, 11),
                                                                                     text: 'Required'
                                                                                 }),
                                                                                 components.inputs.text({
@@ -1004,7 +1002,6 @@ const pages = {
                                                                                 ...layouts.row('end'),
                                                                                 children: [
                                                                                     components.buttons.formPrimary({
-                                                                                        palette: 'blue',
                                                                                         text: 'Rename',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
@@ -1057,7 +1054,7 @@ const pages = {
                                                         }
                                                     }),
                                                     components.buttons.menu({
-                                                        palette: 'red',
+                                                        palette: baseColors.danger,
                                                         text: 'Delete',
                                                         onclick: async function (event) {
                                                             stack.replace({
@@ -1069,7 +1066,7 @@ const pages = {
                                                                     note: 'Consider moving it to an \'Archive\' folder instead — create one if you don’t have it yet.',
                                                                     buttons: [
                                                                         components.buttons.formPrimary({
-                                                                            palette: 'red',
+                                                                            palette: baseColors.danger,
                                                                             text: 'Delete',
                                                                             onclick: async function (event) {
                                                                                 await stack.pop();
@@ -1147,6 +1144,7 @@ const pages = {
                                                                     path: '#theme',
                                                                     hidePrior: false,
                                                                     config: () => components.modalCloseBackground({
+                                                                        backgroundColor: colors.background.overlay.s(),
                                                                         child: {
                                                                             ...styles.modal(),
                                                                             ...layouts.column('start', 'start', '1rem'),
@@ -1219,7 +1217,7 @@ const pages = {
                                                             }
                                                         }),
                                                         components.buttons.menu({
-                                                            palette: 'red',
+                                                            palette: baseColors.danger,
                                                             text: 'Delete account',
                                                             onclick: function (event) {
                                                                 stack.replace({
@@ -1231,7 +1229,7 @@ const pages = {
                                                                         note: 'Your account and all it\'s data will be permanently deleted in 30 days. Contact support before then to stop the process.',
                                                                         buttons: [
                                                                             components.buttons.formPrimary({
-                                                                                palette: 'red',
+                                                                                palette: baseColors.danger,
                                                                                 text: 'Delete',
                                                                                 onclick: async function (event) {
                                                                                     await stack.pop();
@@ -1271,7 +1269,7 @@ const pages = {
                                                             }
                                                         }),
                                                         components.buttons.menu({
-                                                            palette: 'red',
+                                                            palette: baseColors.danger,
                                                             text: 'Log out',
                                                             onclick: function (event) {
                                                                 signOut(firebase.auth);
@@ -1293,7 +1291,6 @@ const pages = {
                             ...layouts.column('start', 'start', '1rem'),
                             children: [
                                 components.button({
-                                    color: 'blue',
                                     padding: '0.5rem',
                                     borderRadius: '2rem',
                                     backgroundColor: c('blue', 3),
@@ -1318,6 +1315,7 @@ const pages = {
                                                                 path: '#newfolder',
                                                                 hidePrior: false,
                                                                 config: () => components.modalCloseBackground({
+                                                                    backgroundColor: colors.background.overlay.s(),
                                                                     child: {
                                                                         ...styles.modal(),
                                                                         ...layouts.column('start', 'start', '1rem'),
@@ -1334,7 +1332,7 @@ const pages = {
                                                                                         id: 'new-folder-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: c(colorsBase.danger, 11),
+                                                                                        color: c(baseColors.danger, 11),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1348,7 +1346,6 @@ const pages = {
                                                                                 ...layouts.row('end'),
                                                                                 children: [
                                                                                     components.buttons.formPrimary({
-                                                                                        palette: 'blue',
                                                                                         text: 'Create',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
@@ -1408,6 +1405,7 @@ const pages = {
                                                                 path: '#newnote',
                                                                 hidePrior: false,
                                                                 config: () => components.modalCloseBackground({
+                                                                    backgroundColor: colors.background.overlay.s(),
                                                                     child: {
                                                                         ...styles.modal(),
                                                                         ...layouts.column('start', 'start', '1rem'),
@@ -1424,7 +1422,7 @@ const pages = {
                                                                                         id: 'new-note-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: c(colorsBase.danger, 11),
+                                                                                        color: c(baseColors.danger, 11),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1438,7 +1436,6 @@ const pages = {
                                                                                 ...layouts.row('end'),
                                                                                 children: [
                                                                                     components.buttons.formPrimary({
-                                                                                        palette: 'blue',
                                                                                         text: 'Create',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
@@ -1578,7 +1575,7 @@ const pages = {
                     () => components.header({
                         id: 'header',
                         leading: components.button({
-                            backgroundHoverColor: colors.background1(3),
+                            backgroundHoverColor: colors.background.overlay.m(),
                             href: '/',
                             child: components.icon({
                                 ligature: 'home'
@@ -1598,7 +1595,7 @@ const pages = {
                                 id: 'add-paragraph-hint',
                                 display: addParagraphValid ? 'none' : 'block',
                                 fontWeight: 500,
-                                color: c(colorsBase.danger, 11),
+                                color: c(baseColors.danger, 11),
                                 text: 'Required'
                             }),
                             components.inputs.textArea({
@@ -1637,7 +1634,7 @@ const pages = {
                                                     path: '#invalid',
                                                     hidePrior: false,
                                                     config: () => components.modals.prompt({
-                                                        palette: 'red',
+                                                        palette: baseColors.danger,
                                                         title: 'Invalid',
                                                         description: 'Maximum 8 files, 1GB total'
                                                     })
@@ -1647,7 +1644,7 @@ const pages = {
                                                     path: '#invalid',
                                                     hidePrior: false,
                                                     config: () => components.modals.prompt({
-                                                        palette: 'red',
+                                                        palette: baseColors.danger,
                                                         title: 'Invalid',
                                                         description: '10 GB limit reached. Delete existing files to free up space.',
                                                         note: 'Limit update could take up to 24 hours.'
@@ -1772,7 +1769,7 @@ const pages = {
                                                                                                     id: 'filter-paragraphs',
                                                                                                     width: '100%',
                                                                                                     padding: '0 0.25rem 0 0.5rem',
-                                                                                                    border: `1px solid ${colors.foreground2(4)}`,
+                                                                                                    border: `1px solid ${colors.border.s()}`,
                                                                                                     borderRadius: '0.5rem',
                                                                                                     ...layouts.row('start', 'center'),
                                                                                                     children: [
@@ -1792,7 +1789,7 @@ const pages = {
                                                                                                             },
                                                                                                         },
                                                                                                         components.button({
-                                                                                                            backgroundHoverColor: colors.background1(2),
+                                                                                                            backgroundHoverColor: colors.background.overlay.m(),
                                                                                                             padding: '0.25rem',
                                                                                                             child: components.icon({
                                                                                                                 ligature: 'close'
@@ -1827,14 +1824,14 @@ const pages = {
                                                                                                             id: `paragraph-${paragraph.id}`,
                                                                                                             width: '100%',
                                                                                                             padding: '0.5rem',
-                                                                                                            border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground2(4)}`,
+                                                                                                            border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
                                                                                                             borderRadius: '0.5rem',
-                                                                                                            backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background1(),
-                                                                                                            color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground2(),
+                                                                                                            backgroundColor: paragraph.color ? c(paragraph.color, 1) : colors.background.body(),
+                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.m(),
                                                                                                             ...styles.unselectable(),
                                                                                                             cursor: 'pointer',
                                                                                                             ...handlers.hover({
-                                                                                                                backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                                                                border: `2px solid ${paragraph.color ? c(paragraph.color, 8, true) : colors.border.l()}`,
                                                                                                             }),
                                                                                                             ...handlers.button(function (event) {
                                                                                                                 stack.push({
@@ -1845,7 +1842,6 @@ const pages = {
                                                                                                                         description: 'Are you sure?',
                                                                                                                         buttons: [
                                                                                                                             components.buttons.formPrimary({
-                                                                                                                                palette: 'blue',
                                                                                                                                 text: 'Attach',
                                                                                                                                 onclick: async function (event) {
                                                                                                                                     let steps = 0;
@@ -1880,9 +1876,9 @@ const pages = {
                                                                                                                         width: '100%',
                                                                                                                         padding: '0.5rem',
                                                                                                                         borderRadius: '0.5rem',
-                                                                                                                        backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                                                                        backgroundColor: paragraph.color ? c(paragraph.color, 2, true) : colors.background.overlay.s(),
                                                                                                                         fontWeight: 600,
-                                                                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground2(2),
+                                                                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                                                                         ...styles.unselectable(),
                                                                                                                         whiteSpace: 'nowrap',
                                                                                                                         overflow: 'hidden',
@@ -1896,7 +1892,7 @@ const pages = {
                                                                                                                     children: [
                                                                                                                         {
                                                                                                                             fontSize: '0.875rem',
-                                                                                                                            color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground2(3),
+                                                                                                                            color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                                                                             ...styles.unselectable(),
                                                                                                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                                                                                         },
@@ -1927,7 +1923,6 @@ const pages = {
                                         }
                                     }),
                                     components.buttons.formPrimary({
-                                        palette: 'blue',
                                         text: 'Add',
                                         onclick: async function (event) {
                                             addParagraphValid = true;
@@ -2037,13 +2032,13 @@ const pages = {
                                     id: `file-upload-${fu.id}`,
                                     width: '100%',
                                     height: '1rem',
-                                    backgroundColor: colors.background1(2),
+                                    backgroundColor: colors.background.overlay.m(),
                                     ...layouts.row(),
                                     children: [
                                         {
                                             width: `max(5%, ${fu.completed}%)`,
                                             height: '100%',
-                                            backgroundColor: colors.background1(3)
+                                            backgroundColor: colors.background.overlay.l()
                                         }
                                     ]
                                 }))
@@ -2052,7 +2047,7 @@ const pages = {
                                 id: 'filter-paragraphs',
                                 width: '100%',
                                 padding: '0 0.25rem 0 0.5rem',
-                                border: `1px solid ${colors.foreground2(4)}`,
+                                border: `1px solid ${colors.border.s()}`,
                                 borderRadius: '0.5rem',
                                 ...layouts.row('start', 'center'),
                                 children: [
@@ -2072,7 +2067,7 @@ const pages = {
                                         },
                                     },
                                     components.button({
-                                        backgroundHoverColor: colors.background1(2),
+                                        backgroundHoverColor: colors.background.overlay.m(),
                                         padding: '0.25rem',
                                         child: components.icon({
                                             ligature: 'close'
@@ -2115,7 +2110,7 @@ const pages = {
                                                 id: 'edit-paragraph-hint',
                                                 display: editParagraphValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: c(colorsBase.danger, 11),
+                                                color: c(baseColors.danger, 11),
                                                 text: 'Required'
                                             }),
                                             components.inputs.textArea({
@@ -2142,7 +2137,6 @@ const pages = {
                                                         }
                                                     }),
                                                     components.buttons.formPrimary({
-                                                        palette: 'blue',
                                                         text: 'Save',
                                                         onclick: async function (event) {
                                                             editParagraphValid = true;
@@ -2169,10 +2163,10 @@ const pages = {
                                         id: `paragraph-${paragraph.id}`,
                                         width: '100%',
                                         padding: '0.5rem',
-                                        border: `1px solid ${paragraph.color ? colors.foregroundColored(paragraph.color, 4) : colors.foreground2(4)}`,
+                                        border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
                                         borderRadius: '0.5rem',
-                                        backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color) : colors.background1(),
-                                        color: paragraph.color ? colors.foregroundColored(paragraph.color) : colors.foreground2(),
+                                        backgroundColor: paragraph.color ? c(paragraph.color, 1) : colors.background.body(),
+                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.m(),
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
                                             paragraph.text ? {
@@ -2188,13 +2182,13 @@ const pages = {
                                                     width: '100%',
                                                     padding: '0.25rem 0.25rem 0.25rem 0.5rem',
                                                     borderRadius: '0.5rem',
-                                                    backgroundColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                    backgroundColor: paragraph.color ? c(paragraph.color, 2, true) : colors.background.overlay.s(),
                                                     ...layouts.row('space-between', 'center'),
                                                     children: [
                                                         {
                                                             minWidth: 0,
                                                             fontWeight: 600,
-                                                            color: paragraph.color ? colors.foreground2(paragraph.color) : colors.foreground2(2),
+                                                            color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                             ...styles.unselectable(),
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
@@ -2206,9 +2200,9 @@ const pages = {
                                                             ...layouts.row('start', 'center'),
                                                             children: [
                                                                 !downloads[f.id] ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
+                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                         ligature: 'cloud_download'
                                                                     }),
                                                                     onclick: async function (event) {
@@ -2247,12 +2241,12 @@ const pages = {
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
                                                                     padding: '0.5rem',
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
+                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2274,9 +2268,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
+                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2303,9 +2297,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
+                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2335,9 +2329,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 downloads[f.id]?.status === 'ready' ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 3) : colors.background1(3),
+                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2372,7 +2366,7 @@ const pages = {
                                                 children: [
                                                     {
                                                         fontSize: '0.875rem',
-                                                        color: paragraph.color ? colors.foregroundColored(paragraph.color, 3) : colors.foreground2(3),
+                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                         ...styles.unselectable(),
                                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                     },
@@ -2380,9 +2374,9 @@ const pages = {
                                                         ...layouts.row(),
                                                         children: [
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                     ligature: 'content_copy',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2390,9 +2384,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                     ligature: 'palette',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2400,6 +2394,7 @@ const pages = {
                                                                         path: '#color',
                                                                         hidePrior: false,
                                                                         config: () => components.modalCloseBackground({
+                                                                            backgroundColor: colors.background.overlay.s(),
                                                                             child: {
                                                                                 ...styles.modal(),
                                                                                 ...layouts.column('start', 'start', '1rem'),
@@ -2415,14 +2410,14 @@ const pages = {
                                                                                         gridTemplateColumns: 'repeat(auto-fill, 3rem)',
                                                                                         justifyContent: 'center',
                                                                                         gap: '1rem',
-                                                                                        children: [undefined, 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map(color => components.button({
+                                                                                        children: [undefined, 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'bronze', 'gold', 'brown', 'orange', 'amber', 'yellow', 'lime', 'mint', 'sky'].map(color => components.button({
                                                                                             padding: '0.25rem',
                                                                                             borderRadius: '2rem',
-                                                                                            backgroundColor: color ? colors.backgroundColored(color, 2) : colors.background1(2),
-                                                                                            backgroundHoverColor: color ? colors.backgroundColored(color, 3) : colors.background1(3),
+                                                                                            backgroundColor: c(color || baseColors.neutral, 3, true),
+                                                                                            backgroundHoverColor: c(color || baseColors.neutral, 4, true),
                                                                                             child: components.icon({
                                                                                                 fontSize: '2.5rem',
-                                                                                                color: color ? colors.foregroundColored(color) : colors.foreground2(2),
+                                                                                                color: color ? c(color, 11) : colors.foreground.m(),
                                                                                                 ligature: 'circle',
                                                                                             }),
                                                                                             onclick: async function (event) {
@@ -2441,9 +2436,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                     ligature: 'edit',
                                                                 }),
                                                                 disabled: editParagraphId,
@@ -2458,9 +2453,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? colors.backgroundColored(paragraph.color, 2) : colors.background1(2),
+                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? colors.foregroundColored(paragraph.color, 2) : colors.foreground2(2),
+                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
                                                                     ligature: 'delete',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2472,7 +2467,7 @@ const pages = {
                                                                             description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
                                                                             buttons: [
                                                                                 components.buttons.formPrimary({
-                                                                                    palette: 'red',
+                                                                                    palette: baseColors.danger,
                                                                                     text: 'Delete',
                                                                                     onclick: function (event) {
                                                                                         stack.pop();
@@ -2500,15 +2495,15 @@ const pages = {
                                         width: '100%',
                                         height: '2.5rem',
                                         padding: '0 0.75rem',
-                                        backgroundColor: colors.background1(2),
-                                        backgroundHoverColor: colors.background1(3),
+                                        backgroundColor: colors.background.overlay.m(),
+                                        backgroundHoverColor: colors.background.overlay.l(),
                                         onclick: function (event) {
                                             limitParagraphs = false;
                                             this.layer.widgets['paragraphs'].update();
                                         },
                                         child: {
                                             fontWeight: 600,
-                                            color: colors.foreground2(2),
+                                            color: colors.foreground.s(),
                                             text: 'More'
                                         }
                                     }) : null]
