@@ -1826,7 +1826,7 @@ const pages = {
                                                                                                             padding: '0.5rem',
                                                                                                             border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
                                                                                                             borderRadius: '0.5rem',
-                                                                                                            backgroundColor: paragraph.color ? c(paragraph.color, 1) : colors.background.body(),
+                                                                                                            backgroundColor: paragraph.color ? c(paragraph.color, 2) : colors.background.body(),
                                                                                                             color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.m(),
                                                                                                             ...styles.unselectable(),
                                                                                                             cursor: 'pointer',
@@ -2165,7 +2165,7 @@ const pages = {
                                         padding: '0.5rem',
                                         border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
                                         borderRadius: '0.5rem',
-                                        backgroundColor: paragraph.color ? c(paragraph.color, 1) : colors.background.body(),
+                                        backgroundColor: paragraph.color ? c(paragraph.color, 2) : colors.background.body(),
                                         color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.m(),
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
@@ -2352,7 +2352,7 @@ const pages = {
                                                 width: '100%',
                                                 ...layouts.column('start', 'start', '0.5rem'),
                                                 children: paragraph.notes.filter(nid => nid !== noteId).map(nid => components.textLink({
-                                                    color: c('blue', 9),
+                                                    color: c('blue', 11),
                                                     href: `/note/${nid}`,
                                                     text: tree[nid].name,
                                                     onclick: function (event) {
@@ -2413,8 +2413,8 @@ const pages = {
                                                                                         children: [undefined, 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'bronze', 'gold', 'brown', 'orange', 'amber', 'yellow', 'lime', 'mint', 'sky'].map(color => components.button({
                                                                                             padding: '0.25rem',
                                                                                             borderRadius: '2rem',
-                                                                                            backgroundColor: c(color || baseColors.neutral, 3, true),
-                                                                                            backgroundHoverColor: c(color || baseColors.neutral, 4, true),
+                                                                                            backgroundColor: c(color || baseColors.neutral, 4, true),
+                                                                                            backgroundHoverColor: c(color || baseColors.neutral, 5, true),
                                                                                             child: components.icon({
                                                                                                 fontSize: '2.5rem',
                                                                                                 color: color ? c(color, 11) : colors.foreground.m(),
