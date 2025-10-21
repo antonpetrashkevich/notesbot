@@ -1831,7 +1831,7 @@ const pages = {
                                                                                                             ...styles.unselectable(),
                                                                                                             cursor: 'pointer',
                                                                                                             ...handlers.hover({
-                                                                                                                border: `2px solid ${paragraph.color ? c(paragraph.color, 8, true) : colors.border.l()}`,
+                                                                                                                outline: `2px solid ${paragraph.color ? c(paragraph.color, 8, true) : colors.border.l()}`,
                                                                                                             }),
                                                                                                             ...handlers.button(function (event) {
                                                                                                                 stack.push({
@@ -1878,7 +1878,7 @@ const pages = {
                                                                                                                         borderRadius: '0.5rem',
                                                                                                                         backgroundColor: paragraph.color ? c(paragraph.color, 2, true) : colors.background.overlay.s(),
                                                                                                                         fontWeight: 600,
-                                                                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                                                                         ...styles.unselectable(),
                                                                                                                         whiteSpace: 'nowrap',
                                                                                                                         overflow: 'hidden',
@@ -1892,7 +1892,7 @@ const pages = {
                                                                                                                     children: [
                                                                                                                         {
                                                                                                                             fontSize: '0.875rem',
-                                                                                                                            color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                                                                             ...styles.unselectable(),
                                                                                                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                                                                                         },
@@ -2188,7 +2188,7 @@ const pages = {
                                                         {
                                                             minWidth: 0,
                                                             fontWeight: 600,
-                                                            color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                             ...styles.unselectable(),
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
@@ -2202,7 +2202,7 @@ const pages = {
                                                                 !downloads[f.id] ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                         ligature: 'cloud_download'
                                                                     }),
                                                                     onclick: async function (event) {
@@ -2241,12 +2241,12 @@ const pages = {
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
                                                                     padding: '0.5rem',
-                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2270,7 +2270,7 @@ const pages = {
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2299,7 +2299,7 @@ const pages = {
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2331,7 +2331,7 @@ const pages = {
                                                                 downloads[f.id]?.status === 'ready' ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2366,7 +2366,7 @@ const pages = {
                                                 children: [
                                                     {
                                                         fontSize: '0.875rem',
-                                                        color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                         ...styles.unselectable(),
                                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                     },
@@ -2376,7 +2376,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                     ligature: 'content_copy',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2386,7 +2386,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                     ligature: 'palette',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2438,7 +2438,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                     ligature: 'edit',
                                                                 }),
                                                                 disabled: editParagraphId,
@@ -2455,7 +2455,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 10) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
                                                                     ligature: 'delete',
                                                                 }),
                                                                 onclick: function (event) {
