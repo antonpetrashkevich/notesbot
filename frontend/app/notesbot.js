@@ -1,6 +1,6 @@
 import Argon2Worker from './workers/argon2.js?worker';
 
-import { baseColors, c, colors as baseColors_, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/commons';
+import { baseColors, radixColor, panels, colors as baseColors_, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
 
 import { initializeApp as initializeFirebase } from "firebase/app";
@@ -200,12 +200,12 @@ export async function init() {
         });
     });
     updateMetaTags({
-        'theme-color': colors.background.panel()
+        // 'theme-color': colors.background.panel()
     });
     updateBodyStyle({
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-        backgroundColor: colors.background.body(),
-        color: colors.foreground.primary(),
+        // backgroundColor: colors.background.body(),
+        // color: colors.foreground.primary(),
     });
     await utils.loadFont({
         fontFamily: 'material',
@@ -216,22 +216,23 @@ export async function init() {
         }
     })
 
-    stack.push(pages.init());
-    key = await loadKeyFromIDB('main');
-    onAuthStateChanged(firebase.auth, async (user) => {
-        if (user) {
-            startListenNotebook();
-        } else {
-            if (authInitialized) {
-                await wipeCache();
-                window.location.reload();
-            }
-            else {
-                stack.replace(pages.login('/'));
-            }
-        }
-        authInitialized = true;
-    });
+    stack.push(pages.panels());
+    // stack.push(pages.init());
+    // key = await loadKeyFromIDB('main');
+    // onAuthStateChanged(firebase.auth, async (user) => {
+    //     if (user) {
+    //         startListenNotebook();
+    //     } else {
+    //         if (authInitialized) {
+    //             await wipeCache();
+    //             window.location.reload();
+    //         }
+    //         else {
+    //             stack.replace(pages.login('/'));
+    //         }
+    //     }
+    //     authInitialized = true;
+    // });
 }
 
 function startListenNotebook() {
@@ -305,40 +306,7 @@ const components = {
 }
 
 const pages = {
-    init: (path = '') => ({
-        path,
-        meta: {
-            title: appName,
-        },
-        config: () => ({
-            width: '100%',
-            height: '100%',
-            padding: '1rem',
-            ...layouts.row('center', 'center'),
-            children: [components.animations.spinner({
-                width: '8vh',
-                height: '8vh',
-            })]
-        }),
-    }),
-    notFound: (path = '') => ({
-        path,
-        meta: {
-            title: `Page Not Found | ${appName}`,
-            description: 'Page Not Found (invalid URL).'
-        },
-        config: () => ({
-            width: '100%',
-            height: '100%',
-            padding: '1rem',
-            ...layouts.column('center', 'center'),
-            children: [
-                {
-                    text: 'Page Not Found (invalid URL).'
-                },
-            ]
-        }),
-    }),
+    ...basePages,
     login(path = '') {
         let loggingIn = false;
         return {
@@ -493,7 +461,7 @@ const pages = {
                                                 id: 'keyphrase-hint',
                                                 display: keyphraseValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: c(baseColors.danger, 11),
+                                                color: radixColor(baseColors.danger, 11),
                                                 text: 'Required',
                                             }),
                                             components.inputs.password({
@@ -514,7 +482,7 @@ const pages = {
                                                 id: 'keyphrase-repeat-hint',
                                                 display: keyphraseRepeatValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: c(baseColors.danger, 11),
+                                                color: radixColor(baseColors.danger, 11),
                                                 text: 'Invalid',
                                             }),
                                             components.inputs.password({
@@ -657,7 +625,7 @@ const pages = {
                                         id: 'keyphrase-hint',
                                         display: keyphraseValid ? 'none' : 'block',
                                         fontWeight: 500,
-                                        color: c(baseColors.danger, 11),
+                                        color: radixColor(baseColors.danger, 11),
                                         text: 'Invalid'
                                     }),
                                     components.inputs.password({
@@ -985,7 +953,7 @@ const pages = {
                                                                                     id: 'new-folder-name-hint',
                                                                                     display: nameValid ? 'none' : 'block',
                                                                                     fontWeight: 500,
-                                                                                    color: c(baseColors.danger, 11),
+                                                                                    color: radixColor(baseColors.danger, 11),
                                                                                     text: 'Required'
                                                                                 }),
                                                                                 components.inputs.text({
@@ -1157,7 +1125,7 @@ const pages = {
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
-                                                                                        color: c('blue', 9),
+                                                                                        color: radixColor('blue', 9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
                                                                                     text: 'System',
@@ -1176,7 +1144,7 @@ const pages = {
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
-                                                                                        color: c('blue', 9),
+                                                                                        color: radixColor('blue', 9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
                                                                                     text: 'Light',
@@ -1195,7 +1163,7 @@ const pages = {
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
-                                                                                        color: c('blue', 9),
+                                                                                        color: radixColor('blue', 9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
                                                                                     text: 'Dark',
@@ -1290,11 +1258,11 @@ const pages = {
                                 components.button({
                                     padding: '0.5rem',
                                     borderRadius: '2rem',
-                                    backgroundColor: c('blue', 3),
-                                    backgroundHoverColor: c('blue', 4),
+                                    backgroundColor: radixColor('blue', 3),
+                                    backgroundHoverColor: radixColor('blue', 4),
                                     child: components.icon({
                                         fontSize: '2rem',
-                                        color: c('blue', 9),
+                                        color: radixColor('blue', 9),
                                         ligature: 'add_2'
                                     }),
                                     onclick: function (event) {
@@ -1329,7 +1297,7 @@ const pages = {
                                                                                         id: 'new-folder-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: c(baseColors.danger, 11),
+                                                                                        color: radixColor(baseColors.danger, 11),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1419,7 +1387,7 @@ const pages = {
                                                                                         id: 'new-note-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: c(baseColors.danger, 11),
+                                                                                        color: radixColor(baseColors.danger, 11),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1592,7 +1560,7 @@ const pages = {
                                 id: 'add-paragraph-hint',
                                 display: addParagraphValid ? 'none' : 'block',
                                 fontWeight: 500,
-                                color: c(baseColors.danger, 11),
+                                color: radixColor(baseColors.danger, 11),
                                 text: 'Required'
                             }),
                             components.inputs.textArea({
@@ -1821,14 +1789,14 @@ const pages = {
                                                                                                             id: `paragraph-${paragraph.id}`,
                                                                                                             width: '100%',
                                                                                                             padding: '0.5rem',
-                                                                                                            border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
+                                                                                                            border: `1px solid ${paragraph.color ? radixColor(paragraph.color, 6, true) : colors.border.s()}`,
                                                                                                             borderRadius: '0.5rem',
-                                                                                                            backgroundColor: paragraph.color ? c(paragraph.color, 3) : colors.background.body(),
-                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.primary(),
+                                                                                                            backgroundColor: paragraph.color ? radixColor(paragraph.color, 3) : colors.background.body(),
+                                                                                                            color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.primary(),
                                                                                                             ...styles.unselectable(),
                                                                                                             cursor: 'pointer',
                                                                                                             ...handlers.hover({
-                                                                                                                outline: `2px solid ${paragraph.color ? c(paragraph.color, 8, true) : colors.border.l()}`,
+                                                                                                                outline: `2px solid ${paragraph.color ? radixColor(paragraph.color, 8, true) : colors.border.l()}`,
                                                                                                             }),
                                                                                                             ...handlers.button(function (event) {
                                                                                                                 stack.push({
@@ -1873,9 +1841,9 @@ const pages = {
                                                                                                                         width: '100%',
                                                                                                                         padding: '0.5rem',
                                                                                                                         borderRadius: '0.5rem',
-                                                                                                                        backgroundColor: paragraph.color ? c(paragraph.color, 2, true) : colors.background.overlay.s(),
+                                                                                                                        backgroundColor: paragraph.color ? radixColor(paragraph.color, 2, true) : colors.background.overlay.s(),
                                                                                                                         fontWeight: 600,
-                                                                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                                                                         ...styles.unselectable(),
                                                                                                                         whiteSpace: 'nowrap',
                                                                                                                         overflow: 'hidden',
@@ -1889,7 +1857,7 @@ const pages = {
                                                                                                                     children: [
                                                                                                                         {
                                                                                                                             fontSize: '0.875rem',
-                                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                                                                            color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                                                                             ...styles.unselectable(),
                                                                                                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                                                                                         },
@@ -2107,7 +2075,7 @@ const pages = {
                                                 id: 'edit-paragraph-hint',
                                                 display: editParagraphValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: c(baseColors.danger, 11),
+                                                color: radixColor(baseColors.danger, 11),
                                                 text: 'Required'
                                             }),
                                             components.inputs.textArea({
@@ -2160,10 +2128,10 @@ const pages = {
                                         id: `paragraph-${paragraph.id}`,
                                         width: '100%',
                                         padding: '0.5rem',
-                                        border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
+                                        border: `1px solid ${paragraph.color ? radixColor(paragraph.color, 6, true) : colors.border.s()}`,
                                         borderRadius: '0.5rem',
-                                        backgroundColor: paragraph.color ? c(paragraph.color, 3) : colors.background.body(),
-                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.primary(),
+                                        backgroundColor: paragraph.color ? radixColor(paragraph.color, 3) : colors.background.body(),
+                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.primary(),
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
                                             paragraph.text ? {
@@ -2179,13 +2147,13 @@ const pages = {
                                                     width: '100%',
                                                     padding: '0.25rem 0.25rem 0.25rem 0.5rem',
                                                     borderRadius: '0.5rem',
-                                                    backgroundColor: paragraph.color ? c(paragraph.color, 2, true) : colors.background.overlay.s(),
+                                                    backgroundColor: paragraph.color ? radixColor(paragraph.color, 2, true) : colors.background.overlay.s(),
                                                     ...layouts.row('space-between', 'center'),
                                                     children: [
                                                         {
                                                             minWidth: 0,
                                                             fontWeight: 600,
-                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                            color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                             ...styles.unselectable(),
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
@@ -2197,9 +2165,9 @@ const pages = {
                                                             ...layouts.row('start', 'center'),
                                                             children: [
                                                                 !downloads[f.id] ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'cloud_download'
                                                                     }),
                                                                     onclick: async function (event) {
@@ -2238,12 +2206,12 @@ const pages = {
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
                                                                     padding: '0.5rem',
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2265,9 +2233,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2294,9 +2262,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2326,9 +2294,9 @@ const pages = {
                                                                     }
                                                                 }) : null,
                                                                 downloads[f.id]?.status === 'ready' ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2349,7 +2317,7 @@ const pages = {
                                                 width: '100%',
                                                 ...layouts.column('start', 'start', '0.5rem'),
                                                 children: paragraph.notes.filter(nid => nid !== noteId).map(nid => components.textLink({
-                                                    color: c('blue', 11),
+                                                    color: radixColor('blue', 11),
                                                     href: `/note/${nid}`,
                                                     text: tree[nid].name,
                                                     onclick: function (event) {
@@ -2363,7 +2331,7 @@ const pages = {
                                                 children: [
                                                     {
                                                         fontSize: '0.875rem',
-                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                         ...styles.unselectable(),
                                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                     },
@@ -2371,9 +2339,9 @@ const pages = {
                                                         ...layouts.row(),
                                                         children: [
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'content_copy',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2381,9 +2349,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'palette',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2410,11 +2378,11 @@ const pages = {
                                                                                         children: [undefined, 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'bronze', 'gold', 'brown', 'orange', 'amber', 'yellow', 'lime', 'mint', 'sky'].map(color => components.button({
                                                                                             padding: '0.25rem',
                                                                                             borderRadius: '2rem',
-                                                                                            backgroundColor: c(color || baseColors.neutral, 4, true),
-                                                                                            backgroundHoverColor: c(color || baseColors.neutral, 5, true),
+                                                                                            backgroundColor: radixColor(color || baseColors.neutral, 4, true),
+                                                                                            backgroundHoverColor: radixColor(color || baseColors.neutral, 5, true),
                                                                                             child: components.icon({
                                                                                                 fontSize: '2.5rem',
-                                                                                                color: color ? c(color, 11) : colors.foreground.primary(),
+                                                                                                color: color ? radixColor(color, 11) : colors.foreground.primary(),
                                                                                                 ligature: 'circle',
                                                                                             }),
                                                                                             onclick: async function (event) {
@@ -2433,9 +2401,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'edit',
                                                                 }),
                                                                 disabled: editParagraphId,
@@ -2450,9 +2418,9 @@ const pages = {
                                                                 }
                                                             }),
                                                             components.button({
-                                                                backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
+                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
+                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'delete',
                                                                 }),
                                                                 onclick: function (event) {
