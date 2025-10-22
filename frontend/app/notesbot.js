@@ -1,6 +1,6 @@
 import Argon2Worker from './workers/argon2.js?worker';
 
-import { baseColors, setBaseColors, c, colors as baseColors_, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/commons';
+import { baseColors, c, colors as baseColors_, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/commons';
 import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
 
 import { initializeApp as initializeFirebase } from "firebase/app";
@@ -188,7 +188,6 @@ export async function init() {
     firebase.storage = getStorage(firebase.app);
     // firebase.analytics = getAnalytics(firebase.app);
 
-    setBaseColors('slate');
     startApp('XPL');
     startViewportSizeController();
     startThemeController(function () {
@@ -197,7 +196,7 @@ export async function init() {
         });
         updateBodyStyle({
             backgroundColor: colors.background.body(),
-            color: colors.foreground.m(),
+            color: colors.foreground.primary(),
         });
     });
     updateMetaTags({
@@ -206,7 +205,7 @@ export async function init() {
     updateBodyStyle({
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
         backgroundColor: colors.background.body(),
-        color: colors.foreground.m(),
+        color: colors.foreground.primary(),
     });
     await utils.loadFont({
         fontFamily: 'material',
@@ -644,7 +643,6 @@ const pages = {
                             {
                                 fontSize: '2rem',
                                 fontWeight: 600,
-                                color: colors.foreground.l(),
                                 text: 'Keyphrase'
                             },
                             {
@@ -653,7 +651,6 @@ const pages = {
                                 children: [
                                     {
                                         fontWeight: 600,
-                                        color: colors.foreground.l(),
                                         text: 'Your keyphrase'
                                     },
                                     () => ({
@@ -1826,8 +1823,8 @@ const pages = {
                                                                                                             padding: '0.5rem',
                                                                                                             border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
                                                                                                             borderRadius: '0.5rem',
-                                                                                                            backgroundColor: paragraph.color ? c(paragraph.color, 2) : colors.background.body(),
-                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.m(),
+                                                                                                            backgroundColor: paragraph.color ? c(paragraph.color, 3) : colors.background.body(),
+                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.primary(),
                                                                                                             ...styles.unselectable(),
                                                                                                             cursor: 'pointer',
                                                                                                             ...handlers.hover({
@@ -1878,7 +1875,7 @@ const pages = {
                                                                                                                         borderRadius: '0.5rem',
                                                                                                                         backgroundColor: paragraph.color ? c(paragraph.color, 2, true) : colors.background.overlay.s(),
                                                                                                                         fontWeight: 600,
-                                                                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                                                                         ...styles.unselectable(),
                                                                                                                         whiteSpace: 'nowrap',
                                                                                                                         overflow: 'hidden',
@@ -1892,7 +1889,7 @@ const pages = {
                                                                                                                     children: [
                                                                                                                         {
                                                                                                                             fontSize: '0.875rem',
-                                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                                                                             ...styles.unselectable(),
                                                                                                                             text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                                                                                         },
@@ -2165,8 +2162,8 @@ const pages = {
                                         padding: '0.5rem',
                                         border: `1px solid ${paragraph.color ? c(paragraph.color, 6, true) : colors.border.s()}`,
                                         borderRadius: '0.5rem',
-                                        backgroundColor: paragraph.color ? c(paragraph.color, 2) : colors.background.body(),
-                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.m(),
+                                        backgroundColor: paragraph.color ? c(paragraph.color, 3) : colors.background.body(),
+                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.primary(),
                                         ...layouts.column('start', 'start', '1rem'),
                                         children: [
                                             paragraph.text ? {
@@ -2188,7 +2185,7 @@ const pages = {
                                                         {
                                                             minWidth: 0,
                                                             fontWeight: 600,
-                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                            color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                             ...styles.unselectable(),
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
@@ -2202,7 +2199,7 @@ const pages = {
                                                                 !downloads[f.id] ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'cloud_download'
                                                                     }),
                                                                     onclick: async function (event) {
@@ -2241,12 +2238,12 @@ const pages = {
                                                                     width: '2.25rem',
                                                                     height: '2.25rem',
                                                                     padding: '0.5rem',
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                 }) : null,
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'image'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2270,7 +2267,7 @@ const pages = {
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2299,7 +2296,7 @@ const pages = {
                                                                 (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'play_circle'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2331,7 +2328,7 @@ const pages = {
                                                                 downloads[f.id]?.status === 'ready' ? components.button({
                                                                     backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                     child: components.icon({
-                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                         ligature: 'download'
                                                                     }),
                                                                     onclick: function (event) {
@@ -2366,7 +2363,7 @@ const pages = {
                                                 children: [
                                                     {
                                                         fontSize: '0.875rem',
-                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                        color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                         ...styles.unselectable(),
                                                         text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
                                                     },
@@ -2376,7 +2373,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'content_copy',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2386,7 +2383,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'palette',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2417,7 +2414,7 @@ const pages = {
                                                                                             backgroundHoverColor: c(color || baseColors.neutral, 5, true),
                                                                                             child: components.icon({
                                                                                                 fontSize: '2.5rem',
-                                                                                                color: color ? c(color, 11) : colors.foreground.m(),
+                                                                                                color: color ? c(color, 11) : colors.foreground.primary(),
                                                                                                 ligature: 'circle',
                                                                                             }),
                                                                                             onclick: async function (event) {
@@ -2438,7 +2435,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'edit',
                                                                 }),
                                                                 disabled: editParagraphId,
@@ -2455,7 +2452,7 @@ const pages = {
                                                             components.button({
                                                                 backgroundHoverColor: paragraph.color ? c(paragraph.color, 3, true) : colors.background.overlay.m(),
                                                                 child: components.icon({
-                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.s(),
+                                                                    color: paragraph.color ? c(paragraph.color, 11) : colors.foreground.secondary(),
                                                                     ligature: 'delete',
                                                                 }),
                                                                 onclick: function (event) {
@@ -2503,7 +2500,7 @@ const pages = {
                                         },
                                         child: {
                                             fontWeight: 600,
-                                            color: colors.foreground.s(),
+                                            color: colors.foreground.secondary(),
                                             text: 'More'
                                         }
                                     }) : null]
