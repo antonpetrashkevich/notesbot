@@ -1,8 +1,6 @@
 import Argon2Worker from './workers/argon2.js?worker';
 
-import { baseColors, colors as baseColors_, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents, pages as basePages } from '/home/n1/projects/xpl_kit/commons';
-import { appName, stack, smallViewport, darkMode, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from '/home/n1/projects/xpl_kit/core.js';
-import { radixColor, panels } from '/home/n1/projects/xpl_kit/colors.js';
+import { appName, stack, smallViewport, theme, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from '/home/n1/projects/xpl_kit/core.js';
 
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -13,6 +11,9 @@ import { getBytes, getStorage, ref, uploadBytesResumable } from "firebase/storag
 // https://developers.google.com/fonts/docs/material_symbols
 // https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined
 import materialFontUrl from './material_symbols_outlined_default.woff2';
+
+import * as radixColors from "@radix-ui/colors";
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
@@ -193,20 +194,20 @@ export async function init() {
     startViewportSizeController();
     startThemeController(function () {
         updateMetaTags({
-            'theme-color': colors.background.panel()
+            'theme-color': colors.background.accent(),
         });
         updateBodyStyle({
-            backgroundColor: colors.background.body(),
+            backgroundColor: colors.background.base(),
             color: colors.foreground.primary(),
         });
     });
     updateMetaTags({
-        // 'theme-color': colors.background.panel()
+        'theme-color': colors.background.accent()
     });
     updateBodyStyle({
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
-        // backgroundColor: colors.background.body(),
-        // color: colors.foreground.primary(),
+        backgroundColor: colors.background.base(),
+        color: colors.foreground.primary(),
     });
     await utils.loadFont({
         fontFamily: 'material',
@@ -217,23 +218,22 @@ export async function init() {
         }
     })
 
-    stack.push(pages.panels());
-    // stack.push(pages.init());
-    // key = await loadKeyFromIDB('main');
-    // onAuthStateChanged(firebase.auth, async (user) => {
-    //     if (user) {
-    //         startListenNotebook();
-    //     } else {
-    //         if (authInitialized) {
-    //             await wipeCache();
-    //             window.location.reload();
-    //         }
-    //         else {
-    //             stack.replace(pages.login('/'));
-    //         }
-    //     }
-    //     authInitialized = true;
-    // });
+    stack.push(pages.init());
+    key = await loadKeyFromIDB('main');
+    onAuthStateChanged(firebase.auth, async (user) => {
+        if (user) {
+            startListenNotebook();
+        } else {
+            if (authInitialized) {
+                await wipeCache();
+                window.location.reload();
+            }
+            else {
+                stack.replace(pages.login('/'));
+            }
+        }
+        authInitialized = true;
+    });
 }
 
 function startListenNotebook() {
@@ -286,12 +286,121 @@ function startListenNotebook() {
         });
 }
 
+function radixColor(theme, name, tone, alpha = false, forceRGB = false) {
+    return radixColors[`${name}${theme === 'dark' ? 'Dark' : ''}${!forceRGB && CSS.supports('color', 'color(display-p3 1 1 1)') ? 'P3' : ''}${alpha ? 'A' : ''}`][`${name}${alpha ? 'A' : ''}${tone}`];
+}
+
+const palette = {
+    base: 'gray',
+    primary: 'blue',
+    danger: 'red',
+}
+
 const colors = {
-    ...baseColors_
+    white: (tone, forceRGB = false) => radixColors[`white${!forceRGB && CSS.supports('color', 'color(display-p3 1 1 1)') ? 'P3' : ''}A`][`whiteA${tone}`],
+    black: (tone, forceRGB = false) => radixColors[`black${!forceRGB && CSS.supports('color', 'color(display-p3 1 1 1)') ? 'P3' : ''}A`][`blackA${tone}`],
+    light: {
+        gray: (tone, alpha = false, forceRGB = false) => radixColor('light', 'gray', tone, alpha, forceRGB),
+        mauve: (tone, alpha = false, forceRGB = false) => radixColor('light', 'mauve', tone, alpha, forceRGB),
+        slate: (tone, alpha = false, forceRGB = false) => radixColor('light', 'slate', tone, alpha, forceRGB),
+        sage: (tone, alpha = false, forceRGB = false) => radixColor('light', 'sage', tone, alpha, forceRGB),
+        olive: (tone, alpha = false, forceRGB = false) => radixColor('light', 'olive', tone, alpha, forceRGB),
+        sand: (tone, alpha = false, forceRGB = false) => radixColor('light', 'sand', tone, alpha, forceRGB),
+        tomato: (tone, alpha = false, forceRGB = false) => radixColor('light', 'tomato', tone, alpha, forceRGB),
+        red: (tone, alpha = false, forceRGB = false) => radixColor('light', 'red', tone, alpha, forceRGB),
+        ruby: (tone, alpha = false, forceRGB = false) => radixColor('light', 'ruby', tone, alpha, forceRGB),
+        crimson: (tone, alpha = false, forceRGB = false) => radixColor('light', 'crimson', tone, alpha, forceRGB),
+        pink: (tone, alpha = false, forceRGB = false) => radixColor('light', 'pink', tone, alpha, forceRGB),
+        plum: (tone, alpha = false, forceRGB = false) => radixColor('light', 'plum', tone, alpha, forceRGB),
+        purple: (tone, alpha = false, forceRGB = false) => radixColor('light', 'purple', tone, alpha, forceRGB),
+        violet: (tone, alpha = false, forceRGB = false) => radixColor('light', 'violet', tone, alpha, forceRGB),
+        iris: (tone, alpha = false, forceRGB = false) => radixColor('light', 'iris', tone, alpha, forceRGB),
+        indigo: (tone, alpha = false, forceRGB = false) => radixColor('light', 'indigo', tone, alpha, forceRGB),
+        blue: (tone, alpha = false, forceRGB = false) => radixColor('light', 'blue', tone, alpha, forceRGB),
+        cyan: (tone, alpha = false, forceRGB = false) => radixColor('light', 'cyan', tone, alpha, forceRGB),
+        teal: (tone, alpha = false, forceRGB = false) => radixColor('light', 'teal', tone, alpha, forceRGB),
+        jade: (tone, alpha = false, forceRGB = false) => radixColor('light', 'jade', tone, alpha, forceRGB),
+        green: (tone, alpha = false, forceRGB = false) => radixColor('light', 'green', tone, alpha, forceRGB),
+        grass: (tone, alpha = false, forceRGB = false) => radixColor('light', 'grass', tone, alpha, forceRGB),
+        bronze: (tone, alpha = false, forceRGB = false) => radixColor('light', 'bronze', tone, alpha, forceRGB),
+        gold: (tone, alpha = false, forceRGB = false) => radixColor('light', 'gold', tone, alpha, forceRGB),
+        brown: (tone, alpha = false, forceRGB = false) => radixColor('light', 'brown', tone, alpha, forceRGB),
+        orange: (tone, alpha = false, forceRGB = false) => radixColor('light', 'orange', tone, alpha, forceRGB),
+        amber: (tone, alpha = false, forceRGB = false) => radixColor('light', 'amber', tone, alpha, forceRGB),
+        yellow: (tone, alpha = false, forceRGB = false) => radixColor('light', 'yellow', tone, alpha, forceRGB),
+        lime: (tone, alpha = false, forceRGB = false) => radixColor('light', 'lime', tone, alpha, forceRGB),
+        mint: (tone, alpha = false, forceRGB = false) => radixColor('light', 'mint', tone, alpha, forceRGB),
+        sky: (tone, alpha = false, forceRGB = false) => radixColor('light', 'sky', tone, alpha, forceRGB),
+    },
+    dark: {
+        gray: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'gray', tone, alpha, forceRGB),
+        mauve: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'mauve', tone, alpha, forceRGB),
+        slate: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'slate', tone, alpha, forceRGB),
+        sage: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'sage', tone, alpha, forceRGB),
+        olive: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'olive', tone, alpha, forceRGB),
+        sand: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'sand', tone, alpha, forceRGB),
+        tomato: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'tomato', tone, alpha, forceRGB),
+        red: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'red', tone, alpha, forceRGB),
+        ruby: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'ruby', tone, alpha, forceRGB),
+        crimson: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'crimson', tone, alpha, forceRGB),
+        pink: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'pink', tone, alpha, forceRGB),
+        plum: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'plum', tone, alpha, forceRGB),
+        purple: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'purple', tone, alpha, forceRGB),
+        violet: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'violet', tone, alpha, forceRGB),
+        iris: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'iris', tone, alpha, forceRGB),
+        indigo: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'indigo', tone, alpha, forceRGB),
+        blue: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'blue', tone, alpha, forceRGB),
+        cyan: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'cyan', tone, alpha, forceRGB),
+        teal: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'teal', tone, alpha, forceRGB),
+        jade: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'jade', tone, alpha, forceRGB),
+        green: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'green', tone, alpha, forceRGB),
+        grass: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'grass', tone, alpha, forceRGB),
+        bronze: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'bronze', tone, alpha, forceRGB),
+        gold: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'gold', tone, alpha, forceRGB),
+        brown: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'brown', tone, alpha, forceRGB),
+        orange: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'orange', tone, alpha, forceRGB),
+        amber: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'amber', tone, alpha, forceRGB),
+        yellow: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'yellow', tone, alpha, forceRGB),
+        lime: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'lime', tone, alpha, forceRGB),
+        mint: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'mint', tone, alpha, forceRGB),
+        sky: (tone, alpha = false, forceRGB = false) => radixColor('dark', 'sky', tone, alpha, forceRGB),
+    },
+    border: {
+        light: () => colors[theme][palette.base](6),
+        normal: () => colors[theme][palette.base](7),
+        contrast: () => colors[theme][palette.base](8),
+    },
+    background: {
+        // base: () => theme === 'light' ? 'white' : colors.dark[palette.base](1),
+        // accent: () => theme === 'light' ? colors.light[palette.base](1) : colors.dark[palette.base](2),
+        base: () => theme === 'light' ? 'white' : 'black',
+        accent: () => colors[theme][palette.base](1),
+    },
+    foreground: {
+        primary: () => colors[theme][palette.base](12),
+        secondary: () => colors[theme][palette.base](11),
+        tertiary: () => colors[theme][palette.base](9),
+        danger: () => colors[theme][palette.danger](11),
+        textLink: () => colors[theme].blue(11),
+    },
 }
 
 const styles = {
-    ...baseStyles
+    ...baseStyles,
+    modalCloseBackground: () => ({
+        // backgroundColor: theme === 'light' ? colors.light[palette.base](1, true) : colors.dark[palette.base](2, true),
+        backgroundColor: colors[theme][palette.base](2, true),
+        backdropFilter: 'blur(16px) saturate(180%)'
+    }),
+    modal: () => ({
+        width: 'min(640px, 100% - 1rem)',
+        maxHeight: 'calc(100% - 1rem)',
+        padding: '0.75rem',
+        border: `1px solid ${colors.border.normal()}`,
+        borderRadius: '0.5rem',
+        backgroundColor: colors.background.base(),
+        overflow: 'auto',
+    })
 }
 
 const handlers = {
@@ -303,11 +412,421 @@ const layouts = {
 }
 
 const components = {
-    ...baseComponents
+    ...baseComponents,
+    animations: {
+        spinner: ({ id, width, height, padding, lineGap = 0.25, lineWidth = 10, lineCap, color, speed = 0.75 } = {}) => {
+            let r = Math.floor(50 - lineWidth / 2);
+            return {
+                id,
+                html: `<svg viewBox="0 0 100 100" stroke="${color}" fill="none"><circle cx="50" cy="50" r="${r}" stroke-width="${lineWidth}" stroke-dasharray="${2 * Math.PI * r * (1 - lineGap)} ${2 * Math.PI * r * lineGap}" stroke-linecap=${lineCap}> <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="${speed}s" repeatCount="indefinite"/></circle></svg>`,
+                width,
+                height,
+                padding,
+            };
+        }
+    },
+    icon: ({ id, fontSize = '1.25rem', color, ligature } = {}) => ({
+        id,
+        fontFamily: 'material',
+        fontSize,
+        lineHeight: 1,
+        fontWeight: 400,
+        color,
+        webkitFontFeatureSettings: 'liga',
+        webkitFontSmoothing: 'antialiased',
+        ...styles.unselectable(),
+        text: ligature
+    }),
+    buttons: {
+        floating: ({ id, priority, disabled, onclick, ligature } = {}) => {
+            let backgroundColor, backgroundHoverColor, color;
+            switch (priority) {
+                case 'primary':
+                    backgroundColor = colors[theme][palette.primary](3);
+                    backgroundHoverColor = colors[theme][palette.primary](4);
+                    color = colors[theme][palette.primary](11);
+                    break;
+                case 'danger':
+                    backgroundColor = colors[theme][palette.danger](3);
+                    backgroundHoverColor = colors[theme][palette.danger](4);
+                    color = colors[theme][palette.danger](11);
+                    break;
+                default:
+                    backgroundColor = colors[theme][palette.base](3);
+                    backgroundHoverColor = colors[theme][palette.base](4);
+                    color = colors.foreground.secondary();
+                    break;
+            }
+            return components.button({
+                id,
+                width: '3rem',
+                height: '3rem',
+                padding: '0.5rem',
+                borderRadius: '2rem',
+                backgroundColor,
+                backgroundHoverColor,
+                color,
+                disabled,
+                onclick,
+                child: components.icon({
+                    fontSize: '2rem',
+                    ligature
+                }),
+            });
+        },
+        form: ({ id, priority, smallViewportGrow = true, disabled, href, onclick, ligature, text } = {}) => {
+            let backgroundColor, backgroundHoverColor, color;
+            switch (priority) {
+                case 'primary':
+                    backgroundColor = colors[theme][palette.primary](9);
+                    backgroundHoverColor = colors[theme][palette.primary](10);
+                    color = 'white';
+                    break;
+                case 'danger':
+                    backgroundColor = colors[theme][palette.danger](9);
+                    backgroundHoverColor = colors[theme][palette.danger](10);
+                    color = 'white';
+                    break;
+                default:
+                    backgroundColor = colors[theme][palette.base](3);
+                    backgroundHoverColor = colors[theme][palette.base](4);
+                    color = colors.foreground.secondary();
+                    break;
+            }
+            return components.button({
+                id,
+                minWidth: '6rem',
+                height: '2.5rem',
+                flexGrow: smallViewportGrow && smallViewport ? 1 : 0,
+                flexBasis: smallViewportGrow && smallViewport ? 0 : undefined,
+                padding: '0 0.75rem',
+                backgroundColor,
+                backgroundHoverColor,
+                color,
+                disabled,
+                href,
+                onclick,
+                child: {
+                    ...layouts.row('center', 'center', '0.5rem'),
+                    children: [
+                        ligature ? components.icon({
+                            ligature
+                        }) : null,
+                        text ? {
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            text
+                        } : null
+                    ]
+                },
+            });
+        },
+        menu: ({ id, priority, size = 'm', wrap = false, borderRadius = '0.5rem', disabled, href, onclick, oncontextmenu, justifyContent = 'center', ligature, text } = {}) => {
+            let backgroundHoverColor, color;
+            switch (priority) {
+                case 'danger':
+                    backgroundHoverColor = colors[theme][palette.danger](2);
+                    color = colors.foreground.danger();
+                    break;
+                default:
+                    // backgroundHoverColor = theme === 'light' ? colors.light[palette.base](1, true) : colors.dark[palette.base](2, true);
+                    backgroundHoverColor = colors[theme][palette.base](2);
+                    color = colors.foreground.primary();
+                    break;
+            }
+            return components.button({
+                id,
+                width: '100%',
+                padding: size === 's' ? '0.25rem' : size === 'm' ? '0.5rem' : '0.75rem',
+                borderRadius,
+                backgroundHoverColor,
+                color,
+                disabled,
+                href,
+                onclick,
+                oncontextmenu,
+                child: {
+                    width: '100%',
+                    ...layouts.row(justifyContent, 'center', '0.5rem'),
+                    children: [
+                        ligature ? components.icon({
+                            fontSize: size === 's' ? '1rem' : size === 'm' ? '1.25rem' : '1.5rem',
+                            ligature
+                        }) : null,
+                        text ? {
+                            minWidth: wrap ? undefined : 0,
+                            fontSize: size === 's' ? '0.875rem' : size === 'm' ? '1rem' : '1.125rem',
+                            whiteSpace: wrap ? undefined : 'nowrap',
+                            overflow: wrap ? undefined : 'hidden',
+                            textOverflow: wrap ? undefined : 'ellipsis',
+                            text
+                        } : null
+                    ]
+                },
+            });
+        }
+    },
+    inputs: {
+        text: ({ id, width = '100%', padding = '0.5rem', border = `1px solid ${colors.border.normal()}`, borderRadius = '0.5rem', backgroundColor = 'inherit', fontSize = '1rem', lineHeight = 1.5, color = 'inherit', password = false, disabled, maxlength, value, oninput } = {}) => ({
+            id,
+            tag: 'input',
+            width,
+            padding,
+            border,
+            borderRadius,
+            backgroundColor,
+            fontFamily: 'inherit',
+            fontSize,
+            lineHeight,
+            color,
+            appearance: 'none',
+            ...disabled ? styles.disabled() : {},
+            type: password ? 'password' : 'text',
+            disabled,
+            maxlength,
+            value,
+            onfocus: function () {
+                this.domElement.style.outline = 'none';
+            },
+            oninput
+        }),
+        textArea: ({ id, width = '100%', height = '8rem', padding = '0.5rem', border = `1px solid ${colors.border.normal()}`, borderRadius = '0.5rem', backgroundColor = 'inherit', fontSize = '1rem', lineHeight = 1.5, color = 'inherit', disabled, maxlength, resize = 'vertical', oninput, text } = {}) => ({
+            id,
+            tag: 'textarea',
+            width,
+            height,
+            padding,
+            border,
+            borderRadius,
+            backgroundColor,
+            fontFamily: 'inherit',
+            fontSize,
+            lineHeight,
+            color,
+            appearance: 'none',
+            ...disabled ? styles.disabled() : {},
+            disabled,
+            maxlength,
+            resize,
+            onfocus: function () {
+                this.domElement.style.outline = 'none';
+            },
+            oninput,
+            text,
+        }),
+        toggle: ({ id, width = '100%', color, disabled, value, onclick, iconFalse, iconTrue, text }) => ({
+            id,
+            width,
+            color,
+            ...disabled ? styles.disabled() : {},
+            ...styles.unselectable(),
+            cursor: 'pointer',
+            disabled,
+            onclick,
+            ...layouts.row('start', 'center', '0.5rem'),
+            children: [
+                value ? iconTrue : iconFalse,
+                {
+                    text
+                }
+            ]
+        }),
+    },
+    modals: {
+        menu: ({ id, buttons } = {}) => components.modalCloseBackground({
+            id,
+            ...styles.modalCloseBackground(),
+            child: {
+                id,
+                ...styles.modal(),
+                ...layouts.column(),
+                children: buttons
+            }
+        }),
+        prompt: ({ id, title, description, note, buttons } = {}) => components.modalCloseBackground({
+            id,
+            ...styles.modalCloseBackground(),
+            child: {
+                id,
+                ...styles.modal(),
+                ...layouts.column('start', 'start', '1rem'),
+                children: [
+                    {
+                        fontWeight: 600,
+                        text: title,
+                    },
+                    {
+                        text: description,
+                    },
+                    note ? {
+                        color: colors.foreground.secondary(),
+                        fontStyle: 'italic',
+                        text: note,
+                    } : null,
+                    buttons ? {
+                        width: '100%',
+                        ...layouts.row('end', 'center', '1rem'),
+                        children: buttons
+                    } : null
+                ]
+            }
+        }),
+    },
+    blockers: {
+        loading: ({ toggled, text } = {}) => components.blocker({
+            id: 'blocker-loading',
+            backgroundColor: colors.background.base(),
+            toggled,
+            child: {
+                width: '100%',
+                height: '100%',
+                padding: '1rem',
+                ...layouts.column('center', 'center', '2rem'),
+                children: [
+                    components.animations.spinner({
+                        width: '8vh',
+                        height: '8vh',
+                        color: colors[theme][palette.base](4)
+                    }),
+                    text ? {
+                        text
+                    } : null
+                ]
+            }
+        }),
+        error: ({ error } = {}) => {
+            let text;
+            switch (error) {
+                case 'network':
+                    text = 'Network error. Check your connection and try again.';
+                    break;
+                case 'outofsync':
+                    text = 'Out of sync. Reload the page and try again.';
+                    break;
+                default:
+                    text = 'Something went wrong. Try reloading the page.';
+                    break;
+            }
+            return components.blocker({
+                id: 'blocker-error',
+                backgroundColor: colors.background.base(),
+                toggled: error,
+                child: {
+                    width: '100%',
+                    height: '100%',
+                    padding: '1rem',
+                    ...layouts.column('center', 'center'),
+                    text
+                }
+            });
+        }
+    },
+    header: ({ id, padding = '0.5rem', borderBottom, backgroundColor = colors.background.accent(), color, onclick, leading, title, trailing } = {}) => ({
+        id,
+        position: 'sticky',
+        top: 0,
+        left: 0,
+        zIndex: 10,
+        width: '100%',
+        minHeight: '3.25rem',
+        padding,
+        borderBottom,
+        backgroundColor,
+        color,
+        ...styles.unselectable(),
+        cursor: onclick ? 'pointer' : undefined,
+        ...handlers.button(onclick),
+        ...layouts.row('space-between', 'center', '1rem'),
+        children: [
+            {
+                minWidth: 0,
+                ...layouts.row('start', 'center', '0.5rem'),
+                children: [
+                    leading,
+                    {
+                        fontSize: '1.25rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        text: title
+                    }
+                ]
+            },
+            trailing
+        ]
+    })
 }
 
 const pages = {
-    ...basePages,
+    init: (path = '') => ({
+        path,
+        meta: {
+            title: appName,
+        },
+        config: () => ({
+            width: '100%',
+            height: '100%',
+            padding: '1rem',
+            ...layouts.row('center', 'center'),
+            children: [components.animations.spinner({
+                width: '8vh',
+                height: '8vh',
+                color: colors[theme][palette.base](4)
+            })]
+        }),
+    }),
+    notFound: (path = '') => ({
+        path,
+        meta: {
+            title: `Page Not Found | ${appName}`,
+            description: 'Page Not Found (invalid URL).'
+        },
+        config: () => ({
+            width: '100%',
+            height: '100%',
+            padding: '1rem',
+            ...layouts.column('center', 'center'),
+            children: [
+                {
+                    text: 'Page Not Found (invalid URL).'
+                },
+            ]
+        }),
+    }),
+    notebookDeleted(path = '') {
+        return {
+            path,
+            meta: {
+                title: `Notebook Deleted | ${appName}`,
+                description: 'Notebook deleted.'
+            },
+            config: () => ({
+                width: '100%',
+                height: '100%',
+                padding: '1rem',
+                ...layouts.column('center', 'center', '2rem'),
+                children: [
+                    {
+                        text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
+                    },
+                    {
+                        width: '100%',
+                        ...layouts.row('center'),
+                        children: [
+                            components.buttons.form({
+                                text: 'Log out',
+                                onclick: function (event) {
+                                    signOut(firebase.auth);
+                                }
+                            })
+                        ]
+                    }
+
+                ]
+            }),
+        };
+    },
     login(path = '') {
         let loggingIn = false;
         return {
@@ -328,7 +847,7 @@ const pages = {
                     }),
                     components.button({
                         padding: '0.75rem',
-                        backgroundHoverColor: colors.background.overlay.s(),
+                        backgroundHoverColor: colors[theme][palette.base](2),
                         onclick: function (event) {
                             try {
                                 loggingIn = true;
@@ -353,39 +872,6 @@ const pages = {
                             ]
                         }
                     }),
-                ]
-            }),
-        };
-    },
-    notebookDeleted(path = '') {
-        return {
-            path,
-            meta: {
-                title: `Notebook Deleted | ${appName}`,
-                description: 'Notebook deleted.'
-            },
-            config: () => ({
-                width: '100%',
-                height: '100%',
-                padding: '1rem',
-                ...layouts.column('center', 'center', '1rem'),
-                children: [
-                    {
-                        text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
-                    },
-                    {
-                        width: '100%',
-                        ...layouts.row('center'),
-                        children: [
-                            components.buttons.formSecondary({
-                                text: 'Log out',
-                                onclick: function (event) {
-                                    signOut(firebase.auth);
-                                }
-                            })
-                        ]
-                    }
-
                 ]
             }),
         };
@@ -420,7 +906,7 @@ const pages = {
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        border: `1px solid ${colors.border.m()}`,
+                        border: `1px solid ${colors.border.normal()}`,
                         borderRadius: '0.5rem',
                         ...layouts.column('center', 'start', '2rem'),
                         children: [
@@ -442,7 +928,7 @@ const pages = {
                                         text: 'Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.'
                                     },
                                     {
-                                        text: 'Passwords shorter than 20 characters may become crackable in 50 years.'
+                                        text: 'Passwords shorter than 20 characters will be crackable 50 years from now.'
                                     },
                                 ]
                             },
@@ -462,11 +948,13 @@ const pages = {
                                                 id: 'keyphrase-hint',
                                                 display: keyphraseValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: radixColor(baseColors.danger, 11),
+                                                color: colors.foreground.danger(),
                                                 text: 'Required',
                                             }),
-                                            components.inputs.password({
+                                            components.inputs.text({
                                                 id: 'keyphrase-input',
+                                                border: `1px solid ${colors.border.normal()}`,
+                                                password: true,
                                                 maxlength: 64
                                             })
                                         ]
@@ -483,11 +971,13 @@ const pages = {
                                                 id: 'keyphrase-repeat-hint',
                                                 display: keyphraseRepeatValid ? 'none' : 'block',
                                                 fontWeight: 500,
-                                                color: radixColor(baseColors.danger, 11),
+                                                color: colors.foreground.danger(),
                                                 text: 'Invalid',
                                             }),
-                                            components.inputs.password({
+                                            components.inputs.text({
                                                 id: 'keyphrase-repeat-input',
+                                                border: `1px solid ${colors.border.normal()}`,
+                                                password: true,
                                                 maxlength: 64
                                             })
                                         ]
@@ -498,13 +988,14 @@ const pages = {
                                 width: '100%',
                                 ...layouts.row('end', 'center', '1rem'),
                                 children: [
-                                    components.buttons.formSecondary({
+                                    components.buttons.form({
                                         text: 'Log out',
                                         onclick: function (event) {
                                             signOut(firebase.auth);
                                         }
                                     }),
-                                    components.buttons.formPrimary({
+                                    components.buttons.form({
+                                        priority: 'primary',
                                         text: 'Save',
                                         onclick: async function (event) {
                                             keyphraseValid = true;
@@ -540,7 +1031,7 @@ const pages = {
                                                                 transaction.set(notebookDocRef, {
                                                                     timestamp: serverTimestamp(),
                                                                     status: 'active',
-                                                                    salt,
+                                                                    salt: Bytes.fromUint8Array(salt),
                                                                     keytest: { iv: Bytes.fromUint8Array(keytestEncrypted.iv), data: Bytes.fromUint8Array(keytestEncrypted.data) },
                                                                     tree: {}
                                                                 });
@@ -605,7 +1096,7 @@ const pages = {
                     {
                         width: 'min(640px, 100% - 1rem)',
                         padding: '0.75rem',
-                        border: `1px solid ${colors.border.m()}`,
+                        border: `1px solid ${colors.border.normal()}`,
                         borderRadius: '0.5rem',
                         ...layouts.column('center', 'start', '2rem'),
                         children: [
@@ -626,11 +1117,13 @@ const pages = {
                                         id: 'keyphrase-hint',
                                         display: keyphraseValid ? 'none' : 'block',
                                         fontWeight: 500,
-                                        color: radixColor(baseColors.danger, 11),
+                                        color: colors.foreground.danger(),
                                         text: 'Invalid'
                                     }),
-                                    components.inputs.password({
+                                    components.inputs.text({
                                         id: 'keyphrase-input',
+                                        border: `1px solid ${colors.border.normal()}`,
+                                        password: true,
                                         maxlength: 64
                                     }),
                                 ]
@@ -639,13 +1132,14 @@ const pages = {
                                 width: '100%',
                                 ...layouts.row('end', 'center', '1rem'),
                                 children: [
-                                    components.buttons.formSecondary({
+                                    components.buttons.form({
                                         text: 'Log out',
                                         onclick: function (event) {
                                             signOut(firebase.auth);
                                         }
                                     }),
-                                    components.buttons.formPrimary({
+                                    components.buttons.form({
+                                        priority: 'primary',
                                         text: 'Save',
                                         onclick: async function (event) {
                                             keyBuilding = true;
@@ -745,7 +1239,8 @@ const pages = {
                         () => components.header({
                             id: 'header',
                             leading: folderId === 'root' ? null : components.button({
-                                backgroundHoverColor: colors.background.overlay.m(),
+                                backgroundHoverColor: colors[theme][palette.base](3),
+                                color: colors.foreground.secondary(),
                                 href: '/',
                                 child: components.icon({
                                     ligature: 'home'
@@ -865,7 +1360,8 @@ const pages = {
                                                                             children: [
                                                                                 components.header({
                                                                                     title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
-                                                                                    trailing: components.buttons.formPrimary({
+                                                                                    trailing: components.buttons.form({
+                                                                                        priority: 'primary',
                                                                                         smallViewportGrow: false,
                                                                                         text: 'Move',
                                                                                         onclick: async function (event) {
@@ -938,7 +1434,7 @@ const pages = {
                                                                 path: '#rename',
                                                                 hidePrior: false,
                                                                 config: () => components.modalCloseBackground({
-                                                                    backgroundColor: colors.background.overlay.s(),
+                                                                    ...styles.modalCloseBackground(),
                                                                     child: {
                                                                         ...styles.modal(),
                                                                         ...layouts.column('start', 'start', '1rem'),
@@ -954,7 +1450,7 @@ const pages = {
                                                                                     id: 'new-folder-name-hint',
                                                                                     display: nameValid ? 'none' : 'block',
                                                                                     fontWeight: 500,
-                                                                                    color: radixColor(baseColors.danger, 11),
+                                                                                    color: colors.foreground.danger(),
                                                                                     text: 'Required'
                                                                                 }),
                                                                                 components.inputs.text({
@@ -967,7 +1463,8 @@ const pages = {
                                                                                 width: '100%',
                                                                                 ...layouts.row('end'),
                                                                                 children: [
-                                                                                    components.buttons.formPrimary({
+                                                                                    components.buttons.form({
+                                                                                        priority: 'primary',
                                                                                         text: 'Rename',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
@@ -1020,7 +1517,7 @@ const pages = {
                                                         }
                                                     }),
                                                     components.buttons.menu({
-                                                        palette: baseColors.danger,
+                                                        priority: 'danger',
                                                         text: 'Delete',
                                                         onclick: async function (event) {
                                                             stack.replace({
@@ -1031,8 +1528,8 @@ const pages = {
                                                                     description: 'You won\'t be able to restore it.',
                                                                     note: 'Consider moving it to an \'Archive\' folder instead — create one if you don’t have it yet.',
                                                                     buttons: [
-                                                                        components.buttons.formPrimary({
-                                                                            palette: baseColors.danger,
+                                                                        components.buttons.form({
+                                                                            priority: 'danger',
                                                                             text: 'Delete',
                                                                             onclick: async function (event) {
                                                                                 await stack.pop();
@@ -1086,16 +1583,9 @@ const pages = {
                             zIndex: 10,
                             ...layouts.column('start', 'start', '1rem'),
                             children: [
-                                components.button(
+                                components.buttons.floating(
                                     {
-                                        padding: '0.5rem',
-                                        borderRadius: '2rem',
-                                        backgroundColor: colors.background.overlay.m(),
-                                        backgroundHoverColor: colors.background.overlay.l(),
-                                        child: components.icon({
-                                            fontSize: '2rem',
-                                            ligature: 'menu'
-                                        }),
+                                        ligature: 'menu',
                                         onclick: function (event) {
                                             const notebookTimestamp = notebook.timestamp.toMillis();
                                             stack.push({
@@ -1110,7 +1600,7 @@ const pages = {
                                                                     path: '#theme',
                                                                     hidePrior: false,
                                                                     config: () => components.modalCloseBackground({
-                                                                        backgroundColor: colors.background.overlay.s(),
+                                                                        ...styles.modalCloseBackground(),
                                                                         child: {
                                                                             ...styles.modal(),
                                                                             ...layouts.column('start', 'start', '1rem'),
@@ -1123,10 +1613,11 @@ const pages = {
                                                                                     id: 'theme-system',
                                                                                     value: window.localStorage.getItem('theme') === 'auto',
                                                                                     iconFalse: components.icon({
+                                                                                        color: colors.foreground.secondary(),
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
-                                                                                        color: radixColor('blue', 9),
+                                                                                        color: colors[theme][palette.primary](9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
                                                                                     text: 'System',
@@ -1142,10 +1633,11 @@ const pages = {
                                                                                     id: 'theme-light',
                                                                                     value: window.localStorage.getItem('theme') === 'light',
                                                                                     iconFalse: components.icon({
+                                                                                        color: colors.foreground.secondary(),
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
-                                                                                        color: radixColor('blue', 9),
+                                                                                        color: colors[theme][palette.primary](9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
                                                                                     text: 'Light',
@@ -1161,10 +1653,11 @@ const pages = {
                                                                                     id: 'theme-dark',
                                                                                     value: window.localStorage.getItem('theme') === 'dark',
                                                                                     iconFalse: components.icon({
+                                                                                        color: colors.foreground.secondary(),
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
-                                                                                        color: radixColor('blue', 9),
+                                                                                        color: colors[theme][palette.primary](9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
                                                                                     text: 'Dark',
@@ -1183,7 +1676,7 @@ const pages = {
                                                             }
                                                         }),
                                                         components.buttons.menu({
-                                                            palette: baseColors.danger,
+                                                            priority: 'danger',
                                                             text: 'Delete account',
                                                             onclick: function (event) {
                                                                 stack.replace({
@@ -1194,8 +1687,8 @@ const pages = {
                                                                         description: 'Are you sure?',
                                                                         note: 'Your account and all it\'s data will be permanently deleted in 30 days. Contact support before then to stop the process.',
                                                                         buttons: [
-                                                                            components.buttons.formPrimary({
-                                                                                palette: baseColors.danger,
+                                                                            components.buttons.form({
+                                                                                priority: 'danger',
                                                                                 text: 'Delete',
                                                                                 onclick: async function (event) {
                                                                                     await stack.pop();
@@ -1235,7 +1728,7 @@ const pages = {
                                                             }
                                                         }),
                                                         components.buttons.menu({
-                                                            palette: baseColors.danger,
+                                                            priority: 'danger',
                                                             text: 'Log out',
                                                             onclick: function (event) {
                                                                 signOut(firebase.auth);
@@ -1256,16 +1749,9 @@ const pages = {
                             zIndex: 10,
                             ...layouts.column('start', 'start', '1rem'),
                             children: [
-                                components.button({
-                                    padding: '0.5rem',
-                                    borderRadius: '2rem',
-                                    backgroundColor: radixColor('blue', 3),
-                                    backgroundHoverColor: radixColor('blue', 4),
-                                    child: components.icon({
-                                        fontSize: '2rem',
-                                        color: radixColor('blue', 9),
-                                        ligature: 'add_2'
-                                    }),
+                                components.buttons.floating({
+                                    priority: 'primary',
+                                    ligature: 'add_2',
                                     onclick: function (event) {
                                         const notebookTimestamp = notebook.timestamp.toMillis();
                                         stack.push({
@@ -1281,7 +1767,7 @@ const pages = {
                                                                 path: '#newfolder',
                                                                 hidePrior: false,
                                                                 config: () => components.modalCloseBackground({
-                                                                    backgroundColor: colors.background.overlay.s(),
+                                                                    ...styles.modalCloseBackground(),
                                                                     child: {
                                                                         ...styles.modal(),
                                                                         ...layouts.column('start', 'start', '1rem'),
@@ -1298,7 +1784,7 @@ const pages = {
                                                                                         id: 'new-folder-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: radixColor(baseColors.danger, 11),
+                                                                                        color: colors.foreground.danger(),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1311,7 +1797,8 @@ const pages = {
                                                                                 width: '100%',
                                                                                 ...layouts.row('end'),
                                                                                 children: [
-                                                                                    components.buttons.formPrimary({
+                                                                                    components.buttons.form({
+                                                                                        priority: 'primary',
                                                                                         text: 'Create',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
@@ -1371,7 +1858,7 @@ const pages = {
                                                                 path: '#newnote',
                                                                 hidePrior: false,
                                                                 config: () => components.modalCloseBackground({
-                                                                    backgroundColor: colors.background.overlay.s(),
+                                                                    ...styles.modalCloseBackground(),
                                                                     child: {
                                                                         ...styles.modal(),
                                                                         ...layouts.column('start', 'start', '1rem'),
@@ -1388,7 +1875,7 @@ const pages = {
                                                                                         id: 'new-note-name-hint',
                                                                                         display: nameValid ? 'none' : 'block',
                                                                                         fontWeight: 500,
-                                                                                        color: radixColor(baseColors.danger, 11),
+                                                                                        color: colors.foreground.danger(),
                                                                                         text: 'Required'
                                                                                     }),
                                                                                     components.inputs.text({
@@ -1401,7 +1888,8 @@ const pages = {
                                                                                 width: '100%',
                                                                                 ...layouts.row('end'),
                                                                                 children: [
-                                                                                    components.buttons.formPrimary({
+                                                                                    components.buttons.form({
+                                                                                        priority: 'primary',
                                                                                         text: 'Create',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
@@ -1541,7 +2029,8 @@ const pages = {
                     () => components.header({
                         id: 'header',
                         leading: components.button({
-                            backgroundHoverColor: colors.background.overlay.m(),
+                            backgroundHoverColor: colors[theme][palette.base](3),
+                            color: colors.foreground.secondary(),
                             href: '/',
                             child: components.icon({
                                 ligature: 'home'
@@ -1561,7 +2050,7 @@ const pages = {
                                 id: 'add-paragraph-hint',
                                 display: addParagraphValid ? 'none' : 'block',
                                 fontWeight: 500,
-                                color: radixColor(baseColors.danger, 11),
+                                color: colors.foreground.danger(),
                                 text: 'Required'
                             }),
                             components.inputs.textArea({
@@ -1600,7 +2089,6 @@ const pages = {
                                                     path: '#invalid',
                                                     hidePrior: false,
                                                     config: () => components.modals.prompt({
-                                                        palette: baseColors.danger,
                                                         title: 'Invalid',
                                                         description: 'Maximum 8 files, 1GB total'
                                                     })
@@ -1610,7 +2098,6 @@ const pages = {
                                                     path: '#invalid',
                                                     hidePrior: false,
                                                     config: () => components.modals.prompt({
-                                                        palette: baseColors.danger,
                                                         title: 'Invalid',
                                                         description: '10 GB limit reached. Delete existing files to free up space.',
                                                         note: 'Limit update could take up to 24 hours.'
@@ -1623,7 +2110,7 @@ const pages = {
                                             }
                                         }
                                     },
-                                    () => components.buttons.formSecondary({
+                                    () => components.buttons.form({
                                         id: 'attach_button',
                                         ligature: filesAttached ? 'attach_file_off' : 'attach_file',
                                         text: filesAttached ? 'Detach' : 'Attach',
@@ -1633,262 +2120,12 @@ const pages = {
                                                 this.layer.widgets['files-attached'].update();
                                                 this.layer.widgets['attach_button'].update();
                                             } else {
-                                                stack.push({
-                                                    path: '#attach',
-                                                    hidePrior: false,
-                                                    config: () => components.modals.menu({
-                                                        buttons: [
-                                                            components.buttons.menu({
-                                                                disabled: uploads[noteId],
-                                                                text: 'Files',
-                                                                onclick: async function (event) {
-                                                                    await stack.pop();
-                                                                    stack.at(-1).widgets['files-input'].domElement.click();
-                                                                }
-                                                            }),
-                                                            components.buttons.menu({
-                                                                text: 'Paragraph',
-                                                                onclick: function (event) {
-                                                                    function attachParagraphFolder(targetFolderId) {
-                                                                        return {
-                                                                            path: `#attach-${targetFolderId}`,
-                                                                            config: () => {
-                                                                                const children = Object.keys(tree).filter(id => id !== noteId && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                                                                                return {
-                                                                                    ...layouts.base('start', 'center'),
-                                                                                    children: [
-                                                                                        components.header({
-                                                                                            title: 'Attach Paragraph',
-                                                                                        }),
-                                                                                        {
-                                                                                            flexGrow: 1,
-                                                                                            width: 'min(640px, 100% - 1rem)',
-                                                                                            padding: '1rem 0',
-                                                                                            ...layouts.column('center', 'center', '1rem'),
-                                                                                            children: children.map(cid => components.buttons.menu({
-                                                                                                size: 'l',
-                                                                                                text: tree[cid]['name'],
-                                                                                                onclick: function (event) {
-                                                                                                    if (tree[cid].type === 'folder') {
-                                                                                                        stack.push(attachParagraphFolder(cid));
-                                                                                                    } else {
-                                                                                                        stack.push(attachParagraphNote(cid));
-                                                                                                    }
-                                                                                                },
-                                                                                            }))
-                                                                                        }
-                                                                                    ]
-                                                                                };
-                                                                            }
-                                                                        };
-                                                                    }
-                                                                    function attachParagraphNote(targetNoteId) {
-                                                                        const paragraphs = [];
-                                                                        let filterParagraphQuery;
-                                                                        let stopListenParagraphs;
-                                                                        return {
-                                                                            path: `#attach-${targetNoteId}`,
-                                                                            onPush: function () {
-                                                                                stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', targetNoteId), orderBy('timestamp', 'desc')),
-                                                                                    async (querySnapshot) => {
-                                                                                        paragraphs.length = 0;
-                                                                                        for (const docSnap of querySnapshot.docs) {
-                                                                                            const docData = docSnap.data();
-                                                                                            if (!docData.notes.includes(noteId)) {
-                                                                                                paragraphs.push({
-                                                                                                    id: docSnap.id,
-                                                                                                    timestamp: docData.timestamp,
-                                                                                                    notes: docData.notes,
-                                                                                                    color: docData.color,
-                                                                                                    text: textDecoder.decode(await decrypt(key, docData.text.iv.toUint8Array(), docData.text.data.toUint8Array())),
-                                                                                                    files: docData.files ? await Promise.all(docData.files.map(async (f) => ({
-                                                                                                        id: f.id,
-                                                                                                        size: f.size,
-                                                                                                        type: f.type,
-                                                                                                        lastModified: f.lastModified,
-                                                                                                        name: textDecoder.decode(await decrypt(key, f.name.iv.toUint8Array(), f.name.data.toUint8Array())),
-                                                                                                        iv: f.iv.toUint8Array()
-                                                                                                    }))) : undefined
-                                                                                                });
-                                                                                            }
-                                                                                        }
-                                                                                        this.widgets['paragraphs'].update();
-                                                                                    }
-                                                                                );
-                                                                            },
-                                                                            onPop: function () {
-                                                                                stopListenParagraphs();
-                                                                            },
-                                                                            config: () => {
-                                                                                return {
-                                                                                    ...layouts.base('start', 'center'),
-                                                                                    children: [
-                                                                                        components.header({
-                                                                                            title: tree[targetNoteId].name,
-                                                                                        }),
-                                                                                        {
-                                                                                            width: 'min(640px, 100% - 1rem)',
-                                                                                            padding: '1rem 0',
-                                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                                            children: [
-                                                                                                () => ({
-                                                                                                    id: 'filter-paragraphs',
-                                                                                                    width: '100%',
-                                                                                                    padding: '0 0.25rem 0 0.5rem',
-                                                                                                    border: `1px solid ${colors.border.s()}`,
-                                                                                                    borderRadius: '0.5rem',
-                                                                                                    ...layouts.row('start', 'center'),
-                                                                                                    children: [
-                                                                                                        components.icon({
-                                                                                                            ligature: 'search'
-                                                                                                        }),
-                                                                                                        {
-                                                                                                            tag: 'input',
-                                                                                                            flexGrow: 1,
-                                                                                                            ...styles.input(),
-                                                                                                            border: 'none',
-                                                                                                            type: 'text',
-                                                                                                            value: filterParagraphQuery,
-                                                                                                            oninput: function (event) {
-                                                                                                                filterParagraphQuery = event.target.value;
-                                                                                                                this.layer.widgets['paragraphs'].update();
-                                                                                                            },
-                                                                                                        },
-                                                                                                        components.button({
-                                                                                                            backgroundHoverColor: colors.background.overlay.m(),
-                                                                                                            padding: '0.25rem',
-                                                                                                            child: components.icon({
-                                                                                                                ligature: 'close'
-                                                                                                            }),
-                                                                                                            onclick: function (event) {
-                                                                                                                filterParagraphQuery = undefined;
-                                                                                                                this.layer.widgets['filter-paragraphs'].update();
-                                                                                                                this.layer.widgets['paragraphs'].update();
-                                                                                                            }
-                                                                                                        }),
-                                                                                                    ]
-                                                                                                }),
-                                                                                                () => {
-                                                                                                    return ({
-                                                                                                        id: 'paragraphs',
-                                                                                                        width: '100%',
-                                                                                                        ...layouts.column('start', 'start', '1rem'),
-                                                                                                        children: paragraphs.filter(p => {
-                                                                                                            if (!filterParagraphQuery) {
-                                                                                                                return true;
-                                                                                                            }
-                                                                                                            if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                                                                                                return true;
-                                                                                                            }
-                                                                                                            for (const file of p.files || []) {
-                                                                                                                if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                                                                                                    return true;
-                                                                                                                }
-                                                                                                            }
-                                                                                                            return false;
-                                                                                                        }).map((paragraph, index) => ({
-                                                                                                            id: `paragraph-${paragraph.id}`,
-                                                                                                            width: '100%',
-                                                                                                            padding: '0.5rem',
-                                                                                                            border: `1px solid ${paragraph.color ? radixColor(paragraph.color, 6, true) : colors.border.s()}`,
-                                                                                                            borderRadius: '0.5rem',
-                                                                                                            backgroundColor: paragraph.color ? radixColor(paragraph.color, 3) : colors.background.body(),
-                                                                                                            color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.primary(),
-                                                                                                            ...styles.unselectable(),
-                                                                                                            cursor: 'pointer',
-                                                                                                            ...handlers.hover({
-                                                                                                                outline: `2px solid ${paragraph.color ? radixColor(paragraph.color, 8, true) : colors.border.l()}`,
-                                                                                                            }),
-                                                                                                            ...handlers.button(function (event) {
-                                                                                                                stack.push({
-                                                                                                                    path: '#confirm',
-                                                                                                                    hidePrior: false,
-                                                                                                                    config: () => components.modals.prompt({
-                                                                                                                        title: 'Attach Paragraph',
-                                                                                                                        description: 'Are you sure?',
-                                                                                                                        buttons: [
-                                                                                                                            components.buttons.formPrimary({
-                                                                                                                                text: 'Attach',
-                                                                                                                                onclick: async function (event) {
-                                                                                                                                    let steps = 0;
-                                                                                                                                    for (let i = stack.length - 1; i > 0; i--) {
-                                                                                                                                        if (stack.at(i) === pageLayer) {
-                                                                                                                                            break;
-                                                                                                                                        }
-                                                                                                                                        steps += 1;
-                                                                                                                                    }
-                                                                                                                                    await stack.pop(steps);
-                                                                                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                                        notes: arrayUnion(noteId),
-                                                                                                                                    });
-                                                                                                                                }
-                                                                                                                            })
-                                                                                                                        ]
-                                                                                                                    })
-                                                                                                                });
-                                                                                                            }),
-                                                                                                            ...layouts.column('start', 'start', '1rem'),
-                                                                                                            children: [
-                                                                                                                paragraph.text ? {
-                                                                                                                    width: '100%',
-                                                                                                                    whiteSpace: 'pre-wrap',
-                                                                                                                    wordBreak: 'break-word',
-                                                                                                                    text: paragraph.text
-                                                                                                                } : null,
-                                                                                                                paragraph.files ? {
-                                                                                                                    width: '100%',
-                                                                                                                    ...layouts.column('start', 'start', '0.5rem'),
-                                                                                                                    children: paragraph.files.map(f => ({
-                                                                                                                        width: '100%',
-                                                                                                                        padding: '0.5rem',
-                                                                                                                        borderRadius: '0.5rem',
-                                                                                                                        backgroundColor: paragraph.color ? radixColor(paragraph.color, 2, true) : colors.background.overlay.s(),
-                                                                                                                        fontWeight: 600,
-                                                                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                                                                        ...styles.unselectable(),
-                                                                                                                        whiteSpace: 'nowrap',
-                                                                                                                        overflow: 'hidden',
-                                                                                                                        textOverflow: 'ellipsis',
-                                                                                                                        text: f.name
-                                                                                                                    }))
-                                                                                                                } : null,
-                                                                                                                {
-                                                                                                                    width: '100%',
-                                                                                                                    ...layouts.row('space-between', 'center', '1rem'),
-                                                                                                                    children: [
-                                                                                                                        {
-                                                                                                                            fontSize: '0.875rem',
-                                                                                                                            color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                                                                            ...styles.unselectable(),
-                                                                                                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                                                                                        },
-                                                                                                                        {
-                                                                                                                            ...layouts.row(),
-                                                                                                                            children: null
-                                                                                                                        }
-                                                                                                                    ]
-                                                                                                                }
-                                                                                                            ]
-                                                                                                        }))
-                                                                                                    });
-                                                                                                }
-                                                                                            ]
-                                                                                        }
-                                                                                    ]
-                                                                                };
-                                                                            }
-                                                                        };
-                                                                    }
-                                                                    stack.replace(attachParagraphFolder('root'));
-                                                                }
-                                                            }),
-                                                        ]
-                                                    })
-                                                });
+                                                stack.at(-1).widgets['files-input'].domElement.click();
                                             }
                                         }
                                     }),
-                                    components.buttons.formPrimary({
+                                    components.buttons.form({
+                                        priority: 'primary',
                                         text: 'Add',
                                         onclick: async function (event) {
                                             addParagraphValid = true;
@@ -1998,13 +2235,13 @@ const pages = {
                                     id: `file-upload-${fu.id}`,
                                     width: '100%',
                                     height: '1rem',
-                                    backgroundColor: colors.background.overlay.m(),
+                                    backgroundColor: colors[theme][palette.base](3),
                                     ...layouts.row(),
                                     children: [
                                         {
                                             width: `max(5%, ${fu.completed}%)`,
                                             height: '100%',
-                                            backgroundColor: colors.background.overlay.l()
+                                            backgroundColor: colors[theme][palette.base](5)
                                         }
                                     ]
                                 }))
@@ -2013,7 +2250,7 @@ const pages = {
                                 id: 'filter-paragraphs',
                                 width: '100%',
                                 padding: '0 0.25rem 0 0.5rem',
-                                border: `1px solid ${colors.border.s()}`,
+                                border: `1px solid ${colors[theme][palette.base](6)}`,
                                 borderRadius: '0.5rem',
                                 ...layouts.row('start', 'center'),
                                 children: [
@@ -2023,19 +2260,29 @@ const pages = {
                                     {
                                         tag: 'input',
                                         flexGrow: 1,
-                                        ...styles.input(),
+                                        padding: '0.5rem',
                                         border: 'none',
+                                        backgroundColor: 'inherit',
+                                        fontFamily: 'inherit',
+                                        fontSize: '1rem',
+                                        lineHeight: 1.5,
+                                        color: 'inherit',
+                                        appearance: 'none',
                                         type: 'text',
                                         value: filterParagraphQuery,
+                                        onfocus: function () {
+                                            this.domElement.style.outline = 'none';
+                                        },
                                         oninput: function (event) {
                                             filterParagraphQuery = event.target.value;
                                             this.layer.widgets['paragraphs'].update();
                                         },
                                     },
                                     components.button({
-                                        backgroundHoverColor: colors.background.overlay.m(),
+                                        backgroundHoverColor: colors[theme][palette.base](2),
                                         padding: '0.25rem',
                                         child: components.icon({
+                                            color: colors.foreground.secondary(),
                                             ligature: 'close'
                                         }),
                                         onclick: function (event) {
@@ -2046,435 +2293,462 @@ const pages = {
                                     }),
                                 ]
                             }),
-                            () => {
-                                return ({
-                                    id: 'paragraphs',
-                                    width: '100%',
-                                    ...layouts.column('start', 'start', '1rem'),
-                                    children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
-                                        if (!filterParagraphQuery) {
+                            () => ({
+                                id: 'paragraphs',
+                                width: '100%',
+                                ...layouts.column('start', 'start', '1rem'),
+                                children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
+                                    if (!filterParagraphQuery) {
+                                        return true;
+                                    }
+                                    if (p.id === editParagraphId) {
+                                        return true;
+                                    }
+                                    if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                        return true;
+                                    }
+                                    for (const file of p.files || []) {
+                                        if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
                                             return true;
                                         }
-                                        if (p.id === editParagraphId) {
-                                            return true;
-                                        }
-                                        if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                            return true;
-                                        }
-                                        for (const file of p.files || []) {
-                                            if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                                return true;
-                                            }
-                                        }
-                                        return false;
-                                    }).map((paragraph, index) => paragraph.id === editParagraphId ? {
-                                        id: 'edit-paragraph',
-                                        ...layouts.column('start', 'start', '1rem'),
-                                        width: '100%',
-                                        children: [
-                                            () => ({
-                                                id: 'edit-paragraph-hint',
-                                                display: editParagraphValid ? 'none' : 'block',
-                                                fontWeight: 500,
-                                                color: radixColor(baseColors.danger, 11),
-                                                text: 'Required'
-                                            }),
-                                            components.inputs.textArea({
-                                                id: 'edit-paragraph-input',
-                                                palette: paragraph.color,
-                                                width: '100%',
-                                                height: `max(${editParagraphHeight}px, 16rem)`,
-                                                text: editParagraphText,
-                                                oninput: function (event) {
-                                                    editParagraphText = event.target.value;
-                                                }
-                                            }),
-                                            {
-                                                width: '100%',
-                                                ...layouts.row('end', 'start', '1rem'),
-                                                children: [
-                                                    components.buttons.formSecondary({
-                                                        text: 'Cancel',
-                                                        onclick: function (event) {
-                                                            editParagraphId = undefined;
-                                                            editParagraphValid = undefined;
-                                                            editParagraphText = undefined;
-                                                            this.layer.widgets['paragraphs'].update();
-                                                        }
-                                                    }),
-                                                    components.buttons.formPrimary({
-                                                        text: 'Save',
-                                                        onclick: async function (event) {
-                                                            editParagraphValid = true;
-                                                            if (!this.layer.widgets['edit-paragraph-input'].domElement.value.trim()) {
-                                                                editParagraphValid = false;
-                                                            }
-                                                            this.layer.widgets['edit-paragraph-hint'].update();
-                                                            if (!editParagraphValid) {
-                                                                return;
-                                                            }
-                                                            editParagraphId = undefined;
-                                                            editParagraphValid = undefined;
-                                                            editParagraphText = undefined;
-                                                            const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
-                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-                                                            });
-                                                        }
-                                                    })
-                                                ]
-                                            }
-                                        ]
-                                    } : {
-                                        id: `paragraph-${paragraph.id}`,
-                                        width: '100%',
-                                        padding: '0.5rem',
-                                        border: `1px solid ${paragraph.color ? radixColor(paragraph.color, 6, true) : colors.border.s()}`,
-                                        borderRadius: '0.5rem',
-                                        backgroundColor: paragraph.color ? radixColor(paragraph.color, 3) : colors.background.body(),
-                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.primary(),
-                                        ...layouts.column('start', 'start', '1rem'),
-                                        children: [
-                                            paragraph.text ? {
-                                                width: '100%',
-                                                whiteSpace: 'pre-wrap',
-                                                wordBreak: 'break-word',
-                                                text: paragraph.text
-                                            } : null,
-                                            paragraph.files ? {
-                                                width: '100%',
-                                                ...layouts.column('start', 'start', '0.5rem'),
-                                                children: paragraph.files.map(f => ({
+                                    }
+                                    return false;
+                                }).map((paragraph, index) => {
+                                    let borderColor, backgroundColor, textColor, dateColor, buttonColor, buttonBackgroundHoverColor, fileBackgroundColor, fileTextColor, fileButtonColor, fileButtonBackgroundHoverColor;
+                                    if (paragraph.color) {
+                                        borderColor = colors[theme][paragraph.color](7);
+                                        backgroundColor = colors[theme][paragraph.color](3);
+                                        textColor = colors[theme][paragraph.color](12);
+                                        dateColor = colors[theme][paragraph.color](11);
+                                        buttonColor = colors[theme][paragraph.color](11);
+                                        buttonBackgroundHoverColor = colors[theme][paragraph.color](5);
+                                        fileBackgroundColor = colors[theme][paragraph.color](4);
+                                        fileTextColor = colors[theme][paragraph.color](11);
+                                        fileButtonColor = colors[theme][paragraph.color](11);
+                                        fileButtonBackgroundHoverColor = colors[theme][paragraph.color](6);
+                                    } else {
+                                        borderColor = colors.border.normal();
+                                        backgroundColor = undefined;
+                                        textColor = undefined;
+                                        dateColor = colors.foreground.secondary();
+                                        buttonColor = colors.foreground.secondary();
+                                        buttonBackgroundHoverColor = colors[theme][palette.base](3);
+                                        fileBackgroundColor = colors[theme][palette.base](2);
+                                        fileTextColor = colors.foreground.secondary();
+                                        fileButtonColor = colors.foreground.secondary();
+                                        fileButtonBackgroundHoverColor = colors[theme][palette.base](4);
+                                    }
+                                    if (paragraph.id === editParagraphId) {
+                                        return {
+                                            id: 'edit-paragraph',
+                                            ...layouts.column('start', 'start', '1rem'),
+                                            width: '100%',
+                                            children: [
+                                                () => ({
+                                                    id: 'edit-paragraph-hint',
+                                                    display: editParagraphValid ? 'none' : 'block',
+                                                    fontWeight: 500,
+                                                    color: colors.foreground.danger(),
+                                                    text: 'Required'
+                                                }),
+                                                components.inputs.textArea({
+                                                    id: 'edit-paragraph-input',
                                                     width: '100%',
-                                                    padding: '0.25rem 0.25rem 0.25rem 0.5rem',
-                                                    borderRadius: '0.5rem',
-                                                    backgroundColor: paragraph.color ? radixColor(paragraph.color, 2, true) : colors.background.overlay.s(),
-                                                    ...layouts.row('space-between', 'center'),
+                                                    height: `max(${editParagraphHeight}px, 16rem)`,
+                                                    border: `1px solid ${borderColor}`,
+                                                    backgroundColor,
+                                                    color: textColor,
+                                                    text: editParagraphText,
+                                                    oninput: function (event) {
+                                                        editParagraphText = event.target.value;
+                                                    }
+                                                }),
+                                                {
+                                                    width: '100%',
+                                                    ...layouts.row('end', 'start', '1rem'),
                                                     children: [
-                                                        {
-                                                            minWidth: 0,
-                                                            fontWeight: 600,
-                                                            color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                            ...styles.unselectable(),
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            text: f.name
-                                                        },
-                                                        () => ({
-                                                            id: `file-actions-${f.id}`,
-                                                            ...layouts.row('start', 'center'),
-                                                            children: [
-                                                                !downloads[f.id] ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                    child: components.icon({
-                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                        ligature: 'cloud_download'
-                                                                    }),
-                                                                    onclick: async function (event) {
-                                                                        downloads[f.id] = {
-                                                                            status: 'downloading'
-                                                                        };
-                                                                        stack.updateAll({
-                                                                            type: 'download',
-                                                                            fileId: f.id
-                                                                        });
-                                                                        try {
-                                                                            const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
-                                                                            const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
+                                                        components.buttons.form({
+                                                            text: 'Cancel',
+                                                            onclick: function (event) {
+                                                                editParagraphId = undefined;
+                                                                editParagraphValid = undefined;
+                                                                editParagraphText = undefined;
+                                                                this.layer.widgets['paragraphs'].update();
+                                                            }
+                                                        }),
+                                                        components.buttons.form({
+                                                            priority: 'primary',
+                                                            text: 'Save',
+                                                            onclick: async function (event) {
+                                                                editParagraphValid = true;
+                                                                if (!this.layer.widgets['edit-paragraph-input'].domElement.value.trim()) {
+                                                                    editParagraphValid = false;
+                                                                }
+                                                                this.layer.widgets['edit-paragraph-hint'].update();
+                                                                if (!editParagraphValid) {
+                                                                    return;
+                                                                }
+                                                                editParagraphId = undefined;
+                                                                editParagraphValid = undefined;
+                                                                editParagraphText = undefined;
+                                                                const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
+                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                    text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+                                                                });
+                                                            }
+                                                        })
+                                                    ]
+                                                }
+                                            ]
+                                        };
+                                    } else {
+                                        return {
+                                            id: `paragraph-${paragraph.id}`,
+                                            width: '100%',
+                                            padding: '0.5rem',
+                                            border: `1px solid ${borderColor}`,
+                                            borderRadius: '0.5rem',
+                                            backgroundColor,
+                                            color: textColor,
+                                            ...layouts.column('start', 'start', '1rem'),
+                                            children: [
+                                                paragraph.text ? {
+                                                    width: '100%',
+                                                    whiteSpace: 'pre-wrap',
+                                                    wordBreak: 'break-word',
+                                                    text: paragraph.text
+                                                } : null,
+                                                paragraph.files ? {
+                                                    width: '100%',
+                                                    ...layouts.column('start', 'start', '0.5rem'),
+                                                    children: paragraph.files.map(f => ({
+                                                        width: '100%',
+                                                        padding: '0.25rem 0.25rem 0.25rem 0.5rem',
+                                                        borderRadius: '0.5rem',
+                                                        backgroundColor: fileBackgroundColor,
+                                                        ...layouts.row('space-between', 'center'),
+                                                        children: [
+                                                            {
+                                                                minWidth: 0,
+                                                                fontWeight: 600,
+                                                                color: fileTextColor,
+                                                                ...styles.unselectable(),
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                text: f.name
+                                                            },
+                                                            () => ({
+                                                                id: `file-actions-${f.id}`,
+                                                                ...layouts.row('start', 'center'),
+                                                                children: [
+                                                                    !downloads[f.id] ? components.button({
+                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                        child: components.icon({
+                                                                            color: fileButtonColor,
+                                                                            ligature: 'cloud_download'
+                                                                        }),
+                                                                        onclick: async function (event) {
                                                                             downloads[f.id] = {
-                                                                                status: 'ready',
-                                                                                file: new File([fileDecrypted], f.name, {
-                                                                                    type: f.type,
-                                                                                    lastModified: f.lastModified,
-                                                                                })
+                                                                                status: 'downloading'
                                                                             };
                                                                             stack.updateAll({
                                                                                 type: 'download',
                                                                                 fileId: f.id
                                                                             });
-                                                                        } catch (e) {
-                                                                            console.error(e);
-                                                                            downloads[f.id] = undefined;
-                                                                            stack.updateAll({
-                                                                                type: 'download',
-                                                                                fileId: f.id
+                                                                            try {
+                                                                                const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
+                                                                                const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
+                                                                                downloads[f.id] = {
+                                                                                    status: 'ready',
+                                                                                    file: new File([fileDecrypted], f.name, {
+                                                                                        type: f.type,
+                                                                                        lastModified: f.lastModified,
+                                                                                    })
+                                                                                };
+                                                                                stack.updateAll({
+                                                                                    type: 'download',
+                                                                                    fileId: f.id
+                                                                                });
+                                                                            } catch (e) {
+                                                                                console.error(e);
+                                                                                downloads[f.id] = undefined;
+                                                                                stack.updateAll({
+                                                                                    type: 'download',
+                                                                                    fileId: f.id
+                                                                                });
+                                                                            }
+                                                                        }
+                                                                    }) : null,
+                                                                    downloads[f.id]?.status === 'downloading' ? components.animations.spinner({
+                                                                        width: '2.25rem',
+                                                                        height: '2.25rem',
+                                                                        padding: '0.5rem',
+                                                                        color: fileButtonColor,
+                                                                    }) : null,
+                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
+                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                        child: components.icon({
+                                                                            color: fileButtonColor,
+                                                                            ligature: 'image'
+                                                                        }),
+                                                                        onclick: function (event) {
+                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                            stack.push({
+                                                                                path: '#image',
+                                                                                onPop: function () {
+                                                                                    URL.revokeObjectURL(url);
+                                                                                },
+                                                                                config: {
+                                                                                    tag: 'img',
+                                                                                    width: '100%',
+                                                                                    height: '100%',
+                                                                                    objectFit: 'contain',
+                                                                                    objectPosition: 'center',
+                                                                                    src: url
+                                                                                }
                                                                             });
                                                                         }
-                                                                    }
-                                                                }) : null,
-                                                                downloads[f.id]?.status === 'downloading' ? components.animations.spinner({
-                                                                    width: '2.25rem',
-                                                                    height: '2.25rem',
-                                                                    padding: '0.5rem',
-                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                }) : null,
-                                                                (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                    child: components.icon({
-                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                        ligature: 'image'
-                                                                    }),
-                                                                    onclick: function (event) {
-                                                                        const url = URL.createObjectURL(downloads[f.id].file);
-                                                                        stack.push({
-                                                                            path: '#image',
-                                                                            onPop: function () {
-                                                                                URL.revokeObjectURL(url);
-                                                                            },
-                                                                            config: {
-                                                                                tag: 'img',
-                                                                                width: '100%',
-                                                                                height: '100%',
-                                                                                objectFit: 'contain',
-                                                                                objectPosition: 'center',
-                                                                                src: url
-                                                                            }
-                                                                        });
-                                                                    }
-                                                                }) : null,
-                                                                (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                    child: components.icon({
-                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                        ligature: 'play_circle'
-                                                                    }),
-                                                                    onclick: function (event) {
-                                                                        const url = URL.createObjectURL(downloads[f.id].file);
-                                                                        stack.push({
-                                                                            path: '#audio',
-                                                                            onPop: function () {
-                                                                                URL.revokeObjectURL(url);
-                                                                            },
-                                                                            config: {
-                                                                                width: '100%',
-                                                                                height: '100%',
-                                                                                ...layouts.row('center', 'center'),
-                                                                                children: [
-                                                                                    {
-                                                                                        tag: 'audio',
-                                                                                        width: '100%',
-                                                                                        controls: true,
-                                                                                        src: url
-                                                                                    }
-                                                                                ]
-                                                                            }
-                                                                        });
-                                                                    }
-                                                                }) : null,
-                                                                (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                    child: components.icon({
-                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                        ligature: 'play_circle'
-                                                                    }),
-                                                                    onclick: function (event) {
-                                                                        const url = URL.createObjectURL(downloads[f.id].file);
-                                                                        stack.push({
-                                                                            path: '#video',
-                                                                            onPop: function () {
-                                                                                URL.revokeObjectURL(url);
-                                                                            },
-                                                                            config: {
-                                                                                width: '100%',
-                                                                                height: '100%',
-                                                                                ...layouts.row('center', 'center'),
-                                                                                children: [
-                                                                                    {
-                                                                                        tag: 'video',
-                                                                                        width: '100%',
-                                                                                        height: '100%',
-                                                                                        objectFit: 'contain',
-                                                                                        objectPosition: 'center',
-                                                                                        controls: true,
-                                                                                        src: url
-                                                                                    }
-                                                                                ]
-                                                                            }
-                                                                        });
-                                                                    }
-                                                                }) : null,
-                                                                downloads[f.id]?.status === 'ready' ? components.button({
-                                                                    backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                    child: components.icon({
-                                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                        ligature: 'download'
-                                                                    }),
-                                                                    onclick: function (event) {
-                                                                        const url = URL.createObjectURL(downloads[f.id].file);
-                                                                        const a = document.createElement('a');
-                                                                        a.href = url;
-                                                                        a.download = downloads[f.id].file.name;
-                                                                        a.click();
-                                                                        requestAnimationFrame(() => URL.revokeObjectURL(url));
-                                                                    }
-                                                                }) : null,
-                                                            ]
-                                                        }),
-                                                    ]
-                                                }))
-                                            } : null,
-                                            paragraph.notes.length > 1 ? {
-                                                width: '100%',
-                                                ...layouts.column('start', 'start', '0.5rem'),
-                                                children: paragraph.notes.filter(nid => nid !== noteId).map(nid => components.textLink({
-                                                    color: radixColor('blue', 11),
-                                                    href: `/note/${nid}`,
-                                                    text: tree[nid].name,
-                                                    onclick: function (event) {
-                                                        stack.push(pages.note(`/note/${nid}`, nid));
-                                                    }
-                                                }))
-                                            } : null,
-                                            {
-                                                width: '100%',
-                                                ...layouts.row('space-between', 'center', '1rem'),
-                                                children: [
-                                                    {
-                                                        fontSize: '0.875rem',
-                                                        color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                        ...styles.unselectable(),
-                                                        text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                    },
-                                                    {
-                                                        ...layouts.row(),
-                                                        children: [
-                                                            components.button({
-                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                child: components.icon({
-                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                    ligature: 'content_copy',
-                                                                }),
-                                                                onclick: function (event) {
-                                                                    navigator.clipboard.writeText(paragraph.text);
-                                                                }
-                                                            }),
-                                                            components.button({
-                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                child: components.icon({
-                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                    ligature: 'palette',
-                                                                }),
-                                                                onclick: function (event) {
-                                                                    stack.push({
-                                                                        path: '#color',
-                                                                        hidePrior: false,
-                                                                        config: () => components.modalCloseBackground({
-                                                                            backgroundColor: colors.background.overlay.s(),
-                                                                            child: {
-                                                                                ...styles.modal(),
-                                                                                ...layouts.column('start', 'start', '1rem'),
-                                                                                children: [
-                                                                                    {
-                                                                                        fontWeight: 600,
-                                                                                        text: 'Color'
-                                                                                    },
-                                                                                    {
-                                                                                        ...layouts.grid(),
-                                                                                        width: '100%',
-                                                                                        alignSelf: 'center',
-                                                                                        gridTemplateColumns: 'repeat(auto-fill, 3rem)',
-                                                                                        justifyContent: 'center',
-                                                                                        gap: '1rem',
-                                                                                        children: [undefined, 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'bronze', 'gold', 'brown', 'orange', 'amber', 'yellow', 'lime', 'mint', 'sky'].map(color => components.button({
-                                                                                            padding: '0.25rem',
-                                                                                            borderRadius: '2rem',
-                                                                                            backgroundColor: radixColor(color || baseColors.neutral, 4, true),
-                                                                                            backgroundHoverColor: radixColor(color || baseColors.neutral, 5, true),
-                                                                                            child: components.icon({
-                                                                                                fontSize: '2.5rem',
-                                                                                                color: color ? radixColor(color, 11) : colors.foreground.primary(),
-                                                                                                ligature: 'circle',
-                                                                                            }),
-                                                                                            onclick: async function (event) {
-                                                                                                stack.pop();
-                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                    color: color || deleteField(),
-                                                                                                });
-                                                                                            }
-                                                                                        })
-                                                                                        )
-                                                                                    }
-                                                                                ]
-                                                                            }
-                                                                        })
-                                                                    });
-                                                                }
-                                                            }),
-                                                            components.button({
-                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                child: components.icon({
-                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                    ligature: 'edit',
-                                                                }),
-                                                                disabled: editParagraphId,
-                                                                onclick: function (event) {
-                                                                    if (!editParagraphId) {
-                                                                        editParagraphId = paragraph.id;
-                                                                        editParagraphHeight = this.layer.widgets[`paragraph-${paragraph.id}`].domElement.getBoundingClientRect().height;
-                                                                        editParagraphValid = true;
-                                                                        editParagraphText = paragraph.text;
-                                                                        this.layer.widgets['paragraphs'].update();
-                                                                    }
-                                                                }
-                                                            }),
-                                                            components.button({
-                                                                backgroundHoverColor: paragraph.color ? radixColor(paragraph.color, 3, true) : colors.background.overlay.m(),
-                                                                child: components.icon({
-                                                                    color: paragraph.color ? radixColor(paragraph.color, 11) : colors.foreground.secondary(),
-                                                                    ligature: 'delete',
-                                                                }),
-                                                                onclick: function (event) {
-                                                                    stack.push({
-                                                                        path: '#delete',
-                                                                        hidePrior: false,
-                                                                        config: () => components.modals.prompt({
-                                                                            title: 'Delete',
-                                                                            description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
-                                                                            buttons: [
-                                                                                components.buttons.formPrimary({
-                                                                                    palette: baseColors.danger,
-                                                                                    text: 'Delete',
-                                                                                    onclick: function (event) {
-                                                                                        stack.pop();
-                                                                                        if (paragraph.notes.length > 1) {
-                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                notes: arrayRemove(noteId),
-                                                                                            });
-                                                                                        } else {
-                                                                                            deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                    }) : null,
+                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
+                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                        child: components.icon({
+                                                                            color: fileButtonColor,
+                                                                            ligature: 'play_circle'
+                                                                        }),
+                                                                        onclick: function (event) {
+                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                            stack.push({
+                                                                                path: '#audio',
+                                                                                onPop: function () {
+                                                                                    URL.revokeObjectURL(url);
+                                                                                },
+                                                                                config: {
+                                                                                    width: '100%',
+                                                                                    height: '100%',
+                                                                                    ...layouts.row('center', 'center'),
+                                                                                    children: [
+                                                                                        {
+                                                                                            tag: 'audio',
+                                                                                            width: '100%',
+                                                                                            controls: true,
+                                                                                            src: url
                                                                                         }
-                                                                                    }
-                                                                                })
-                                                                            ]
-                                                                        })
-                                                                    });
-                                                                }
+                                                                                    ]
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    }) : null,
+                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
+                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                        child: components.icon({
+                                                                            color: fileButtonColor,
+                                                                            ligature: 'play_circle'
+                                                                        }),
+                                                                        onclick: function (event) {
+                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                            stack.push({
+                                                                                path: '#video',
+                                                                                onPop: function () {
+                                                                                    URL.revokeObjectURL(url);
+                                                                                },
+                                                                                config: {
+                                                                                    width: '100%',
+                                                                                    height: '100%',
+                                                                                    ...layouts.row('center', 'center'),
+                                                                                    children: [
+                                                                                        {
+                                                                                            tag: 'video',
+                                                                                            width: '100%',
+                                                                                            height: '100%',
+                                                                                            objectFit: 'contain',
+                                                                                            objectPosition: 'center',
+                                                                                            controls: true,
+                                                                                            src: url
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    }) : null,
+                                                                    downloads[f.id]?.status === 'ready' ? components.button({
+                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                        child: components.icon({
+                                                                            color: fileButtonColor,
+                                                                            ligature: 'download'
+                                                                        }),
+                                                                        onclick: function (event) {
+                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                            const a = document.createElement('a');
+                                                                            a.href = url;
+                                                                            a.download = downloads[f.id].file.name;
+                                                                            a.click();
+                                                                            requestAnimationFrame(() => URL.revokeObjectURL(url));
+                                                                        }
+                                                                    }) : null,
+                                                                ]
                                                             }),
                                                         ]
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    }),
-                                    !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button({
-                                        width: '100%',
-                                        height: '2.5rem',
-                                        padding: '0 0.75rem',
-                                        backgroundColor: colors.background.overlay.m(),
-                                        backgroundHoverColor: colors.background.overlay.l(),
-                                        onclick: function (event) {
-                                            limitParagraphs = false;
-                                            this.layer.widgets['paragraphs'].update();
-                                        },
-                                        child: {
-                                            fontWeight: 600,
-                                            color: colors.foreground.secondary(),
-                                            text: 'More'
-                                        }
-                                    }) : null]
-                                });
-                            }
+                                                    }))
+                                                } : null,
+                                                paragraph.notes.length > 1 ? {
+                                                    width: '100%',
+                                                    ...layouts.column('start', 'start', '0.5rem'),
+                                                    children: paragraph.notes.filter(nid => nid !== noteId).map(nid => components.textLink({
+                                                        color: colors.foreground.textLink(),
+                                                        href: `/note/${nid}`,
+                                                        text: tree[nid].name,
+                                                        onclick: function (event) {
+                                                            stack.push(pages.note(`/note/${nid}`, nid));
+                                                        }
+                                                    }))
+                                                } : null,
+                                                {
+                                                    width: '100%',
+                                                    ...layouts.row('space-between', 'center', '1rem'),
+                                                    children: [
+                                                        {
+                                                            fontSize: '0.875rem',
+                                                            color: dateColor,
+                                                            ...styles.unselectable(),
+                                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                        },
+                                                        {
+                                                            ...layouts.row(),
+                                                            children: [
+                                                                components.button({
+                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                    child: components.icon({
+                                                                        color: buttonColor,
+                                                                        ligature: 'content_copy',
+                                                                    }),
+                                                                    onclick: function (event) {
+                                                                        navigator.clipboard.writeText(paragraph.text);
+                                                                    }
+                                                                }),
+                                                                components.button({
+                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                    child: components.icon({
+                                                                        color: buttonColor,
+                                                                        ligature: 'palette',
+                                                                    }),
+                                                                    onclick: function (event) {
+                                                                        stack.push({
+                                                                            path: '#color',
+                                                                            hidePrior: false,
+                                                                            config: () => components.modalCloseBackground({
+                                                                                ...styles.modalCloseBackground(),
+                                                                                child: {
+                                                                                    ...styles.modal(),
+                                                                                    ...layouts.column('start', 'start', '1rem'),
+                                                                                    children: [
+                                                                                        {
+                                                                                            fontWeight: 600,
+                                                                                            text: 'Color'
+                                                                                        },
+                                                                                        {
+                                                                                            ...layouts.grid(),
+                                                                                            width: '100%',
+                                                                                            alignSelf: 'center',
+                                                                                            gridTemplateColumns: 'repeat(auto-fill, 3rem)',
+                                                                                            justifyContent: 'center',
+                                                                                            gap: '1rem',
+                                                                                            children: [undefined, 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'bronze', 'gold', 'brown', 'orange', 'amber', 'yellow', 'lime', 'mint', 'sky'].map(color => components.button({
+                                                                                                padding: '0.25rem',
+                                                                                                borderRadius: '2rem',
+                                                                                                backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
+                                                                                                backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
+                                                                                                child: components.icon({
+                                                                                                    fontSize: '2.5rem',
+                                                                                                    color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
+                                                                                                    ligature: 'circle',
+                                                                                                }),
+                                                                                                onclick: async function (event) {
+                                                                                                    stack.pop();
+                                                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                        color: color || deleteField(),
+                                                                                                    });
+                                                                                                }
+                                                                                            })
+                                                                                            )
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            })
+                                                                        });
+                                                                    }
+                                                                }),
+                                                                components.button({
+                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                    child: components.icon({
+                                                                        color: buttonColor,
+                                                                        ligature: 'edit',
+                                                                    }),
+                                                                    disabled: editParagraphId,
+                                                                    onclick: function (event) {
+                                                                        if (!editParagraphId) {
+                                                                            editParagraphId = paragraph.id;
+                                                                            editParagraphHeight = this.layer.widgets[`paragraph-${paragraph.id}`].domElement.getBoundingClientRect().height;
+                                                                            editParagraphValid = true;
+                                                                            editParagraphText = paragraph.text;
+                                                                            this.layer.widgets['paragraphs'].update();
+                                                                        }
+                                                                    }
+                                                                }),
+                                                                components.button({
+                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                    child: components.icon({
+                                                                        color: buttonColor,
+                                                                        ligature: 'delete',
+                                                                    }),
+                                                                    onclick: function (event) {
+                                                                        stack.push({
+                                                                            path: '#delete',
+                                                                            hidePrior: false,
+                                                                            config: () => components.modals.prompt({
+                                                                                title: 'Delete',
+                                                                                description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
+                                                                                buttons: [
+                                                                                    components.buttons.form({
+                                                                                        priority: 'danger',
+                                                                                        text: 'Delete',
+                                                                                        onclick: function (event) {
+                                                                                            stack.pop();
+                                                                                            if (paragraph.notes.length > 1) {
+                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                    notes: arrayRemove(noteId),
+                                                                                                });
+                                                                                            } else {
+                                                                                                deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                            }
+                                                                                        }
+                                                                                    })
+                                                                                ]
+                                                                            })
+                                                                        });
+                                                                    }
+                                                                }),
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        };
+                                    }
+                                }),
+                                !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.buttons.form({
+                                    width: '100%',
+                                    onclick: function (event) {
+                                        limitParagraphs = false;
+                                        this.layer.widgets['paragraphs'].update();
+                                    },
+                                    child: {
+                                        fontWeight: 600,
+                                        color: colors.foreground.secondary(),
+                                        text: 'More'
+                                    }
+                                }) : null]
+                            })
                         ]
                     },
                 ]
