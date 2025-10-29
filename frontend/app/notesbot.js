@@ -2652,7 +2652,7 @@ const pages = {
                                                                     onclick: function (event) {
                                                                         function linkParagraphPage(targetFolderId) {
                                                                             return {
-                                                                                path: `#copyto-${targetFolderId}`,
+                                                                                path: `#linkto-${targetFolderId}`,
                                                                                 config: () => {
                                                                                     const children = Object.keys(tree).filter(id => !paragraph.notes.includes(id) && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
                                                                                     return {
@@ -2839,15 +2839,19 @@ const pages = {
                                         };
                                     }
                                 }),
-                                !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.buttons.form({
+                                !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button({
                                     width: '100%',
+                                    height: '2.5rem',
+                                    padding: '0 0.75rem',
+                                    backgroundColor: colors[theme][palette.base](3),
+                                    backgroundHoverColor: colors[theme][palette.base](4),
+                                    color: colors.foreground.secondary(),
                                     onclick: function (event) {
                                         limitParagraphs = false;
                                         this.layer.widgets['paragraphs'].update();
                                     },
                                     child: {
                                         fontWeight: 600,
-                                        color: colors.foreground.secondary(),
                                         text: 'More'
                                     }
                                 }) : null]
