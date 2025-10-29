@@ -1354,11 +1354,28 @@ const pages = {
                                                                 return {
                                                                     path: `#moveto-${targetFolderId}`,
                                                                     config: () => {
-                                                                        const children = Object.keys(tree).filter(id => tree[id].type === 'folder' && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                        const children = Object.keys(tree).filter(id => id !== cid && tree[id].type === 'folder' && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
                                                                         return {
                                                                             ...layouts.base('start', 'center'),
                                                                             children: [
                                                                                 components.header({
+                                                                                    leading: components.button({
+                                                                                        backgroundHoverColor: colors[theme][palette.base](3),
+                                                                                        color: colors.foreground.secondary(),
+                                                                                        child: components.icon({
+                                                                                            ligature: 'close'
+                                                                                        }),
+                                                                                        onclick: async function (event) {
+                                                                                            let steps = 0;
+                                                                                            for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                if (stack.at(i) === pageLayer) {
+                                                                                                    break;
+                                                                                                }
+                                                                                                steps += 1;
+                                                                                            }
+                                                                                            await stack.pop(steps);
+                                                                                        }
+                                                                                    }),
                                                                                     title: `Move to ${targetFolderId === 'root' ? 'Home' : tree[targetFolderId].name}`,
                                                                                     trailing: components.buttons.form({
                                                                                         priority: 'primary',
@@ -2279,7 +2296,7 @@ const pages = {
                                         },
                                     },
                                     components.button({
-                                        backgroundHoverColor: colors[theme][palette.base](2),
+                                        backgroundHoverColor: colors[theme][palette.base](3),
                                         padding: '0.25rem',
                                         child: components.icon({
                                             color: colors.foreground.secondary(),
@@ -2624,6 +2641,92 @@ const pages = {
                                                                     }),
                                                                     onclick: function (event) {
                                                                         navigator.clipboard.writeText(paragraph.text);
+                                                                    }
+                                                                }),
+                                                                components.button({
+                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                    child: components.icon({
+                                                                        color: buttonColor,
+                                                                        ligature: 'link',
+                                                                    }),
+                                                                    onclick: function (event) {
+                                                                        function linkParagraphPage(targetFolderId) {
+                                                                            return {
+                                                                                path: `#copyto-${targetFolderId}`,
+                                                                                config: () => {
+                                                                                    const children = Object.keys(tree).filter(id => !paragraph.notes.includes(id) && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                                    return {
+                                                                                        ...layouts.base('start', 'center'),
+                                                                                        children: [
+                                                                                            components.header({
+                                                                                                leading: components.button({
+                                                                                                    backgroundHoverColor: colors[theme][palette.base](3),
+                                                                                                    color: colors.foreground.secondary(),
+                                                                                                    child: components.icon({
+                                                                                                        ligature: 'close'
+                                                                                                    }),
+                                                                                                    onclick: async function (event) {
+                                                                                                        let steps = 0;
+                                                                                                        for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                            if (stack.at(i) === pageLayer) {
+                                                                                                                break;
+                                                                                                            }
+                                                                                                            steps += 1;
+                                                                                                        }
+                                                                                                        await stack.pop(steps);
+                                                                                                    }
+                                                                                                }),
+                                                                                                title: 'Link paragraph',
+                                                                                            }),
+                                                                                            {
+                                                                                                flexGrow: 1,
+                                                                                                width: 'min(640px, 100% - 1rem)',
+                                                                                                padding: '1rem 0',
+                                                                                                ...layouts.column('center', 'center', '1rem'),
+                                                                                                children: children.map(cid => components.buttons.menu({
+                                                                                                    size: 'l',
+                                                                                                    text: tree[cid]['name'],
+                                                                                                    onclick: function (event) {
+                                                                                                        if (tree[cid].type === 'folder') {
+                                                                                                            stack.push(linkParagraphPage(cid));
+                                                                                                        } else if (tree[cid].type === 'note') {
+                                                                                                            stack.push({
+                                                                                                                path: '#confirm',
+                                                                                                                hidePrior: false,
+                                                                                                                config: () => components.modals.prompt({
+                                                                                                                    title: 'Link Paragraph',
+                                                                                                                    description: 'Are you sure?',
+                                                                                                                    buttons: [
+                                                                                                                        components.buttons.form({
+                                                                                                                            priority: 'primary',
+                                                                                                                            text: 'Link',
+                                                                                                                            onclick: async function (event) {
+                                                                                                                                let steps = 0;
+                                                                                                                                for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                                                    if (stack.at(i) === pageLayer) {
+                                                                                                                                        break;
+                                                                                                                                    }
+                                                                                                                                    steps += 1;
+                                                                                                                                }
+                                                                                                                                await stack.pop(steps);
+                                                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                                    notes: arrayUnion(cid),
+                                                                                                                                });
+                                                                                                                            }
+                                                                                                                        })
+                                                                                                                    ]
+                                                                                                                })
+                                                                                                            });
+                                                                                                        }
+                                                                                                    },
+                                                                                                }))
+                                                                                            }
+                                                                                        ]
+                                                                                    };
+                                                                                }
+                                                                            };
+                                                                        }
+                                                                        stack.push(linkParagraphPage('root'));
                                                                     }
                                                                 }),
                                                                 components.button({
