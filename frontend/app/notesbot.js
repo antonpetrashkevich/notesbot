@@ -2198,9 +2198,9 @@ const pages = {
                                                                         ligature: 'link',
                                                                     }),
                                                                     onclick: function (event) {
-                                                                        function linkParagraphPage(targetFolderId) {
+                                                                        function linkNotePage(targetFolderId) {
                                                                             return {
-                                                                                path: `#linkto-${targetFolderId}`,
+                                                                                path: `#link-${targetFolderId}`,
                                                                                 config: () => {
                                                                                     const children = Object.keys(tree).filter(id => !paragraph.notes.includes(id) && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
                                                                                     return {
@@ -2224,7 +2224,7 @@ const pages = {
                                                                                                         await stack.pop(steps);
                                                                                                     }
                                                                                                 }),
-                                                                                                title: 'Link paragraph',
+                                                                                                title: 'Link note',
                                                                                             }),
                                                                                             {
                                                                                                 flexGrow: 1,
@@ -2236,13 +2236,13 @@ const pages = {
                                                                                                     text: tree[cid]['name'],
                                                                                                     onclick: function (event) {
                                                                                                         if (tree[cid].type === 'folder') {
-                                                                                                            stack.push(linkParagraphPage(cid));
+                                                                                                            stack.push(linkNotePage(cid));
                                                                                                         } else if (tree[cid].type === 'note') {
                                                                                                             stack.push({
                                                                                                                 path: '#confirm',
                                                                                                                 hidePrior: false,
                                                                                                                 config: () => components.modals.prompt({
-                                                                                                                    title: 'Link Paragraph',
+                                                                                                                    title: 'Link Note',
                                                                                                                     description: 'Are you sure?',
                                                                                                                     buttons: [
                                                                                                                         components.buttons.form({
@@ -2274,7 +2274,7 @@ const pages = {
                                                                                 }
                                                                             };
                                                                         }
-                                                                        stack.push(linkParagraphPage('root'));
+                                                                        stack.push(linkNotePage('root'));
                                                                     }
                                                                 }),
                                                                 components.button({
