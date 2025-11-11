@@ -2091,8 +2091,8 @@ const pages = {
                                     if (paragraph.id === editParagraphId) {
                                         return {
                                             id: 'edit-paragraph',
-                                            ...layouts.column('start', 'start', '1rem'),
                                             width: '100%',
+                                            ...layouts.column('start', 'start', '1rem'),
                                             children: [
                                                 () => ({
                                                     id: 'edit-paragraph-hint',
@@ -2115,7 +2115,7 @@ const pages = {
                                                 }),
                                                 {
                                                     width: '100%',
-                                                    ...layouts.row('end', 'start', '1rem'),
+                                                    ...layouts.row('end', 'center', '1rem'),
                                                     children: [
                                                         components.buttons.form({
                                                             text: 'Cancel',
