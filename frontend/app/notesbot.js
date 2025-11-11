@@ -2164,10 +2164,8 @@ const pages = {
                                             children: [
                                                 paragraph.text ? {
                                                     width: '100%',
-                                                    maxHeight: '24rem',
                                                     whiteSpace: 'pre-wrap',
                                                     wordBreak: 'break-word',
-                                                    overflow: 'auto',
                                                     text: paragraph.text
                                                 } : null,
                                                 paragraph.files ? {
