@@ -2341,10 +2341,10 @@ const pages = {
                                                         ]
                                                     }))
                                                 } : null,
-                                                paragraph.notes.length > 1 ? {
+                                                paragraph.notes.filter(nid => tree[nid].parent !== 'deleted').length > 1 ? {
                                                     width: '100%',
                                                     ...layouts.column('start', 'start', '0.5rem'),
-                                                    children: paragraph.notes.filter(nid => nid !== noteId).map(nid => components.textLink({
+                                                    children: paragraph.notes.filter(nid => tree[nid].parent !== 'deleted' && nid !== noteId).map(nid => components.textLink({
                                                         color: colors.foreground.textLink(),
                                                         href: `/note/${nid}`,
                                                         text: tree[nid].name,
