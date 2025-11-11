@@ -1324,6 +1324,7 @@ const pages = {
                                                 ...layouts.base('start', 'center'),
                                                 children: [
                                                     components.header({
+                                                        backgroundColor: null,
                                                         gapTrailing: '0.5rem',
                                                         leading: components.button({
                                                             backgroundHoverColor: colors[theme][palette.base](3),
@@ -1341,7 +1342,7 @@ const pages = {
                                                             padding: '0 0.25rem 0 0.5rem',
                                                             border: 'none',
                                                             borderRadius: '0.5rem',
-                                                            backgroundColor: colors.background.base(),
+                                                            backgroundColor: colors[theme][palette.base](2),
                                                             ...layouts.row('start', 'center'),
                                                             children: [
                                                                 components.icon({
@@ -1370,7 +1371,7 @@ const pages = {
                                                                     },
                                                                 },
                                                                 components.button({
-                                                                    backgroundHoverColor: colors[theme][palette.base](3),
+                                                                    backgroundHoverColor: colors[theme][palette.base](4),
                                                                     padding: '0.25rem',
                                                                     child: components.icon({
                                                                         color: colors.foreground.secondary(),
@@ -1411,7 +1412,7 @@ const pages = {
                                                             flexGrow: 1,
                                                             width: 'min(640px, 100% - 1rem)',
                                                             padding: '1rem 0',
-                                                            ...layouts.column('center', 'center', '1rem'),
+                                                            ...layouts.column('start', 'center', '1rem'),
                                                             children: nodesFiltered.map(nid => components.buttons.menu({
                                                                 size: 'l',
                                                                 text: tree[nid]['name'],
