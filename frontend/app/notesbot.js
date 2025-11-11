@@ -1416,7 +1416,6 @@ const pages = {
                                                                 size: 'l',
                                                                 text: tree[nid]['name'],
                                                                 onclick: async function (event) {
-                                                                    await stack.pop();
                                                                     if (tree[nid].type === 'folder') {
                                                                         stack.push(pages.folder(`/folder/${nid}`, nid));
                                                                     } else if (tree[nid].type === 'note') {
