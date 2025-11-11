@@ -2304,7 +2304,7 @@ const pages = {
                                                                                             gridTemplateColumns: 'repeat(auto-fill, 3rem)',
                                                                                             justifyContent: 'center',
                                                                                             gap: '1rem',
-                                                                                            children: [undefined, 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'bronze', 'gold', 'brown', 'orange', 'amber', 'yellow', 'lime', 'mint', 'sky'].map(color => components.button({
+                                                                                            children: [undefined, 'red', 'orange', 'brown', 'yellow', 'green', 'teal', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
                                                                                                 padding: '0.25rem',
                                                                                                 borderRadius: '2rem',
                                                                                                 backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
