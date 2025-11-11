@@ -2041,7 +2041,7 @@ const pages = {
                                 id: 'paragraphs',
                                 width: '100%',
                                 ...layouts.column('start', 'start', '1rem'),
-                                children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
+                                children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphColor && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
                                     if (!filterParagraphColor && !filterParagraphQuery) {
                                         return true;
                                     }
@@ -2572,7 +2572,7 @@ const pages = {
                                         };
                                     }
                                 }),
-                                !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button({
+                                !filterParagraphColor && !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button({
                                     width: '100%',
                                     height: '2.5rem',
                                     padding: '0 0.75rem',
