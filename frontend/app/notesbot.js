@@ -749,8 +749,9 @@ const pages = {
 
         let pageLayer;
         let error;
-        let children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
         let treeUpdating = false;
+        let children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+        let filterTreeQuery;
         return {
             path,
             meta: {
@@ -1315,6 +1316,122 @@ const pages = {
                             ...layouts.column('start', 'start', '1rem'),
                             children: [
                                 components.buttons.floating({
+                                    ligature: 'search',
+                                    onclick: function (event) {
+                                        stack.push({
+                                            path: '#search',
+                                            config: () => ({
+                                                ...layouts.base('start', 'center'),
+                                                children: [
+                                                    components.header({
+                                                        gapTrailing: '0.5rem',
+                                                        leading: components.button({
+                                                            backgroundHoverColor: colors[theme][palette.base](3),
+                                                            color: colors.foreground.secondary(),
+                                                            child: components.icon({
+                                                                ligature: 'close'
+                                                            }),
+                                                            onclick: async function (event) {
+                                                                await stack.pop();
+                                                            }
+                                                        }),
+                                                        trailing: () => ({
+                                                            id: 'filter-tree',
+                                                            flexGrow: 1,
+                                                            padding: '0 0.25rem 0 0.5rem',
+                                                            border: 'none',
+                                                            borderRadius: '0.5rem',
+                                                            backgroundColor: colors.background.base(),
+                                                            ...layouts.row('start', 'center'),
+                                                            children: [
+                                                                components.icon({
+                                                                    ligature: 'search'
+                                                                }),
+                                                                {
+                                                                    tag: 'input',
+                                                                    flexGrow: 1,
+                                                                    padding: '0.5rem',
+                                                                    border: 'none',
+                                                                    borderRadius: '0.5rem',
+                                                                    backgroundColor: 'inherit',
+                                                                    fontFamily: 'inherit',
+                                                                    fontSize: '1rem',
+                                                                    lineHeight: 1.5,
+                                                                    color: 'inherit',
+                                                                    appearance: 'none',
+                                                                    type: 'text',
+                                                                    // placeholder: 'Search',
+                                                                    onfocus: function () {
+                                                                        this.domElement.style.outline = 'none';
+                                                                    },
+                                                                    oninput: function (event) {
+                                                                        filterTreeQuery = event.target.value;
+                                                                        this.layer.widgets['tree'].update();
+                                                                    },
+                                                                },
+                                                                components.button({
+                                                                    backgroundHoverColor: colors[theme][palette.base](3),
+                                                                    padding: '0.25rem',
+                                                                    child: components.icon({
+                                                                        color: colors.foreground.secondary(),
+                                                                        ligature: 'cancel'
+                                                                    }),
+                                                                    onclick: function (event) {
+                                                                        filterTreeQuery = undefined;
+                                                                        this.layer.widgets['filter-tree'].update();
+                                                                        this.layer.widgets['tree'].update();
+                                                                    }
+                                                                }),
+                                                            ]
+                                                        }),
+                                                    }),
+                                                    () => {
+                                                        const nodesFiltered = [];
+                                                        if (filterTreeQuery) {
+                                                            const queue = [folderId];
+                                                            while (queue.length > 0) {
+                                                                const parentId = queue.shift();
+                                                                const childIds = Object.keys(tree)
+                                                                    .filter(id => tree[id].parent === parentId)
+                                                                    .sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                for (const cid of childIds) {
+                                                                    if (tree[cid].name.toLowerCase().includes(filterTreeQuery.toLowerCase())) {
+                                                                        nodesFiltered.push(cid);
+                                                                    }
+                                                                    if (tree[cid].type === 'folder') {
+                                                                        queue.push(cid);
+                                                                    }
+                                                                }
+                                                            }
+                                                        } else {
+                                                            nodesFiltered.push(...(JSON.parse(window.localStorage.getItem('recent_notes')) || []));
+                                                        }
+                                                        return {
+                                                            id: 'tree',
+                                                            flexGrow: 1,
+                                                            width: 'min(640px, 100% - 1rem)',
+                                                            padding: '1rem 0',
+                                                            ...layouts.column('center', 'center', '1rem'),
+                                                            children: nodesFiltered.map(nid => components.buttons.menu({
+                                                                size: 'l',
+                                                                text: tree[nid]['name'],
+                                                                onclick: async function (event) {
+                                                                    await stack.pop();
+                                                                    if (tree[nid].type === 'folder') {
+                                                                        stack.push(pages.folder(`/folder/${nid}`, nid));
+                                                                    } else if (tree[nid].type === 'note') {
+                                                                        stack.push(pages.note(`/note/${nid}`, nid));
+                                                                    }
+                                                                },
+                                                            }))
+                                                        };
+                                                    }
+                                                ]
+                                            })
+                                        });
+                                    }
+                                }),
+                                components.buttons.floating({
                                     priority: 'primary',
                                     ligature: 'add_2',
                                     onclick: function (event) {
@@ -1564,6 +1681,13 @@ const pages = {
                         this.widgets['paragraphs'].update();
                     }
                 );
+                let recentNotes = JSON.parse(window.localStorage.getItem('recent_notes')) || [];
+                recentNotes = recentNotes.filter(id => id !== noteId);
+                recentNotes.unshift(noteId);
+                if (recentNotes.length > 8) {
+                    recentNotes = recentNotes.slice(0, 8);
+                }
+                window.localStorage.setItem('recent_notes', JSON.stringify(recentNotes));
             },
             onPop: function () {
                 stopListenParagraphs();
@@ -1872,7 +1996,7 @@ const pages = {
                                                                 gridTemplateColumns: 'repeat(auto-fill, 3rem)',
                                                                 justifyContent: 'center',
                                                                 gap: '1rem',
-                                                                children: [undefined, 'red', 'orange', 'brown', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
+                                                                children: [undefined, 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
                                                                     padding: '0.25rem',
                                                                     borderRadius: '2rem',
                                                                     backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
@@ -1902,7 +2026,7 @@ const pages = {
                                         padding: '0.25rem',
                                         child: components.icon({
                                             color: colors.foreground.secondary(),
-                                            ligature: 'close'
+                                            ligature: 'cancel'
                                         }),
                                         onclick: function (event) {
                                             filterParagraphColor = undefined;
@@ -2365,7 +2489,7 @@ const pages = {
                                                                                             gridTemplateColumns: 'repeat(auto-fill, 3rem)',
                                                                                             justifyContent: 'center',
                                                                                             gap: '1rem',
-                                                                                            children: [undefined, 'red', 'orange', 'brown', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
+                                                                                            children: [undefined, 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
                                                                                                 padding: '0.25rem',
                                                                                                 borderRadius: '2rem',
                                                                                                 backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
