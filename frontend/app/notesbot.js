@@ -1524,6 +1524,7 @@ const pages = {
         const paragraphs = [];
         let stopListenParagraphs;
         let limitParagraphs = true;
+        let filterParagraphColor;
         let filterParagraphQuery;
         let addParagraphValid = true;
         let filesAttached;
@@ -1844,6 +1845,59 @@ const pages = {
                                         },
                                     },
                                     components.button({
+                                        backgroundHoverColor: colors[theme][filterParagraphColor || palette.base](3),
+                                        padding: '0.25rem',
+                                        child: components.icon({
+                                            color: filterParagraphColor ? colors[theme][filterParagraphColor](9) : colors.foreground.secondary(),
+                                            ligature: 'palette'
+                                        }),
+                                        onclick: function (event) {
+                                            stack.push({
+                                                path: '#color',
+                                                hidePrior: false,
+                                                config: () => components.modalCloseBackground({
+                                                    ...styles.modalCloseBackground(),
+                                                    child: {
+                                                        ...styles.modal(),
+                                                        ...layouts.column('start', 'start', '1rem'),
+                                                        children: [
+                                                            {
+                                                                fontWeight: 600,
+                                                                text: 'Color'
+                                                            },
+                                                            {
+                                                                ...layouts.grid(),
+                                                                width: '100%',
+                                                                alignSelf: 'center',
+                                                                gridTemplateColumns: 'repeat(auto-fill, 3rem)',
+                                                                justifyContent: 'center',
+                                                                gap: '1rem',
+                                                                children: [undefined, 'red', 'orange', 'brown', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
+                                                                    padding: '0.25rem',
+                                                                    borderRadius: '2rem',
+                                                                    backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
+                                                                    backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
+                                                                    child: components.icon({
+                                                                        fontSize: '2.5rem',
+                                                                        color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
+                                                                        ligature: 'circle',
+                                                                    }),
+                                                                    onclick: async function (event) {
+                                                                        stack.pop();
+                                                                        filterParagraphColor = color;
+                                                                        pageLayer.widgets['filter-paragraphs'].update();
+                                                                        pageLayer.widgets['paragraphs'].update();
+                                                                    }
+                                                                })
+                                                                )
+                                                            }
+                                                        ]
+                                                    }
+                                                })
+                                            });
+                                        }
+                                    }),
+                                    components.button({
                                         backgroundHoverColor: colors[theme][palette.base](3),
                                         padding: '0.25rem',
                                         child: components.icon({
@@ -1851,6 +1905,7 @@ const pages = {
                                             ligature: 'close'
                                         }),
                                         onclick: function (event) {
+                                            filterParagraphColor = undefined;
                                             filterParagraphQuery = undefined;
                                             this.layer.widgets['filter-paragraphs'].update();
                                             this.layer.widgets['paragraphs'].update();
@@ -1863,10 +1918,16 @@ const pages = {
                                 width: '100%',
                                 ...layouts.column('start', 'start', '1rem'),
                                 children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
-                                    if (!filterParagraphQuery) {
+                                    if (!filterParagraphColor && !filterParagraphQuery) {
                                         return true;
                                     }
                                     if (p.id === editParagraphId) {
+                                        return true;
+                                    }
+                                    if (filterParagraphColor && filterParagraphColor !== p.color) {
+                                        return false;
+                                    }
+                                    if (!filterParagraphQuery) {
                                         return true;
                                     }
                                     if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
@@ -2304,7 +2365,7 @@ const pages = {
                                                                                             gridTemplateColumns: 'repeat(auto-fill, 3rem)',
                                                                                             justifyContent: 'center',
                                                                                             gap: '1rem',
-                                                                                            children: [undefined, 'red', 'orange', 'brown', 'yellow', 'green', 'teal', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
+                                                                                            children: [undefined, 'red', 'orange', 'brown', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
                                                                                                 padding: '0.25rem',
                                                                                                 borderRadius: '2rem',
                                                                                                 backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
