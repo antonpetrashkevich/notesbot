@@ -1324,7 +1324,6 @@ const pages = {
                                                 ...layouts.base('start', 'center'),
                                                 children: [
                                                     components.header({
-                                                        backgroundColor: null,
                                                         gapTrailing: '0.5rem',
                                                         leading: components.button({
                                                             backgroundHoverColor: colors[theme][palette.base](3),
@@ -1342,7 +1341,7 @@ const pages = {
                                                             padding: '0 0.25rem 0 0.5rem',
                                                             border: 'none',
                                                             borderRadius: '0.5rem',
-                                                            backgroundColor: colors[theme][palette.base](2),
+                                                            backgroundColor: colors.background.base(),
                                                             ...layouts.row('start', 'center'),
                                                             children: [
                                                                 components.icon({
@@ -1371,7 +1370,7 @@ const pages = {
                                                                     },
                                                                 },
                                                                 components.button({
-                                                                    backgroundHoverColor: colors[theme][palette.base](4),
+                                                                    backgroundHoverColor: colors[theme][palette.base](3),
                                                                     padding: '0.25rem',
                                                                     child: components.icon({
                                                                         color: colors.foreground.secondary(),
