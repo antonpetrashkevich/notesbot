@@ -309,9 +309,9 @@ const components = {
 const pages = {
     init: (path = '') => ({
         path,
-        meta: {
+        meta: () => ({
             title: appName,
-        },
+        }),
         config: () => ({
             width: '100%',
             height: '100%',
@@ -326,10 +326,10 @@ const pages = {
     }),
     notFound: (path = '') => ({
         path,
-        meta: {
+        meta: () => ({
             title: `Page Not Found | ${appName}`,
             description: 'Page Not Found (invalid URL).'
-        },
+        }),
         config: () => ({
             width: '100%',
             height: '100%',
@@ -345,10 +345,10 @@ const pages = {
     notebookDeleted(path = '') {
         return {
             path,
-            meta: {
+            meta: () => ({
                 title: `Notebook Deleted | ${appName}`,
                 description: 'Notebook deleted.'
-            },
+            }),
             config: () => ({
                 width: '100%',
                 height: '100%',
@@ -379,10 +379,10 @@ const pages = {
         let loggingIn = false;
         return {
             path,
-            meta: {
+            meta: () => ({
                 title: `Login | ${appName}`,
                 description: 'Login page.'
-            },
+            }),
             config: () => ({
                 id: 'page',
                 width: '100%',
@@ -432,10 +432,10 @@ const pages = {
         let keyphraseRepeatValid = true;
         return {
             path,
-            meta: {
+            meta: () => ({
                 title: `Setup | ${appName}`,
                 description: 'Setup page.'
-            },
+            }),
             onPush: function () {
                 pageLayer = this;
             },
@@ -622,10 +622,10 @@ const pages = {
         let keyphraseValid = true;
         return {
             path,
-            meta: {
+            meta: () => ({
                 title: `Keyphrase | ${appName}`,
                 description: 'Keyphrase page.'
-            },
+            }),
             onPush: function () {
                 pageLayer = this;
             },
@@ -754,10 +754,10 @@ const pages = {
         let filterTreeQuery;
         return {
             path,
-            meta: {
+            meta: () => ({
                 title: `${folderId === 'root' ? 'Home' : tree[folderId].name} | ${appName}`,
                 description: 'Folder page.'
-            },
+            }),
             onPush: function () {
                 pageLayer = this;
             },
@@ -1648,10 +1648,10 @@ const pages = {
         let editParagraphText;
         return {
             path,
-            meta: {
+            meta: () => ({
                 title: `${tree[noteId]['name']} | ${appName}`,
                 description: 'Note page.'
-            },
+            }),
             onPush: function () {
                 pageLayer = this;
                 stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', noteId), orderBy('timestamp', 'desc')),
