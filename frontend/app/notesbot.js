@@ -1324,6 +1324,7 @@ const pages = {
                                                 ...layouts.base('start', 'center'),
                                                 children: [
                                                     components.header({
+                                                        backgroundColor: colors.background.base(),
                                                         gapTrailing: '0.5rem',
                                                         leading: components.button({
                                                             backgroundHoverColor: colors[theme][palette.base](3),
@@ -1338,15 +1339,12 @@ const pages = {
                                                         trailing: () => ({
                                                             id: 'filter-tree',
                                                             flexGrow: 1,
-                                                            padding: '0 0.25rem 0 0.5rem',
+                                                            padding: '0 0.25rem 0 0',
                                                             border: 'none',
                                                             borderRadius: '0.5rem',
-                                                            backgroundColor: colors.background.base(),
+                                                            backgroundColor: colors[theme][palette.base](2),
                                                             ...layouts.row('start', 'center'),
                                                             children: [
-                                                                components.icon({
-                                                                    ligature: 'search'
-                                                                }),
                                                                 {
                                                                     tag: 'input',
                                                                     flexGrow: 1,
@@ -1360,7 +1358,7 @@ const pages = {
                                                                     color: 'inherit',
                                                                     appearance: 'none',
                                                                     type: 'text',
-                                                                    // placeholder: 'Search',
+                                                                    placeholder: 'Search',
                                                                     onfocus: function () {
                                                                         this.domElement.style.outline = 'none';
                                                                     },
@@ -1370,7 +1368,7 @@ const pages = {
                                                                     },
                                                                 },
                                                                 components.button({
-                                                                    backgroundHoverColor: colors[theme][palette.base](3),
+                                                                    backgroundHoverColor: colors[theme][palette.base](4),
                                                                     padding: '0.25rem',
                                                                     child: components.icon({
                                                                         color: colors.foreground.secondary(),
@@ -1411,7 +1409,7 @@ const pages = {
                                                             flexGrow: 1,
                                                             width: 'min(640px, 100% - 1rem)',
                                                             padding: '1rem 0',
-                                                            ...layouts.column('start', 'center', '1rem'),
+                                                            ...layouts.column(filterTreeQuery ? 'start' : 'center', 'center', '1rem'),
                                                             children: nodesFiltered.map(nid => components.buttons.menu({
                                                                 size: 'l',
                                                                 text: tree[nid]['name'],
@@ -1938,14 +1936,11 @@ const pages = {
                             () => ({
                                 id: 'filter-paragraphs',
                                 width: '100%',
-                                padding: '0 0.25rem 0 0.5rem',
+                                padding: '0 0.25rem 0 0',
                                 border: `1px solid ${colors[theme][palette.base](6)}`,
                                 borderRadius: '0.5rem',
                                 ...layouts.row('start', 'center'),
                                 children: [
-                                    components.icon({
-                                        ligature: 'search'
-                                    }),
                                     {
                                         tag: 'input',
                                         flexGrow: 1,
@@ -1958,6 +1953,7 @@ const pages = {
                                         color: 'inherit',
                                         appearance: 'none',
                                         type: 'text',
+                                        placeholder: 'Search',
                                         value: filterParagraphQuery,
                                         onfocus: function () {
                                             this.domElement.style.outline = 'none';
