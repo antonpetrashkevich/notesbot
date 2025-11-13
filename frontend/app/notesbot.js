@@ -767,6 +767,7 @@ const pages = {
                         error = 'outofsync';
                         this.widgets['blocker-error'].update();
                     } else {
+                        updateMetaTags(this.meta());
                         children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
                         this.widgets['blocker-loading'].update();
                         this.widgets['header'].update();
@@ -1696,6 +1697,7 @@ const pages = {
                         this.widgets['blocker-error'].update();
                     }
                     else {
+                        updateMetaTags(this.meta());
                         this.widgets['header'].update();
                     }
                 }
