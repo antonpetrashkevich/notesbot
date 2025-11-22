@@ -2054,6 +2054,12 @@ const pages = {
                                     if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
                                         return true;
                                     }
+                                    for (const nid of p.notes || []) {
+                                        if (nid === noteId) continue;
+                                        if (tree[nid].name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                            return true;
+                                        }
+                                    }
                                     for (const file of p.files || []) {
                                         if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
                                             return true;
