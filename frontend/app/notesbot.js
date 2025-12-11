@@ -1682,8 +1682,8 @@ const pages = {
                 let recentNotes = JSON.parse(window.localStorage.getItem('recent_notes')) || [];
                 recentNotes = recentNotes.filter(id => id !== noteId);
                 recentNotes.unshift(noteId);
-                if (recentNotes.length > 8) {
-                    recentNotes = recentNotes.slice(0, 8);
+                if (recentNotes.length > 16) {
+                    recentNotes = recentNotes.slice(0, 16);
                 }
                 window.localStorage.setItem('recent_notes', JSON.stringify(recentNotes));
             },
