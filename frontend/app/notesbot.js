@@ -168,7 +168,7 @@ function treeNodeExists(nodeId) {
 }
 
 function resolveCurrentPath() {
-    const { segments, params, hash } = utils.pathCurrent();
+    const { segments, params, hash } = utils.currentPath();
     if (segments.length === 2 && segments[0] === 'folder' && treeNodeExists(segments[1])) {
         stack.replace(pages.folder('', segments[1]));
     }
