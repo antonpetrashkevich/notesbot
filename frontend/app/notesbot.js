@@ -793,6 +793,7 @@ const pages = {
                                 color: colors.foreground.secondary(),
                                 href: '/',
                                 child: components.icon({
+                                    fontSize: '1.25rem',
                                     ligature: 'home'
                                 }),
                                 onclick: function (event) {
@@ -913,6 +914,7 @@ const pages = {
                                                                                         backgroundHoverColor: colors[theme][palette.base](3),
                                                                                         color: colors.foreground.secondary(),
                                                                                         child: components.icon({
+                                                                                            fontSize: '1.25rem',
                                                                                             ligature: 'close'
                                                                                         }),
                                                                                         onclick: async function (event) {
@@ -1180,10 +1182,12 @@ const pages = {
                                                                                     id: 'theme-system',
                                                                                     value: window.localStorage.getItem('theme') === 'auto',
                                                                                     iconFalse: components.icon({
+                                                                                        fontSize: '1.25rem',
                                                                                         color: colors.foreground.secondary(),
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
+                                                                                        fontSize: '1.25rem',
                                                                                         color: colors[theme][palette.primary](9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
@@ -1200,10 +1204,12 @@ const pages = {
                                                                                     id: 'theme-light',
                                                                                     value: window.localStorage.getItem('theme') === 'light',
                                                                                     iconFalse: components.icon({
+                                                                                        fontSize: '1.25rem',
                                                                                         color: colors.foreground.secondary(),
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
+                                                                                        fontSize: '1.25rem',
                                                                                         color: colors[theme][palette.primary](9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
@@ -1220,10 +1226,12 @@ const pages = {
                                                                                     id: 'theme-dark',
                                                                                     value: window.localStorage.getItem('theme') === 'dark',
                                                                                     iconFalse: components.icon({
+                                                                                        fontSize: '1.25rem',
                                                                                         color: colors.foreground.secondary(),
                                                                                         ligature: 'radio_button_unchecked'
                                                                                     }),
                                                                                     iconTrue: components.icon({
+                                                                                        fontSize: '1.25rem',
                                                                                         color: colors[theme][palette.primary](9),
                                                                                         ligature: 'radio_button_checked'
                                                                                     }),
@@ -1331,6 +1339,7 @@ const pages = {
                                                             backgroundHoverColor: colors[theme][palette.base](3),
                                                             color: colors.foreground.secondary(),
                                                             child: components.icon({
+                                                                fontSize: '1.25rem',
                                                                 ligature: 'close'
                                                             }),
                                                             onclick: async function (event) {
@@ -1372,6 +1381,7 @@ const pages = {
                                                                     backgroundHoverColor: colors[theme][palette.base](5),
                                                                     padding: '0.25rem',
                                                                     child: components.icon({
+                                                                        fontSize: '1.25rem',
                                                                         color: colors.foreground.secondary(),
                                                                         ligature: 'cancel'
                                                                     }),
@@ -1722,6 +1732,7 @@ const pages = {
                             color: colors.foreground.secondary(),
                             href: '/',
                             child: components.icon({
+                                fontSize: '1.25rem',
                                 ligature: 'home'
                             }),
                             onclick: function (event) {
@@ -1969,6 +1980,7 @@ const pages = {
                                         backgroundHoverColor: colors[theme][filterParagraphColor || palette.base](3),
                                         padding: '0.25rem',
                                         child: components.icon({
+                                            fontSize: '1.25rem',
                                             color: filterParagraphColor ? colors[theme][filterParagraphColor](9) : colors.foreground.secondary(),
                                             ligature: 'palette'
                                         }),
@@ -2022,6 +2034,7 @@ const pages = {
                                         backgroundHoverColor: colors[theme][palette.base](3),
                                         padding: '0.25rem',
                                         child: components.icon({
+                                            fontSize: '1.25rem',
                                             color: colors.foreground.secondary(),
                                             ligature: 'cancel'
                                         }),
@@ -2198,6 +2211,7 @@ const pages = {
                                                                     !downloads[f.id] ? components.button({
                                                                         backgroundHoverColor: fileButtonBackgroundHoverColor,
                                                                         child: components.icon({
+                                                                            fontSize: '1.25rem',
                                                                             color: fileButtonColor,
                                                                             ligature: 'cloud_download'
                                                                         }),
@@ -2242,6 +2256,7 @@ const pages = {
                                                                     (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
                                                                         backgroundHoverColor: fileButtonBackgroundHoverColor,
                                                                         child: components.icon({
+                                                                            fontSize: '1.25rem',
                                                                             color: fileButtonColor,
                                                                             ligature: 'image'
                                                                         }),
@@ -2266,6 +2281,7 @@ const pages = {
                                                                     (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
                                                                         backgroundHoverColor: fileButtonBackgroundHoverColor,
                                                                         child: components.icon({
+                                                                            fontSize: '1.25rem',
                                                                             color: fileButtonColor,
                                                                             ligature: 'play_circle'
                                                                         }),
@@ -2295,6 +2311,7 @@ const pages = {
                                                                     (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
                                                                         backgroundHoverColor: fileButtonBackgroundHoverColor,
                                                                         child: components.icon({
+                                                                            fontSize: '1.25rem',
                                                                             color: fileButtonColor,
                                                                             ligature: 'play_circle'
                                                                         }),
@@ -2327,6 +2344,7 @@ const pages = {
                                                                     downloads[f.id]?.status === 'ready' ? components.button({
                                                                         backgroundHoverColor: fileButtonBackgroundHoverColor,
                                                                         child: components.icon({
+                                                                            fontSize: '1.25rem',
                                                                             color: fileButtonColor,
                                                                             ligature: 'download'
                                                                         }),
@@ -2372,6 +2390,7 @@ const pages = {
                                                                 components.button({
                                                                     backgroundHoverColor: buttonBackgroundHoverColor,
                                                                     child: components.icon({
+                                                                        fontSize: '1.25rem',
                                                                         color: buttonColor,
                                                                         ligature: 'content_copy',
                                                                     }),
@@ -2382,6 +2401,7 @@ const pages = {
                                                                 components.button({
                                                                     backgroundHoverColor: buttonBackgroundHoverColor,
                                                                     child: components.icon({
+                                                                        fontSize: '1.25rem',
                                                                         color: buttonColor,
                                                                         ligature: 'link',
                                                                     }),
@@ -2399,6 +2419,7 @@ const pages = {
                                                                                                     backgroundHoverColor: colors[theme][palette.base](3),
                                                                                                     color: colors.foreground.secondary(),
                                                                                                     child: components.icon({
+                                                                                                        fontSize: '1.25rem',
                                                                                                         ligature: 'close'
                                                                                                     }),
                                                                                                     onclick: async function (event) {
@@ -2468,6 +2489,7 @@ const pages = {
                                                                 components.button({
                                                                     backgroundHoverColor: buttonBackgroundHoverColor,
                                                                     child: components.icon({
+                                                                        fontSize: '1.25rem',
                                                                         color: buttonColor,
                                                                         ligature: 'palette',
                                                                     }),
@@ -2520,6 +2542,7 @@ const pages = {
                                                                 components.button({
                                                                     backgroundHoverColor: buttonBackgroundHoverColor,
                                                                     child: components.icon({
+                                                                        fontSize: '1.25rem',
                                                                         color: buttonColor,
                                                                         ligature: 'edit',
                                                                     }),
@@ -2537,6 +2560,7 @@ const pages = {
                                                                 components.button({
                                                                     backgroundHoverColor: buttonBackgroundHoverColor,
                                                                     child: components.icon({
+                                                                        fontSize: '1.25rem',
                                                                         color: buttonColor,
                                                                         ligature: 'delete',
                                                                     }),
