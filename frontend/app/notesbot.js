@@ -283,6 +283,20 @@ function startListenNotebook() {
                     stack.replace(pages.setup('/'));
                 }
             }
+        },
+        (e) => {
+            if (e.code === 'unavailable') {
+                stack.updateAll({
+                    type: 'error_network',
+                    error: e,
+                });
+            } else {
+                console.error(e);
+                stack.updateAll({
+                    type: 'error',
+                    error: e,
+                });
+            }
         });
 }
 
@@ -307,133 +321,193 @@ const components = {
 }
 
 const pages = {
-    init: (path = '') => ({
-        path,
-        meta: () => ({
-            title: appName,
-        }),
-        config: () => ({
-            width: '100%',
-            height: '100%',
-            padding: '1rem',
-            ...layouts.row('center', 'center'),
-            children: [components.animations.spinner({
-                width: '8vh',
-                height: '8vh',
-                color: colors[theme][palette.base](4)
-            })]
-        }),
-    }),
+    init(path = '') {
+        let pageLayer;
+        let errorRuntime = false;
+        let errorNetwork = false;
+        let initializing = true;
 
-    notFound: (path = '') => ({
-        path,
-        meta: () => ({
-            title: `Page Not Found | ${appName}`,
-            description: 'Page Not Found (invalid URL).'
-        }),
-        config: () => ({
-            width: '100%',
-            height: '100%',
-            padding: '1rem',
-            ...layouts.column('center', 'center'),
-            children: [
-                {
-                    text: 'Page Not Found (invalid URL).'
-                },
-            ]
-        }),
-    }),
+        return ({
+            path,
+            onPush: function () {
+                pageLayer = this;
+            },
+            update: function (message) {
+                if (errorRuntime || errorNetwork) {
+                }
+                else if (message.type === 'error') {
+                    errorRuntime = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_network') {
+                    errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+            },
+            config: {
+                id: 'page',
+                config: () => ({
+                    width: '100%',
+                    height: '100%',
+                    padding: '1rem',
+                    ...layouts.row('center', 'center'),
+                    children: [
+                        {
+                            id: 'blocker',
+                            config: () => components.blockers.common({
+                                loading: initializing,
+                                errorRuntime,
+                                errorNetwork,
+                            })
+                        },
+                    ]
+                })
+            },
+        });
+    },
 
     notebookDeleted(path = '') {
+        let pageLayer;
+        let errorRuntime = false;
+        let errorNetwork = false;
+
         return {
             path,
             meta: () => ({
                 title: `Notebook Deleted | ${appName}`,
                 description: 'Notebook deleted.'
             }),
-            config: () => ({
-                width: '100%',
-                height: '100%',
-                padding: '1rem',
-                ...layouts.column('center', 'center', '2rem'),
-                children: [
-                    {
-                        text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
-                    },
-                    {
-                        width: '100%',
-                        ...layouts.row('center'),
-                        children: [
-                            components.buttons.form({
-                                text: 'Log out',
-                                onclick: function (event) {
-                                    signOut(firebase.auth);
-                                }
-                            })
-                        ]
-                    }
+            onPush: function () {
+                pageLayer = this;
+            },
+            update: function (message) {
+                if (errorRuntime || errorNetwork) {
+                }
+                else if (message.type === 'error') {
+                    errorRuntime = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_network') {
+                    errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+            },
+            config: {
+                id: 'page',
+                config: () => ({
+                    width: '100%',
+                    height: '100%',
+                    padding: '1rem',
+                    ...layouts.column('center', 'center', '2rem'),
+                    children: [
+                        {
+                            text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
+                        },
+                        {
+                            width: '100%',
+                            ...layouts.row('center'),
+                            children: [
+                                components.buttons.form({
+                                    text: 'Log out',
+                                    onclick: function (event) {
+                                        signOut(firebase.auth);
+                                    }
+                                })
+                            ]
+                        }
 
-                ]
-            }),
+                    ]
+                })
+            },
         };
     },
 
     login(path = '') {
+        let pageLayer;
+        let errorRuntime = false;
+        let errorNetwork = false;
         let loggingIn = false;
+
         return {
             path,
             meta: () => ({
                 title: `Login | ${appName}`,
                 description: 'Login page.'
             }),
-            config: () => ({
+            onPush: function () {
+                pageLayer = this;
+            },
+            update: function (message) {
+                if (errorRuntime || errorNetwork) {
+                }
+                else if (message.type === 'error') {
+                    errorRuntime = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_network') {
+                    errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+            },
+            config: {
                 id: 'page',
-                width: '100%',
-                height: '100%',
-                padding: '1rem',
-                ...layouts.column('center', 'center'),
-                children: [
-                    () => components.blockers.loading({
-                        toggled: loggingIn
-                    }),
-                    components.button({
-                        padding: '0.75rem',
-                        backgroundHoverColor: colors[theme][palette.base](2),
-                        onclick: function (event) {
-                            try {
-                                loggingIn = true;
-                                this.layer.widgets['blocker-loading'].update();
-                                signInWithPopup(firebase.auth, new GoogleAuthProvider());
-                            } catch (e) {
-                                loggingIn = false;
-                                this.layer.widgets['blocker-loading'].update();
-                            }
+                config: () => ({
+                    width: '100%',
+                    height: '100%',
+                    padding: '1rem',
+                    ...layouts.column('center', 'center'),
+                    children: [
+                        {
+                            id: 'blocker',
+                            config: () => components.blockers.common({
+                                loading: loggingIn,
+                                errorRuntime,
+                                errorNetwork,
+                            })
                         },
-                        child: {
-                            ...layouts.row('center', 'center', '0.5rem'),
-                            children: [
-                                {
-                                    html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
-                                    width: '1.25rem',
-                                    height: '1.25rem',
-                                },
-                                {
-                                    text: 'Login with Google',
+                        components.button({
+                            padding: '0.75rem',
+                            backgroundHoverColor: colors[theme][palette.base](2),
+                            onclick: function (event) {
+                                try {
+                                    loggingIn = true;
+                                    this.layer.widgets['blocker'].update();
+                                    signInWithPopup(firebase.auth, new GoogleAuthProvider());
+                                } catch (e) {
+                                    console.error(e);
+                                    errorRuntime = true;
+                                    this.layer.widgets['blocker'].update();
                                 }
-                            ]
-                        }
-                    }),
-                ]
-            }),
+                            },
+                            child: {
+                                ...layouts.row('center', 'center', '0.5rem'),
+                                children: [
+                                    {
+                                        html: '<svg viewBox="0 0 48 48"> <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path> <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path> <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path> <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path> <path fill="none" d="M0 0h48v48H0z"></path></svg>',
+                                        width: '1.25rem',
+                                        height: '1.25rem',
+                                    },
+                                    {
+                                        text: 'Login with Google',
+                                    }
+                                ]
+                            }
+                        }),
+                    ]
+                })
+            },
         };
     },
 
     setup(path = '') {
         let pageLayer;
-        let error;
+        let errorRuntime = false;
+        let errorNetwork = false;
+        let errorOutOfSync = false;
         let keyBuilding = false;
         let keyphraseValid = true;
         let keyphraseRepeatValid = true;
+
         return {
             path,
             meta: () => ({
@@ -443,188 +517,216 @@ const pages = {
             onPush: function () {
                 pageLayer = this;
             },
-            config: () => ({
+            update: function (message) {
+                if (errorRuntime || errorNetwork || errorOutOfSync) {
+                }
+                else if (message.type === 'error') {
+                    errorRuntime = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_network') {
+                    errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+            },
+            config: {
                 id: 'page',
-                padding: '0.5rem 0',
-                ...layouts.base('center', 'center'),
-                children: [
-                    () => components.blockers.error({
-                        error
-                    }),
-                    () => components.blockers.loading({
-                        toggled: keyBuilding,
-                        text: 'Building the encryption key... This may take over a minute on older devices.'
-                    }),
-                    {
-                        width: 'min(640px, 100% - 1rem)',
-                        padding: '0.75rem',
-                        border: `1px solid ${colors.border.normal()}`,
-                        borderRadius: '0.5rem',
-                        ...layouts.column('center', 'start', '2rem'),
-                        children: [
-                            {
-                                fontSize: '2rem',
-                                fontWeight: 600,
-                                text: 'Keyphrase'
-                            },
-                            {
-                                ...layouts.column('start', 'start', '1rem'),
-                                children: [
-                                    {
-                                        text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.'
-                                    },
-                                    {
-                                        text: 'Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.'
-                                    },
-                                    {
-                                        text: 'Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.'
-                                    },
-                                    {
-                                        text: 'Passwords shorter than 20 characters will be crackable 50 years from now.'
-                                    },
-                                ]
-                            },
-                            {
-                                width: '100%',
-                                ...layouts.column('start', 'start', '1rem'),
-                                children: [
-                                    {
-                                        width: '100%',
-                                        ...layouts.column('start', 'start', '0.5rem'),
-                                        children: [
-                                            {
-                                                fontWeight: 600,
-                                                text: 'Your keyphrase'
-                                            },
-                                            () => ({
-                                                id: 'keyphrase-hint',
-                                                display: keyphraseValid ? 'none' : 'block',
-                                                fontWeight: 500,
-                                                color: colors.foreground.danger(),
-                                                text: 'Required',
-                                            }),
-                                            components.inputs.text({
-                                                id: 'keyphrase-input',
-                                                border: `1px solid ${colors.border.normal()}`,
-                                                password: true,
-                                                maxlength: 64
-                                            })
-                                        ]
-                                    },
-                                    {
-                                        width: '100%',
-                                        ...layouts.column('start', 'start', '0.5rem'),
-                                        children: [
-                                            {
-                                                fontWeight: 600,
-                                                text: 'Repeat keyphrase'
-                                            },
-                                            () => ({
-                                                id: 'keyphrase-repeat-hint',
-                                                display: keyphraseRepeatValid ? 'none' : 'block',
-                                                fontWeight: 500,
-                                                color: colors.foreground.danger(),
-                                                text: 'Invalid',
-                                            }),
-                                            components.inputs.text({
-                                                id: 'keyphrase-repeat-input',
-                                                border: `1px solid ${colors.border.normal()}`,
-                                                password: true,
-                                                maxlength: 64
-                                            })
-                                        ]
-                                    },
-                                ]
-                            },
-                            {
-                                width: '100%',
-                                ...layouts.row('end', 'center', '1rem'),
-                                children: [
-                                    components.buttons.form({
-                                        text: 'Log out',
-                                        onclick: function (event) {
-                                            signOut(firebase.auth);
-                                        }
-                                    }),
-                                    components.buttons.form({
-                                        priority: 'primary',
-                                        text: 'Save',
-                                        onclick: async function (event) {
-                                            keyphraseValid = true;
-                                            keyphraseRepeatValid = true;
-                                            if (!this.layer.widgets['keyphrase-input'].domElement.value) {
-                                                keyphraseValid = false;
+                config: () => ({
+                    padding: '0.5rem 0',
+                    ...layouts.base('center', 'center'),
+                    children: [
+                        {
+                            id: 'blocker',
+                            config: () => components.blockers.common({
+                                loading: keyBuilding,
+                                loadingText: 'Building the encryption key... This may take over a minute on older devices.',
+                                errorRuntime,
+                                errorNetwork,
+                                errorOutOfSync,
+                            })
+                        },
+                        {
+                            width: 'min(640px, 100% - 1rem)',
+                            padding: '0.75rem',
+                            border: `1px solid ${colors.border.normal()}`,
+                            borderRadius: '0.5rem',
+                            ...layouts.column('center', 'start', '2rem'),
+                            children: [
+                                {
+                                    fontSize: '2rem',
+                                    fontWeight: 600,
+                                    text: 'Keyphrase'
+                                },
+                                {
+                                    ...layouts.column('start', 'start', '1rem'),
+                                    children: [
+                                        {
+                                            text: 'Your data is encrypted with a keyphrase using end-to-end encryption. Only you can decrypt it.'
+                                        },
+                                        {
+                                            text: 'Store your keyphrase securely — if it\'s lost, you won\'t be able to recover your data.'
+                                        },
+                                        {
+                                            text: 'Don\'t use easy-to-guess combinations like \'password\', \'12345\' and so on.'
+                                        },
+                                        {
+                                            text: 'Passwords shorter than 20 characters will be crackable 50 years from now.'
+                                        },
+                                    ]
+                                },
+                                {
+                                    width: '100%',
+                                    ...layouts.column('start', 'start', '1rem'),
+                                    children: [
+                                        {
+                                            width: '100%',
+                                            ...layouts.column('start', 'start', '0.5rem'),
+                                            children: [
+                                                {
+                                                    fontWeight: 600,
+                                                    text: 'Your keyphrase'
+                                                },
+                                                {
+                                                    id: 'keyphrase-hint',
+                                                    config: () => ({
+                                                        display: keyphraseValid ? 'none' : 'block',
+                                                        fontWeight: 500,
+                                                        color: colors.foreground.danger(),
+                                                        text: 'Required',
+                                                    })
+                                                },
+                                                {
+                                                    id: 'keyphrase-input',
+                                                    config: components.inputs.text({
+                                                        border: `1px solid ${colors.border.normal()}`,
+                                                        password: true,
+                                                        maxlength: 64
+                                                    })
+                                                },
+                                            ]
+                                        },
+                                        {
+                                            width: '100%',
+                                            ...layouts.column('start', 'start', '0.5rem'),
+                                            children: [
+                                                {
+                                                    fontWeight: 600,
+                                                    text: 'Repeat keyphrase'
+                                                },
+                                                {
+                                                    id: 'keyphrase-repeat-hint',
+                                                    config: () => ({
+                                                        display: keyphraseRepeatValid ? 'none' : 'block',
+                                                        fontWeight: 500,
+                                                        color: colors.foreground.danger(),
+                                                        text: 'Invalid',
+                                                    })
+                                                },
+                                                {
+                                                    id: 'keyphrase-repeat-input',
+                                                    config: components.inputs.text({
+                                                        border: `1px solid ${colors.border.normal()}`,
+                                                        password: true,
+                                                        maxlength: 64
+                                                    })
+                                                },
+                                            ]
+                                        },
+                                    ]
+                                },
+                                {
+                                    width: '100%',
+                                    ...layouts.row('end', 'center', '1rem'),
+                                    children: [
+                                        components.buttons.form({
+                                            text: 'Log out',
+                                            onclick: function (event) {
+                                                signOut(firebase.auth);
                                             }
-                                            else if (!this.layer.widgets['keyphrase-repeat-input'].domElement.value || this.layer.widgets['keyphrase-input'].domElement.value != this.layer.widgets['keyphrase-repeat-input'].domElement.value) {
-                                                keyphraseRepeatValid = false;
-                                            }
-                                            this.layer.widgets['keyphrase-hint'].update();
-                                            this.layer.widgets['keyphrase-repeat-hint'].update();
-                                            if (!keyphraseValid || !keyphraseRepeatValid) {
-                                                return;
-                                            }
-                                            const salt = window.crypto.getRandomValues(new Uint8Array(32));
-                                            keyBuilding = true;
-                                            pageLayer.widgets['blocker-loading'].update();
-                                            const worker = new Argon2Worker();
-                                            worker.onmessage = async (event) => {
-                                                if (event.data.success) {
-                                                    try {
-                                                        key = await hashToKey(event.data.hash);
-                                                        await saveKeyToIDB('main', key);
-                                                        const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
-                                                        const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
-                                                        await runTransaction(firebase.firestore, async (transaction) => {
-                                                            const notebookDoc = await transaction.get(notebookDocRef);
-                                                            if (notebookDoc.exists()) {
-                                                                throw "Notebook already exists";
-                                                            }
-                                                            else {
-                                                                transaction.set(notebookDocRef, {
-                                                                    timestamp: serverTimestamp(),
-                                                                    status: 'active',
-                                                                    salt: Bytes.fromUint8Array(salt),
-                                                                    keytest: { iv: Bytes.fromUint8Array(keytestEncrypted.iv), data: Bytes.fromUint8Array(keytestEncrypted.data) },
-                                                                    tree: {}
-                                                                });
-                                                            }
-                                                        });
-                                                    } catch (e) {
-                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                            error = 'network';
-                                                            pageLayer.widgets['blocker-error'].update();
-                                                        } else {
-                                                            console.error(e);
-                                                            error = true;
-                                                            pageLayer.widgets['blocker-error'].update();
-                                                        }
-                                                    }
-                                                } else {
-                                                    console.error(event.data.error);
-                                                    error = true;
-                                                    pageLayer.widgets['blocker-error'].update();
+                                        }),
+                                        components.buttons.form({
+                                            priority: 'primary',
+                                            text: 'Save',
+                                            onclick: async function (event) {
+                                                keyphraseValid = true;
+                                                keyphraseRepeatValid = true;
+                                                if (!this.layer.widgets['keyphrase-input'].domElement.value) {
+                                                    keyphraseValid = false;
                                                 }
-                                            };
-                                            worker.postMessage({
-                                                password: this.layer.widgets['keyphrase-input'].domElement.value,
-                                                salt: salt,
-                                            });
-                                        }
-                                    }),
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }),
+                                                else if (!this.layer.widgets['keyphrase-repeat-input'].domElement.value || this.layer.widgets['keyphrase-input'].domElement.value != this.layer.widgets['keyphrase-repeat-input'].domElement.value) {
+                                                    keyphraseRepeatValid = false;
+                                                }
+                                                this.layer.widgets['keyphrase-hint'].update();
+                                                this.layer.widgets['keyphrase-repeat-hint'].update();
+                                                if (!keyphraseValid || !keyphraseRepeatValid) {
+                                                    return;
+                                                }
+                                                const salt = window.crypto.getRandomValues(new Uint8Array(32));
+                                                keyBuilding = true;
+                                                pageLayer.widgets['blocker'].update();
+                                                const worker = new Argon2Worker();
+                                                worker.onmessage = async (event) => {
+                                                    if (event.data.success) {
+                                                        try {
+                                                            key = await hashToKey(event.data.hash);
+                                                            await saveKeyToIDB('main', key);
+                                                            const keytestEncrypted = await encrypt(key, window.crypto.getRandomValues(new Uint8Array(32)));
+                                                            const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
+                                                            await runTransaction(firebase.firestore, async (transaction) => {
+                                                                const notebookDoc = await transaction.get(notebookDocRef);
+                                                                if (notebookDoc.exists()) {
+                                                                    errorOutOfSync = true;
+                                                                    pageLayer.widgets['blocker'].update();
+                                                                }
+                                                                else {
+                                                                    transaction.set(notebookDocRef, {
+                                                                        timestamp: serverTimestamp(),
+                                                                        status: 'active',
+                                                                        salt: Bytes.fromUint8Array(salt),
+                                                                        keytest: { iv: Bytes.fromUint8Array(keytestEncrypted.iv), data: Bytes.fromUint8Array(keytestEncrypted.data) },
+                                                                        tree: {}
+                                                                    });
+                                                                }
+                                                            });
+                                                        } catch (e) {
+                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                errorNetwork = true;
+                                                                pageLayer.widgets['blocker'].update();
+                                                            } else {
+                                                                console.error(e);
+                                                                errorRuntime = true;
+                                                                pageLayer.widgets['blocker'].update();
+                                                            }
+                                                        }
+                                                    } else {
+                                                        console.error(event.data.error);
+                                                        errorRuntime = true;
+                                                        pageLayer.widgets['blocker'].update();
+                                                    }
+                                                };
+                                                worker.postMessage({
+                                                    password: this.layer.widgets['keyphrase-input'].domElement.value,
+                                                    salt: salt,
+                                                });
+                                            }
+                                        }),
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                })
+            },
         };
     },
 
     keyphrase(path = '') {
         let pageLayer;
-        let error;
+        let errorRuntime = false;
+        let errorNetwork = false;
         let keyBuilding = false;
         let keyphraseValid = true;
+
         return {
             path,
             meta: () => ({
@@ -634,116 +736,144 @@ const pages = {
             onPush: function () {
                 pageLayer = this;
             },
-            config: () => ({
+            update: function (message) {
+                if (errorRuntime || errorNetwork) {
+                }
+                else if (message.type === 'error') {
+                    errorRuntime = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_network') {
+                    errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+            },
+            config: {
                 id: 'page',
-                padding: '0.5rem 0',
-                ...layouts.base('center', 'center'),
-                children: [
-                    () => components.blockers.error({
-                        error
-                    }),
-                    () => components.blockers.loading({
-                        toggled: keyBuilding,
-                        text: 'Building the encryption key... This may take over a minute on older devices.'
-                    }),
-                    {
-                        width: 'min(640px, 100% - 1rem)',
-                        padding: '0.75rem',
-                        border: `1px solid ${colors.border.normal()}`,
-                        borderRadius: '0.5rem',
-                        ...layouts.column('center', 'start', '2rem'),
-                        children: [
-                            {
-                                fontSize: '2rem',
-                                fontWeight: 600,
-                                text: 'Keyphrase'
-                            },
-                            {
-                                ...layouts.column('start', 'start', '0.5rem'),
-                                width: '100%',
-                                children: [
-                                    {
-                                        fontWeight: 600,
-                                        text: 'Your keyphrase'
-                                    },
-                                    () => ({
-                                        id: 'keyphrase-hint',
-                                        display: keyphraseValid ? 'none' : 'block',
-                                        fontWeight: 500,
-                                        color: colors.foreground.danger(),
-                                        text: 'Invalid'
-                                    }),
-                                    components.inputs.text({
-                                        id: 'keyphrase-input',
-                                        border: `1px solid ${colors.border.normal()}`,
-                                        password: true,
-                                        maxlength: 64
-                                    }),
-                                ]
-                            },
-                            {
-                                width: '100%',
-                                ...layouts.row('end', 'center', '1rem'),
-                                children: [
-                                    components.buttons.form({
-                                        text: 'Log out',
-                                        onclick: function (event) {
-                                            signOut(firebase.auth);
-                                        }
-                                    }),
-                                    components.buttons.form({
-                                        priority: 'primary',
-                                        text: 'Save',
-                                        onclick: async function (event) {
-                                            keyBuilding = true;
-                                            pageLayer.widgets['blocker-loading'].update();
-                                            const worker = new Argon2Worker();
-                                            worker.onmessage = async (event) => {
-                                                if (event.data.success) {
-                                                    try {
-                                                        key = await hashToKey(event.data.hash);
-                                                        await decrypt(key, notebook.keytest.iv.toUint8Array(), notebook.keytest.data.toUint8Array());
-                                                        await saveKeyToIDB('main', key);
-                                                        tree = {};
-                                                        for (const id in notebook.tree) {
-                                                            tree[id] = {
-                                                                type: notebook.tree[id].type,
-                                                                parent: notebook.tree[id].parent,
-                                                                order: notebook.tree[id].order,
-                                                                name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
-                                                            };
+                config: () => ({
+                    padding: '0.5rem 0',
+                    ...layouts.base('center', 'center'),
+                    children: [
+                        {
+                            id: 'blocker',
+                            config: () => components.blockers.common({
+                                loading: keyBuilding,
+                                loadingText: 'Building the encryption key... This may take over a minute on older devices.',
+                                errorRuntime,
+                                errorNetwork,
+                            })
+                        },
+                        {
+                            width: 'min(640px, 100% - 1rem)',
+                            padding: '0.75rem',
+                            border: `1px solid ${colors.border.normal()}`,
+                            borderRadius: '0.5rem',
+                            ...layouts.column('center', 'start', '2rem'),
+                            children: [
+                                {
+                                    fontSize: '2rem',
+                                    fontWeight: 600,
+                                    text: 'Keyphrase'
+                                },
+                                {
+                                    ...layouts.column('start', 'start', '0.5rem'),
+                                    width: '100%',
+                                    children: [
+                                        {
+                                            fontWeight: 600,
+                                            text: 'Your keyphrase'
+                                        },
+                                        {
+                                            id: 'keyphrase-hint',
+                                            config: () => ({
+                                                display: keyphraseValid ? 'none' : 'block',
+                                                fontWeight: 500,
+                                                color: colors.foreground.danger(),
+                                                text: 'Invalid'
+                                            })
+                                        },
+                                        {
+                                            id: 'keyphrase-input',
+                                            config: components.inputs.text({
+                                                border: `1px solid ${colors.border.normal()}`,
+                                                password: true,
+                                                maxlength: 64
+                                            })
+                                        },
+                                    ]
+                                },
+                                {
+                                    width: '100%',
+                                    ...layouts.row('end', 'center', '1rem'),
+                                    children: [
+                                        components.buttons.form({
+                                            text: 'Log out',
+                                            onclick: function (event) {
+                                                signOut(firebase.auth);
+                                            }
+                                        }),
+                                        components.buttons.form({
+                                            priority: 'primary',
+                                            text: 'Save',
+                                            onclick: async function (event) {
+                                                keyBuilding = true;
+                                                pageLayer.widgets['blocker'].update();
+                                                const worker = new Argon2Worker();
+                                                worker.onmessage = async (event) => {
+                                                    if (event.data.success) {
+                                                        try {
+                                                            key = await hashToKey(event.data.hash);
+                                                            await decrypt(key, notebook.keytest.iv.toUint8Array(), notebook.keytest.data.toUint8Array());
+                                                            await saveKeyToIDB('main', key);
+                                                            tree = {};
+                                                            for (const id in notebook.tree) {
+                                                                tree[id] = {
+                                                                    type: notebook.tree[id].type,
+                                                                    parent: notebook.tree[id].parent,
+                                                                    order: notebook.tree[id].order,
+                                                                    name: textDecoder.decode(await decrypt(key, notebook.tree[id].name.iv.toUint8Array(), notebook.tree[id].name.data.toUint8Array()))
+                                                                };
+                                                            }
+                                                            if (stack.at(-1) === pageLayer) {
+                                                                resolveCurrentPath();
+                                                                notebookInitialized = true;
+                                                            }
+                                                        } catch (e) {
+                                                            keyphraseValid = false;
+                                                            keyBuilding = false;
+                                                            pageLayer.widgets['page'].update();
                                                         }
-                                                        if (stack.at(-1) === pageLayer) {
-                                                            resolveCurrentPath();
-                                                            notebookInitialized = true;
-                                                        }
-                                                    } catch (e) {
-                                                        keyphraseValid = false;
-                                                        keyBuilding = false;
-                                                        pageLayer.widgets['page'].update();
+                                                    } else {
+                                                        console.error(event.data.error);
+                                                        errorRuntime = true;
+                                                        pageLayer.widgets['blocker'].update();
                                                     }
-                                                } else {
-                                                    console.error(event.data.error);
-                                                    error = true;
-                                                    pageLayer.widgets['blocker-error'].update();
-                                                }
-                                            };
-                                            worker.postMessage({
-                                                password: this.layer.widgets['keyphrase-input'].domElement.value,
-                                                salt: notebook.salt.toUint8Array(),
-                                            });
-                                        }
-                                    })
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }),
+                                                };
+                                                worker.postMessage({
+                                                    password: this.layer.widgets['keyphrase-input'].domElement.value,
+                                                    salt: notebook.salt.toUint8Array(),
+                                                });
+                                            }
+                                        })
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                })
+            },
         };
     },
 
     folder(path = '', folderId) {
+        let pageLayer;
+        let errorRuntime = false;
+        let errorNetwork = false;
+        let errorOutOfSync = false;
+        let updating = false;
+        let children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+        let filterTreeQuery;
+
         function generateTreeId() {
             while (true) {
                 const id = randomString(8);
@@ -753,11 +883,6 @@ const pages = {
             }
         }
 
-        let pageLayer;
-        let error;
-        let treeUpdating = false;
-        let children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-        let filterTreeQuery;
         return {
             path,
             meta: () => ({
@@ -768,49 +893,63 @@ const pages = {
                 pageLayer = this;
             },
             update: function (message) {
-                if (message.type === 'tree') {
+                if (errorRuntime || errorNetwork || errorOutOfSync) {
+                }
+                else if (message.type === 'error') {
+                    errorRuntime = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_network') {
+                    errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'tree') {
                     if (!treeNodeExists(folderId)) {
-                        error = 'outofsync';
-                        this.widgets['blocker-error'].update();
+                        errorOutOfSync = true;
+                        this.widgets['blocker'].update();
                     } else {
                         updateMetaTags(this.meta());
                         children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                        this.widgets['blocker-loading'].update();
                         this.widgets['header'].update();
                         this.widgets['tree'].update();
                     }
                 }
             },
-            config: () => {
-                return {
-                    id: 'page',
+            config: {
+                id: 'page',
+                config: () => ({
                     ...layouts.base('start', 'center'),
                     children: [
-                        () => components.blockers.error({
-                            error
-                        }),
-                        () => components.blockers.loading({
-                            toggled: treeUpdating
-                        }),
-                        () => components.header({
+                        {
+                            id: 'blocker',
+                            config: () => components.blockers.common({
+                                loading: updating,
+                                errorRuntime,
+                                errorNetwork,
+                                errorOutOfSync,
+                            })
+                        },
+                        {
                             id: 'header',
-                            leading: folderId === 'root' ? null : components.button({
-                                backgroundHoverColor: colors[theme][palette.base](3),
-                                color: colors.foreground.secondary(),
-                                href: '/',
-                                child: components.icon({
-                                    fontSize: '1.25rem',
-                                    ligature: 'home'
+                            config: () => components.header({
+                                leading: folderId === 'root' ? null : components.button({
+                                    backgroundHoverColor: colors[theme][palette.base](3),
+                                    color: colors.foreground.secondary(),
+                                    href: '/',
+                                    child: components.icon({
+                                        fontSize: '1.25rem',
+                                        ligature: 'home'
+                                    }),
+                                    onclick: function (event) {
+                                        stack.push(pages.folder('/', 'root'));
+                                    }
                                 }),
-                                onclick: function (event) {
-                                    stack.push(pages.folder('/', 'root'));
-                                }
-                            }),
-                            title: folderId === 'root' ? 'Home' : tree[folderId].name,
-                        }),
-                        () => {
-                            return ({
-                                id: 'tree',
+                                title: folderId === 'root' ? 'Home' : tree[folderId].name,
+                            })
+                        },
+                        {
+                            id: 'tree',
+                            config: () => ({
                                 flexGrow: 1,
                                 width: 'min(640px, 100% - 1rem)',
                                 padding: '1rem 0',
@@ -836,8 +975,8 @@ const pages = {
                                                         text: 'Move Up',
                                                         onclick: async function (event) {
                                                             await stack.pop();
-                                                            treeUpdating = true;
-                                                            pageLayer.widgets['blocker-loading'].update();
+                                                            updating = true;
+                                                            pageLayer.widgets['blocker'].update();
                                                             const neighborId = children[children.indexOf(cid) - 1];
                                                             try {
                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -851,19 +990,20 @@ const pages = {
                                                                         });
                                                                     }
                                                                     else {
-                                                                        error = 'outofsync';
-                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                        errorOutOfSync = true;
+                                                                        pageLayer.widgets['blocker'].update();
                                                                     }
                                                                 });
-                                                                treeUpdating = false;
+                                                                updating = false;
+                                                                pageLayer.widgets['blocker'].update();
                                                             } catch (e) {
                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                    error = 'network';
-                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                    errorNetwork = true;
+                                                                    pageLayer.widgets['blocker'].update();
                                                                 } else {
                                                                     console.error(e);
-                                                                    error = true;
-                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                    errorRuntime = true;
+                                                                    pageLayer.widgets['blocker'].update();
                                                                 }
                                                             }
                                                         }
@@ -872,8 +1012,8 @@ const pages = {
                                                         text: 'Move Down',
                                                         onclick: async function (event) {
                                                             await stack.pop();
-                                                            treeUpdating = true;
-                                                            pageLayer.widgets['blocker-loading'].update();
+                                                            updating = true;
+                                                            pageLayer.widgets['blocker'].update();
                                                             const neighborId = children[children.indexOf(cid) + 1];
                                                             try {
                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -887,19 +1027,20 @@ const pages = {
                                                                         });
                                                                     }
                                                                     else {
-                                                                        error = 'outofsync';
-                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                        errorOutOfSync = true;
+                                                                        pageLayer.widgets['blocker'].update();
                                                                     }
                                                                 });
-                                                                treeUpdating = false;
+                                                                updating = false;
+                                                                pageLayer.widgets['blocker'].update();
                                                             } catch (e) {
                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                    error = 'network';
-                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                    errorNetwork = true;
+                                                                    pageLayer.widgets['blocker'].update();
                                                                 } else {
                                                                     console.error(e);
-                                                                    error = true;
-                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                    errorRuntime = true;
+                                                                    pageLayer.widgets['blocker'].update();
                                                                 }
                                                             }
                                                         }
@@ -948,8 +1089,8 @@ const pages = {
                                                                                                 steps += 1;
                                                                                             }
                                                                                             await stack.pop(steps);
-                                                                                            treeUpdating = true;
-                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            updating = true;
+                                                                                            pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -962,19 +1103,20 @@ const pages = {
                                                                                                         });
                                                                                                     }
                                                                                                     else {
-                                                                                                        error = 'outofsync';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                                        errorOutOfSync = true;
+                                                                                                        pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                treeUpdating = false;
+                                                                                                updating = false;
+                                                                                                pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                    error = 'network';
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorNetwork = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 } else {
                                                                                                     console.error(e);
-                                                                                                    error = true;
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorRuntime = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1021,18 +1163,22 @@ const pages = {
                                                                                     fontWeight: 600,
                                                                                     text: 'New Name'
                                                                                 },
-                                                                                () => ({
+                                                                                {
                                                                                     id: 'new-folder-name-hint',
-                                                                                    display: nameValid ? 'none' : 'block',
-                                                                                    fontWeight: 500,
-                                                                                    color: colors.foreground.danger(),
-                                                                                    text: 'Required'
-                                                                                }),
-                                                                                components.inputs.text({
+                                                                                    config: () => ({
+                                                                                        display: nameValid ? 'none' : 'block',
+                                                                                        fontWeight: 500,
+                                                                                        color: colors.foreground.danger(),
+                                                                                        text: 'Required'
+                                                                                    })
+                                                                                },
+                                                                                {
                                                                                     id: 'new-folder-name-input',
-                                                                                    maxlength: '64',
-                                                                                    value: tree[cid].name,
-                                                                                })]
+                                                                                    config: components.inputs.text({
+                                                                                        maxlength: '64',
+                                                                                        value: tree[cid].name,
+                                                                                    })
+                                                                                },]
                                                                             },
                                                                             {
                                                                                 width: '100%',
@@ -1052,8 +1198,8 @@ const pages = {
                                                                                             }
                                                                                             const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
                                                                                             await stack.pop();
-                                                                                            treeUpdating = true;
-                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            updating = true;
+                                                                                            pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -1066,19 +1212,20 @@ const pages = {
                                                                                                         });
                                                                                                     }
                                                                                                     else {
-                                                                                                        error = 'outofsync';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                                        errorOutOfSync = true;
+                                                                                                        pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                treeUpdating = false;
+                                                                                                updating = false;
+                                                                                                pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                    error = 'network';
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorNetwork = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 } else {
                                                                                                     console.error(e);
-                                                                                                    error = true;
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorRuntime = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1108,8 +1255,8 @@ const pages = {
                                                                             text: 'Delete',
                                                                             onclick: async function (event) {
                                                                                 await stack.pop();
-                                                                                treeUpdating = true;
-                                                                                pageLayer.widgets['blocker-loading'].update();
+                                                                                updating = true;
+                                                                                pageLayer.widgets['blocker'].update();
                                                                                 try {
                                                                                     const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                     await runTransaction(firebase.firestore, async (transaction) => {
@@ -1121,19 +1268,20 @@ const pages = {
                                                                                             });
                                                                                         }
                                                                                         else {
-                                                                                            error = 'outofsync';
-                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                            errorOutOfSync = true;
+                                                                                            pageLayer.widgets['blocker'].update();
                                                                                         }
                                                                                     });
-                                                                                    treeUpdating = false;
+                                                                                    updating = false;
+                                                                                    pageLayer.widgets['blocker'].update();
                                                                                 } catch (e) {
                                                                                     if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                        error = 'network';
-                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                        errorNetwork = true;
+                                                                                        pageLayer.widgets['blocker'].update();
                                                                                     } else {
                                                                                         console.error(e);
-                                                                                        error = true;
-                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                        errorRuntime = true;
+                                                                                        pageLayer.widgets['blocker'].update();
                                                                                     }
                                                                                 }
                                                                             }
@@ -1149,7 +1297,7 @@ const pages = {
                                     }
                                 })
                                 )
-                            });
+                            })
                         },
                         {
                             position: 'fixed',
@@ -1184,72 +1332,78 @@ const pages = {
                                                                                     fontWeight: 600,
                                                                                     text: 'Theme'
                                                                                 },
-                                                                                components.inputs.toggle({
+                                                                                {
                                                                                     id: 'theme-system',
-                                                                                    value: window.localStorage.getItem('theme') === 'auto',
-                                                                                    iconFalse: components.icon({
-                                                                                        fontSize: '1.25rem',
-                                                                                        color: colors.foreground.secondary(),
-                                                                                        ligature: 'radio_button_unchecked'
-                                                                                    }),
-                                                                                    iconTrue: components.icon({
-                                                                                        fontSize: '1.25rem',
-                                                                                        color: colors[theme][palette.primary](9),
-                                                                                        ligature: 'radio_button_checked'
-                                                                                    }),
-                                                                                    text: 'System',
-                                                                                    onclick: function (event) {
-                                                                                        window.document.dispatchEvent(new CustomEvent('switch-theme', {
-                                                                                            detail: {
-                                                                                                theme: 'auto'
-                                                                                            }
-                                                                                        }));
-                                                                                    }
-                                                                                }),
-                                                                                components.inputs.toggle({
+                                                                                    config: components.inputs.toggle({
+                                                                                        value: window.localStorage.getItem('theme') === 'auto',
+                                                                                        iconFalse: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: colors.foreground.secondary(),
+                                                                                            ligature: 'radio_button_unchecked'
+                                                                                        }),
+                                                                                        iconTrue: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: colors[theme][palette.primary](9),
+                                                                                            ligature: 'radio_button_checked'
+                                                                                        }),
+                                                                                        text: 'System',
+                                                                                        onclick: function (event) {
+                                                                                            window.document.dispatchEvent(new CustomEvent('switch-theme', {
+                                                                                                detail: {
+                                                                                                    theme: 'auto'
+                                                                                                }
+                                                                                            }));
+                                                                                        }
+                                                                                    })
+                                                                                },
+                                                                                {
                                                                                     id: 'theme-light',
-                                                                                    value: window.localStorage.getItem('theme') === 'light',
-                                                                                    iconFalse: components.icon({
-                                                                                        fontSize: '1.25rem',
-                                                                                        color: colors.foreground.secondary(),
-                                                                                        ligature: 'radio_button_unchecked'
-                                                                                    }),
-                                                                                    iconTrue: components.icon({
-                                                                                        fontSize: '1.25rem',
-                                                                                        color: colors[theme][palette.primary](9),
-                                                                                        ligature: 'radio_button_checked'
-                                                                                    }),
-                                                                                    text: 'Light',
-                                                                                    onclick: function (event) {
-                                                                                        window.document.dispatchEvent(new CustomEvent('switch-theme', {
-                                                                                            detail: {
-                                                                                                theme: 'light'
-                                                                                            }
-                                                                                        }));
-                                                                                    }
-                                                                                }),
-                                                                                components.inputs.toggle({
+                                                                                    config: components.inputs.toggle({
+                                                                                        value: window.localStorage.getItem('theme') === 'light',
+                                                                                        iconFalse: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: colors.foreground.secondary(),
+                                                                                            ligature: 'radio_button_unchecked'
+                                                                                        }),
+                                                                                        iconTrue: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: colors[theme][palette.primary](9),
+                                                                                            ligature: 'radio_button_checked'
+                                                                                        }),
+                                                                                        text: 'Light',
+                                                                                        onclick: function (event) {
+                                                                                            window.document.dispatchEvent(new CustomEvent('switch-theme', {
+                                                                                                detail: {
+                                                                                                    theme: 'light'
+                                                                                                }
+                                                                                            }));
+                                                                                        }
+                                                                                    })
+                                                                                },
+                                                                                {
                                                                                     id: 'theme-dark',
-                                                                                    value: window.localStorage.getItem('theme') === 'dark',
-                                                                                    iconFalse: components.icon({
-                                                                                        fontSize: '1.25rem',
-                                                                                        color: colors.foreground.secondary(),
-                                                                                        ligature: 'radio_button_unchecked'
-                                                                                    }),
-                                                                                    iconTrue: components.icon({
-                                                                                        fontSize: '1.25rem',
-                                                                                        color: colors[theme][palette.primary](9),
-                                                                                        ligature: 'radio_button_checked'
-                                                                                    }),
-                                                                                    text: 'Dark',
-                                                                                    onclick: function (event) {
-                                                                                        window.document.dispatchEvent(new CustomEvent('switch-theme', {
-                                                                                            detail: {
-                                                                                                theme: 'dark'
-                                                                                            }
-                                                                                        }));
-                                                                                    }
-                                                                                }),
+                                                                                    config: components.inputs.toggle({
+                                                                                        value: window.localStorage.getItem('theme') === 'dark',
+                                                                                        iconFalse: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: colors.foreground.secondary(),
+                                                                                            ligature: 'radio_button_unchecked'
+                                                                                        }),
+                                                                                        iconTrue: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: colors[theme][palette.primary](9),
+                                                                                            ligature: 'radio_button_checked'
+                                                                                        }),
+                                                                                        text: 'Dark',
+                                                                                        onclick: function (event) {
+                                                                                            window.document.dispatchEvent(new CustomEvent('switch-theme', {
+                                                                                                detail: {
+                                                                                                    theme: 'dark'
+                                                                                                }
+                                                                                            }));
+                                                                                        }
+                                                                                    })
+                                                                                },
                                                                             ]
                                                                         }
                                                                     })
@@ -1273,8 +1427,8 @@ const pages = {
                                                                                 text: 'Delete',
                                                                                 onclick: async function (event) {
                                                                                     await stack.pop();
-                                                                                    treeUpdating = true;
-                                                                                    pageLayer.widgets['blocker-loading'].update();
+                                                                                    updating = true;
+                                                                                    pageLayer.widgets['blocker'].update();
                                                                                     try {
                                                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                         await runTransaction(firebase.firestore, async (transaction) => {
@@ -1286,19 +1440,20 @@ const pages = {
                                                                                                 });
                                                                                             }
                                                                                             else {
-                                                                                                error = 'outofsync';
-                                                                                                pageLayer.widgets['blocker-error'].update();
+                                                                                                errorOutOfSync = true;
+                                                                                                pageLayer.widgets['blocker'].update();
                                                                                             }
                                                                                         });
-                                                                                        treeUpdating = false;
+                                                                                        updating = false;
+                                                                                        pageLayer.widgets['blocker'].update();
                                                                                     } catch (e) {
                                                                                         if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                            error = 'network';
-                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                            errorNetwork = true;
+                                                                                            pageLayer.widgets['blocker'].update();
                                                                                         } else {
                                                                                             console.error(e);
-                                                                                            error = true;
-                                                                                            pageLayer.widgets['blocker-error'].update();
+                                                                                            errorRuntime = true;
+                                                                                            pageLayer.widgets['blocker'].update();
                                                                                         }
                                                                                     }
                                                                                 }
@@ -1352,94 +1507,98 @@ const pages = {
                                                                 await stack.pop();
                                                             }
                                                         }),
-                                                        trailing: () => ({
+                                                        trailing: {
                                                             id: 'filter-tree',
-                                                            flexGrow: 1,
-                                                            padding: '0 0.25rem 0 0',
-                                                            border: 'none',
-                                                            borderRadius: '0.5rem',
-                                                            backgroundColor: colors[theme][palette.base](3),
-                                                            ...layouts.row('start', 'center'),
-                                                            children: [
-                                                                {
-                                                                    tag: 'input',
-                                                                    flexGrow: 1,
-                                                                    padding: '0.5rem',
-                                                                    border: 'none',
-                                                                    borderRadius: '0.5rem',
-                                                                    backgroundColor: 'inherit',
-                                                                    fontFamily: 'inherit',
-                                                                    fontSize: '1rem',
-                                                                    lineHeight: 1.5,
-                                                                    color: 'inherit',
-                                                                    appearance: 'none',
-                                                                    type: 'text',
-                                                                    placeholder: 'Search',
-                                                                    onfocus: function () {
-                                                                        this.domElement.style.outline = 'none';
+                                                            config: () => ({
+                                                                flexGrow: 1,
+                                                                padding: '0 0.25rem 0 0',
+                                                                border: 'none',
+                                                                borderRadius: '0.5rem',
+                                                                backgroundColor: colors[theme][palette.base](3),
+                                                                ...layouts.row('start', 'center'),
+                                                                children: [
+                                                                    {
+                                                                        tag: 'input',
+                                                                        flexGrow: 1,
+                                                                        padding: '0.5rem',
+                                                                        border: 'none',
+                                                                        borderRadius: '0.5rem',
+                                                                        backgroundColor: 'inherit',
+                                                                        fontFamily: 'inherit',
+                                                                        fontSize: '1rem',
+                                                                        lineHeight: 1.5,
+                                                                        color: 'inherit',
+                                                                        appearance: 'none',
+                                                                        type: 'text',
+                                                                        placeholder: 'Search',
+                                                                        onfocus: function () {
+                                                                            this.domElement.style.outline = 'none';
+                                                                        },
+                                                                        oninput: function (event) {
+                                                                            filterTreeQuery = event.target.value;
+                                                                            this.layer.widgets['tree'].update();
+                                                                        },
                                                                     },
-                                                                    oninput: function (event) {
-                                                                        filterTreeQuery = event.target.value;
-                                                                        this.layer.widgets['tree'].update();
-                                                                    },
-                                                                },
-                                                                components.button({
-                                                                    backgroundHoverColor: colors[theme][palette.base](5),
-                                                                    padding: '0.25rem',
-                                                                    child: components.icon({
-                                                                        fontSize: '1.25rem',
-                                                                        color: colors.foreground.secondary(),
-                                                                        ligature: 'cancel'
+                                                                    components.button({
+                                                                        backgroundHoverColor: colors[theme][palette.base](5),
+                                                                        padding: '0.25rem',
+                                                                        child: components.icon({
+                                                                            fontSize: '1.25rem',
+                                                                            color: colors.foreground.secondary(),
+                                                                            ligature: 'cancel'
+                                                                        }),
+                                                                        onclick: function (event) {
+                                                                            filterTreeQuery = undefined;
+                                                                            this.layer.widgets['filter-tree'].update();
+                                                                            this.layer.widgets['tree'].update();
+                                                                        }
                                                                     }),
-                                                                    onclick: function (event) {
-                                                                        filterTreeQuery = undefined;
-                                                                        this.layer.widgets['filter-tree'].update();
-                                                                        this.layer.widgets['tree'].update();
-                                                                    }
-                                                                }),
-                                                            ]
-                                                        }),
+                                                                ]
+                                                            })
+                                                        },
                                                     }),
-                                                    () => {
-                                                        const nodesFiltered = [];
-                                                        if (filterTreeQuery) {
-                                                            const queue = [folderId];
-                                                            while (queue.length > 0) {
-                                                                const parentId = queue.shift();
-                                                                const childIds = Object.keys(tree)
-                                                                    .filter(id => tree[id].parent === parentId)
-                                                                    .sort((id1, id2) => tree[id1].order - tree[id2].order);
-                                                                for (const cid of childIds) {
-                                                                    if (tree[cid].name.toLowerCase().includes(filterTreeQuery.toLowerCase())) {
-                                                                        nodesFiltered.push(cid);
-                                                                    }
-                                                                    if (tree[cid].type === 'folder') {
-                                                                        queue.push(cid);
+                                                    {
+                                                        id: 'tree',
+                                                        config: () => {
+                                                            const nodesFiltered = [];
+                                                            if (filterTreeQuery) {
+                                                                const queue = [folderId];
+                                                                while (queue.length > 0) {
+                                                                    const parentId = queue.shift();
+                                                                    const childIds = Object.keys(tree)
+                                                                        .filter(id => tree[id].parent === parentId)
+                                                                        .sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                    for (const cid of childIds) {
+                                                                        if (tree[cid].name.toLowerCase().includes(filterTreeQuery.toLowerCase())) {
+                                                                            nodesFiltered.push(cid);
+                                                                        }
+                                                                        if (tree[cid].type === 'folder') {
+                                                                            queue.push(cid);
+                                                                        }
                                                                     }
                                                                 }
+                                                            } else {
+                                                                nodesFiltered.push(...(JSON.parse(window.localStorage.getItem('recent_notes')) || []));
                                                             }
-                                                        } else {
-                                                            nodesFiltered.push(...(JSON.parse(window.localStorage.getItem('recent_notes')) || []));
+                                                            return {
+                                                                flexGrow: 1,
+                                                                width: 'min(640px, 100% - 1rem)',
+                                                                padding: '1rem 0',
+                                                                ...layouts.column(filterTreeQuery ? 'start' : 'center', 'center', '1rem'),
+                                                                children: nodesFiltered.map(nid => components.buttons.menu({
+                                                                    size: 'l',
+                                                                    text: tree[nid]['name'],
+                                                                    onclick: async function (event) {
+                                                                        if (tree[nid].type === 'folder') {
+                                                                            stack.push(pages.folder(`/folder/${nid}`, nid));
+                                                                        } else if (tree[nid].type === 'note') {
+                                                                            stack.push(pages.note(`/note/${nid}`, nid));
+                                                                        }
+                                                                    },
+                                                                }))
+                                                            };
                                                         }
-                                                        return {
-                                                            id: 'tree',
-                                                            flexGrow: 1,
-                                                            width: 'min(640px, 100% - 1rem)',
-                                                            padding: '1rem 0',
-                                                            ...layouts.column(filterTreeQuery ? 'start' : 'center', 'center', '1rem'),
-                                                            children: nodesFiltered.map(nid => components.buttons.menu({
-                                                                size: 'l',
-                                                                text: tree[nid]['name'],
-                                                                onclick: async function (event) {
-                                                                    if (tree[nid].type === 'folder') {
-                                                                        stack.push(pages.folder(`/folder/${nid}`, nid));
-                                                                    } else if (tree[nid].type === 'note') {
-                                                                        stack.push(pages.note(`/note/${nid}`, nid));
-                                                                    }
-                                                                },
-                                                            }))
-                                                        };
-                                                    }
+                                                    },
                                                 ]
                                             })
                                         });
@@ -1476,17 +1635,21 @@ const pages = {
                                                                                         fontWeight: 600,
                                                                                         text: 'Name'
                                                                                     },
-                                                                                    () => ({
+                                                                                    {
                                                                                         id: 'new-folder-name-hint',
-                                                                                        display: nameValid ? 'none' : 'block',
-                                                                                        fontWeight: 500,
-                                                                                        color: colors.foreground.danger(),
-                                                                                        text: 'Required'
-                                                                                    }),
-                                                                                    components.inputs.text({
+                                                                                        config: () => ({
+                                                                                            display: nameValid ? 'none' : 'block',
+                                                                                            fontWeight: 500,
+                                                                                            color: colors.foreground.danger(),
+                                                                                            text: 'Required'
+                                                                                        })
+                                                                                    },
+                                                                                    {
                                                                                         id: 'new-folder-name-input',
-                                                                                        maxlength: '64'
-                                                                                    }),
+                                                                                        config: components.inputs.text({
+                                                                                            maxlength: '64'
+                                                                                        })
+                                                                                    },
                                                                                 ]
                                                                             },
                                                                             {
@@ -1507,8 +1670,8 @@ const pages = {
                                                                                             }
                                                                                             const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
                                                                                             await stack.pop();
-                                                                                            treeUpdating = true;
-                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            updating = true;
+                                                                                            pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -1521,19 +1684,20 @@ const pages = {
                                                                                                         });
                                                                                                     }
                                                                                                     else {
-                                                                                                        error = 'outofsync';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                                        errorOutOfSync = true;
+                                                                                                        pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                treeUpdating = false;
+                                                                                                updating = false;
+                                                                                                pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                    error = 'network';
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorNetwork = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 } else {
                                                                                                     console.error(e);
-                                                                                                    error = true;
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorRuntime = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1567,17 +1731,21 @@ const pages = {
                                                                                         fontWeight: 600,
                                                                                         text: 'Name'
                                                                                     },
-                                                                                    () => ({
+                                                                                    {
                                                                                         id: 'new-note-name-hint',
-                                                                                        display: nameValid ? 'none' : 'block',
-                                                                                        fontWeight: 500,
-                                                                                        color: colors.foreground.danger(),
-                                                                                        text: 'Required'
-                                                                                    }),
-                                                                                    components.inputs.text({
+                                                                                        config: () => ({
+                                                                                            display: nameValid ? 'none' : 'block',
+                                                                                            fontWeight: 500,
+                                                                                            color: colors.foreground.danger(),
+                                                                                            text: 'Required'
+                                                                                        })
+                                                                                    },
+                                                                                    {
                                                                                         id: 'new-note-name-input',
-                                                                                        maxlength: '64'
-                                                                                    }),
+                                                                                        config: components.inputs.text({
+                                                                                            maxlength: '64'
+                                                                                        })
+                                                                                    },
                                                                                 ]
                                                                             },
                                                                             {
@@ -1598,8 +1766,8 @@ const pages = {
                                                                                             }
                                                                                             const name = this.layer.widgets['new-note-name-input'].domElement.value.trim();
                                                                                             await stack.pop();
-                                                                                            treeUpdating = true;
-                                                                                            pageLayer.widgets['blocker-loading'].update();
+                                                                                            updating = true;
+                                                                                            pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -1612,19 +1780,20 @@ const pages = {
                                                                                                         });
                                                                                                     }
                                                                                                     else {
-                                                                                                        error = 'outofsync';
-                                                                                                        pageLayer.widgets['blocker-error'].update();
+                                                                                                        errorOutOfSync = true;
+                                                                                                        pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                treeUpdating = false;
+                                                                                                updating = false;
+                                                                                                pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
-                                                                                                    error = 'network';
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorNetwork = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 } else {
                                                                                                     console.error(e);
-                                                                                                    error = true;
-                                                                                                    pageLayer.widgets['blocker-error'].update();
+                                                                                                    errorRuntime = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1645,14 +1814,16 @@ const pages = {
                             ]
                         }
                     ]
-                };
+                })
             },
         };
     },
 
     note(path = '', noteId) {
         let pageLayer;
-        let error;
+        let errorRuntime = false;
+        let errorNetwork = false;
+        let errorOutOfSync = false;
         const paragraphs = [];
         let stopListenParagraphs;
         let limitParagraphs = true;
@@ -1664,6 +1835,7 @@ const pages = {
         let editParagraphHeight;
         let editParagraphValid;
         let editParagraphText;
+
         return {
             path,
             meta: () => ({
@@ -1708,10 +1880,20 @@ const pages = {
                 stopListenParagraphs();
             },
             update: function (message) {
-                if (message.type === 'tree') {
+                if (errorRuntime || errorNetwork || errorOutOfSync) {
+                }
+                else if (message.type === 'error') {
+                    errorRuntime = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_network') {
+                    errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'tree') {
                     if (!treeNodeExists(noteId)) {
-                        error = 'outofsync';
-                        this.widgets['blocker-error'].update();
+                        errorOutOfSync = true;
+                        this.widgets['blocker'].update();
                     }
                     else {
                         updateMetaTags(this.meta());
@@ -1725,908 +1907,945 @@ const pages = {
                     this.widgets[`file-actions-${message.fileId}`]?.update();
                 }
             },
-            config: () => ({
+            config: {
                 id: 'page',
-                ...layouts.base('start', 'center'),
-                children: [
-                    () => components.blockers.error({
-                        error
-                    }),
-                    () => components.header({
-                        id: 'header',
-                        leading: components.button({
-                            backgroundHoverColor: colors[theme][palette.base](3),
-                            color: colors.foreground.secondary(),
-                            href: '/',
-                            child: components.icon({
-                                fontSize: '1.25rem',
-                                ligature: 'home'
-                            }),
-                            onclick: function (event) {
-                                stack.push(pages.folder('/', 'root'));
-                            }
-                        }),
-                        title: tree[noteId].name
-                    }),
-                    {
-                        width: 'min(640px, 100% - 1rem)',
-                        padding: '1rem 0',
-                        ...layouts.column('start', 'start', '1rem'),
-                        children: [
-                            () => ({
-                                id: 'add-paragraph-hint',
-                                display: addParagraphValid ? 'none' : 'block',
-                                fontWeight: 500,
-                                color: colors.foreground.danger(),
-                                text: 'Required'
-                            }),
-                            components.inputs.textArea({
-                                id: 'add-paragraph-input',
-                                height: '16rem',
-                            }),
-                            () => ({
-                                id: 'files-attached',
-                                width: '100%',
-                                ...layouts.column('start', 'start', '0.5rem'),
-                                display: filesAttached ? 'flex' : 'none',
-                                children: filesAttached?.map(f => ({
-                                    width: '100%',
-                                    text: f.name
-                                }))
-                            }),
-                            {
-                                width: '100%',
-                                ...layouts.row('end', 'center', '1rem'),
-                                children: [
-                                    {
-                                        id: 'files-input',
-                                        tag: 'input',
-                                        display: 'none',
-                                        type: 'file',
-                                        multiple: true,
-                                        onchange: function (event) {
-                                            const filesSelected = [];
-                                            let sizeTotal = 0;
-                                            for (const file of event.target.files) {
-                                                filesSelected.push(file);
-                                                sizeTotal += file.size;
-                                            }
-                                            if (filesSelected.length > 8 || sizeTotal > 1073741824) {
-                                                stack.push({
-                                                    path: '#invalid',
-                                                    hidePrior: false,
-                                                    config: () => components.modals.prompt({
-                                                        title: 'Invalid',
-                                                        description: 'Maximum 8 files, 1GB total'
-                                                    })
-                                                });
-                                            } else if (notebook.quotas?.storage?.used + sizeTotal > 10737418240) {
-                                                stack.push({
-                                                    path: '#invalid',
-                                                    hidePrior: false,
-                                                    config: () => components.modals.prompt({
-                                                        title: 'Invalid',
-                                                        description: '10 GB limit reached. Delete existing files to free up space.',
-                                                        note: 'Limit update could take up to 24 hours.'
-                                                    })
-                                                });
-                                            } else {
-                                                filesAttached = filesSelected;
-                                                this.layer.widgets['files-attached'].update();
-                                                this.layer.widgets['attach_button'].update();
-                                            }
-                                        }
-                                    },
-                                    () => components.buttons.form({
-                                        id: 'attach_button',
-                                        ligature: filesAttached ? 'attach_file_off' : 'attach_file',
-                                        text: filesAttached ? 'Detach' : 'Attach',
-                                        onclick: function (event) {
-                                            if (filesAttached) {
-                                                filesAttached = undefined;
-                                                this.layer.widgets['files-attached'].update();
-                                                this.layer.widgets['attach_button'].update();
-                                            } else {
-                                                stack.at(-1).widgets['files-input'].domElement.click();
-                                            }
-                                        }
+                config: () => ({
+                    ...layouts.base('start', 'center'),
+                    children: [
+                        {
+                            id: 'blocker',
+                            config: () => components.blockers.common({
+                                errorRuntime,
+                                errorNetwork,
+                                errorOutOfSync,
+                            })
+                        },
+                        {
+                            id: 'header',
+                            config: () => components.header({
+                                leading: components.button({
+                                    backgroundHoverColor: colors[theme][palette.base](3),
+                                    color: colors.foreground.secondary(),
+                                    href: '/',
+                                    child: components.icon({
+                                        fontSize: '1.25rem',
+                                        ligature: 'home'
                                     }),
-                                    components.buttons.form({
-                                        priority: 'primary',
-                                        text: 'Add',
-                                        onclick: async function (event) {
-                                            addParagraphValid = true;
-                                            if (!this.layer.widgets['add-paragraph-input'].domElement.value.trim()) {
-                                                addParagraphValid = false;
-                                            }
-                                            this.layer.widgets['add-paragraph-hint'].update();
-                                            if (!addParagraphValid) {
-                                                return;
-                                            }
-                                            const text = this.layer.widgets['add-paragraph-input'].domElement.value;
-                                            this.layer.widgets['add-paragraph-input'].domElement.value = '';
-                                            if (filesAttached) {
-                                                uploads[noteId] = [];
-                                                for (const file of filesAttached) {
-                                                    uploads[noteId].push({
-                                                        id: crypto.randomUUID(),
-                                                        file,
-                                                        completed: 0
-                                                    });
+                                    onclick: function (event) {
+                                        stack.push(pages.folder('/', 'root'));
+                                    }
+                                }),
+                                title: tree[noteId].name
+                            })
+                        },
+                        {
+                            width: 'min(640px, 100% - 1rem)',
+                            padding: '1rem 0',
+                            ...layouts.column('start', 'start', '1rem'),
+                            children: [
+                                {
+                                    id: 'add-paragraph-hint',
+                                    config: () => ({
+                                        display: addParagraphValid ? 'none' : 'block',
+                                        fontWeight: 500,
+                                        color: colors.foreground.danger(),
+                                        text: 'Required'
+                                    })
+                                },
+                                {
+                                    id: 'add-paragraph-input',
+                                    config: components.inputs.textArea({
+                                        height: '16rem',
+                                    })
+                                },
+                                {
+                                    id: 'files-attached',
+                                    config: () => ({
+                                        width: '100%',
+                                        ...layouts.column('start', 'start', '0.5rem'),
+                                        display: filesAttached ? 'flex' : 'none',
+                                        children: filesAttached?.map(f => ({
+                                            width: '100%',
+                                            text: f.name
+                                        }))
+                                    })
+                                },
+                                {
+                                    width: '100%',
+                                    ...layouts.row('end', 'center', '1rem'),
+                                    children: [
+                                        {
+                                            id: 'files-input',
+                                            config: {
+                                                tag: 'input',
+                                                display: 'none',
+                                                type: 'file',
+                                                multiple: true,
+                                                onchange: function (event) {
+                                                    const filesSelected = [];
+                                                    let sizeTotal = 0;
+                                                    for (const file of event.target.files) {
+                                                        filesSelected.push(file);
+                                                        sizeTotal += file.size;
+                                                    }
+                                                    if (filesSelected.length > 8 || sizeTotal > 1073741824) {
+                                                        stack.push({
+                                                            path: '#invalid',
+                                                            hidePrior: false,
+                                                            config: () => components.modals.prompt({
+                                                                title: 'Invalid',
+                                                                description: 'Maximum 8 files, 1GB total'
+                                                            })
+                                                        });
+                                                    } else if (notebook.quotas?.storage?.used + sizeTotal > 10737418240) {
+                                                        stack.push({
+                                                            path: '#invalid',
+                                                            hidePrior: false,
+                                                            config: () => components.modals.prompt({
+                                                                title: 'Invalid',
+                                                                description: '10 GB limit reached. Delete existing files to free up space.',
+                                                                note: 'Limit update could take up to 24 hours.'
+                                                            })
+                                                        });
+                                                    } else {
+                                                        filesAttached = filesSelected;
+                                                        this.layer.widgets['files-attached'].update();
+                                                        this.layer.widgets['attach_button'].update();
+                                                    }
                                                 }
-                                                filesAttached = undefined;
-                                                this.layer.widgets['files-attached'].update();
-                                                this.layer.widgets['attach_button'].update();
-                                                stack.updateAll({
-                                                    type: 'upload',
-                                                    noteId
-                                                });
-                                                try {
-                                                    await Promise.all(uploads[noteId].map(fu => new Promise(async (resolve, reject) => {
-                                                        const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
-                                                        fu.iv = fileEncrypted.iv;
-                                                        const uploadTask = uploadBytesResumable(
-                                                            ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`),
-                                                            fileEncrypted.data,
-                                                            {
-                                                                cacheControl: 'private, max-age=31536000, immutable'
-                                                            }
-                                                        );
-                                                        uploadTask.on(
-                                                            "state_changed",
-                                                            (snapshot) => {
-                                                                fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                                                stack.updateAll({
-                                                                    type: 'upload',
-                                                                    noteId
-                                                                });
-                                                            },
-                                                            (error) => {
-                                                                reject(error);
-                                                            },
-                                                            async () => {
-                                                                resolve();
-                                                            }
-                                                        );
-                                                    })));
-                                                    const files = [];
-                                                    for (const fu of uploads[noteId]) {
-                                                        const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
-                                                        files.push({
-                                                            id: fu.id,
-                                                            size: fu.file.size,
-                                                            type: fu.file.type,
-                                                            lastModified: fu.file.lastModified,
-                                                            name: { iv: Bytes.fromUint8Array(fileNameEncrypted.iv), data: Bytes.fromUint8Array(fileNameEncrypted.data) },
-                                                            iv: Bytes.fromUint8Array(fu.iv),
+                                            }
+                                        },
+                                        {
+                                            id: 'attach_button',
+                                            config: () => components.buttons.form({
+                                                ligature: filesAttached ? 'attach_file_off' : 'attach_file',
+                                                text: filesAttached ? 'Detach' : 'Attach',
+                                                onclick: function (event) {
+                                                    if (filesAttached) {
+                                                        filesAttached = undefined;
+                                                        this.layer.widgets['files-attached'].update();
+                                                        this.layer.widgets['attach_button'].update();
+                                                    } else {
+                                                        stack.at(-1).widgets['files-input'].domElement.click();
+                                                    }
+                                                }
+                                            })
+                                        },
+                                        components.buttons.form({
+                                            priority: 'primary',
+                                            text: 'Add',
+                                            onclick: async function (event) {
+                                                addParagraphValid = true;
+                                                if (!this.layer.widgets['add-paragraph-input'].domElement.value.trim()) {
+                                                    addParagraphValid = false;
+                                                }
+                                                this.layer.widgets['add-paragraph-hint'].update();
+                                                if (!addParagraphValid) {
+                                                    return;
+                                                }
+                                                const text = this.layer.widgets['add-paragraph-input'].domElement.value;
+                                                this.layer.widgets['add-paragraph-input'].domElement.value = '';
+                                                if (filesAttached) {
+                                                    uploads[noteId] = [];
+                                                    for (const file of filesAttached) {
+                                                        uploads[noteId].push({
+                                                            id: crypto.randomUUID(),
+                                                            file,
+                                                            completed: 0
                                                         });
                                                     }
+                                                    filesAttached = undefined;
+                                                    this.layer.widgets['files-attached'].update();
+                                                    this.layer.widgets['attach_button'].update();
+                                                    stack.updateAll({
+                                                        type: 'upload',
+                                                        noteId
+                                                    });
+                                                    try {
+                                                        await Promise.all(uploads[noteId].map(fu => new Promise(async (resolve, reject) => {
+                                                            const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
+                                                            fu.iv = fileEncrypted.iv;
+                                                            const uploadTask = uploadBytesResumable(
+                                                                ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`),
+                                                                fileEncrypted.data,
+                                                                {
+                                                                    cacheControl: 'private, max-age=31536000, immutable'
+                                                                }
+                                                            );
+                                                            uploadTask.on(
+                                                                "state_changed",
+                                                                (snapshot) => {
+                                                                    fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                                                    stack.updateAll({
+                                                                        type: 'upload',
+                                                                        noteId
+                                                                    });
+                                                                },
+                                                                (error) => {
+                                                                    reject(error);
+                                                                },
+                                                                async () => {
+                                                                    resolve();
+                                                                }
+                                                            );
+                                                        })));
+                                                        const files = [];
+                                                        for (const fu of uploads[noteId]) {
+                                                            const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
+                                                            files.push({
+                                                                id: fu.id,
+                                                                size: fu.file.size,
+                                                                type: fu.file.type,
+                                                                lastModified: fu.file.lastModified,
+                                                                name: { iv: Bytes.fromUint8Array(fileNameEncrypted.iv), data: Bytes.fromUint8Array(fileNameEncrypted.data) },
+                                                                iv: Bytes.fromUint8Array(fu.iv),
+                                                            });
+                                                        }
+                                                        const textEncrypted = await encrypt(key, textEncoder.encode(text));
+                                                        addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
+                                                            timestamp: Math.floor(Date.now() / 1000),
+                                                            notes: [noteId],
+                                                            text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+                                                            files
+                                                        });
+                                                        uploads[noteId] = undefined;
+                                                        stack.updateAll({
+                                                            type: 'upload',
+                                                            noteId
+                                                        });
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                        uploads[noteId] = undefined;
+                                                        stack.updateAll({
+                                                            type: 'upload',
+                                                            noteId
+                                                        });
+                                                    }
+                                                } else {
                                                     const textEncrypted = await encrypt(key, textEncoder.encode(text));
                                                     addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
                                                         timestamp: Math.floor(Date.now() / 1000),
                                                         notes: [noteId],
                                                         text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-                                                        files
-                                                    });
-                                                    uploads[noteId] = undefined;
-                                                    stack.updateAll({
-                                                        type: 'upload',
-                                                        noteId
-                                                    });
-                                                } catch (e) {
-                                                    console.error(e);
-                                                    uploads[noteId] = undefined;
-                                                    stack.updateAll({
-                                                        type: 'upload',
-                                                        noteId
                                                     });
                                                 }
-                                            } else {
-                                                const textEncrypted = await encrypt(key, textEncoder.encode(text));
-                                                addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                                    timestamp: Math.floor(Date.now() / 1000),
-                                                    notes: [noteId],
-                                                    text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-                                                });
                                             }
-                                        }
-                                    })
-                                ]
-                            },
-                            () => ({
-                                id: 'uploads',
-                                width: '100%',
-                                ...layouts.column('start', 'start', '0.5rem'),
-                                display: uploads[noteId] ? 'flex' : 'none',
-                                children: uploads[noteId]?.map(fu => () => ({
-                                    id: `file-upload-${fu.id}`,
-                                    width: '100%',
-                                    height: '1rem',
-                                    backgroundColor: colors[theme][palette.base](3),
-                                    ...layouts.row(),
-                                    children: [
-                                        {
-                                            width: `max(5%, ${fu.completed}%)`,
-                                            height: '100%',
-                                            backgroundColor: colors[theme][palette.base](5)
-                                        }
+                                        })
                                     ]
-                                }))
-                            }),
-                            () => ({
-                                id: 'filter-paragraphs',
-                                width: '100%',
-                                padding: '0 0.25rem 0 0',
-                                border: `1px solid ${colors[theme][palette.base](6)}`,
-                                borderRadius: '0.5rem',
-                                ...layouts.row('start', 'center'),
-                                children: [
-                                    {
-                                        tag: 'input',
-                                        flexGrow: 1,
-                                        padding: '0.5rem',
-                                        border: 'none',
-                                        backgroundColor: 'inherit',
-                                        fontFamily: 'inherit',
-                                        fontSize: '1rem',
-                                        lineHeight: 1.5,
-                                        color: 'inherit',
-                                        appearance: 'none',
-                                        type: 'text',
-                                        placeholder: 'Search',
-                                        value: filterParagraphQuery,
-                                        onfocus: function () {
-                                            this.domElement.style.outline = 'none';
-                                        },
-                                        oninput: function (event) {
-                                            filterParagraphQuery = event.target.value;
-                                            this.layer.widgets['paragraphs'].update();
-                                        },
-                                    },
-                                    components.button({
-                                        backgroundHoverColor: colors[theme][filterParagraphColor || palette.base](3),
-                                        padding: '0.25rem',
-                                        child: components.icon({
-                                            fontSize: '1.25rem',
-                                            color: filterParagraphColor ? colors[theme][filterParagraphColor](9) : colors.foreground.secondary(),
-                                            ligature: 'palette'
-                                        }),
-                                        onclick: function (event) {
-                                            stack.push({
-                                                path: '#color',
-                                                hidePrior: false,
-                                                config: () => components.modalCloseBackground({
-                                                    ...styles.modalCloseBackground(),
-                                                    child: {
-                                                        ...styles.modal(),
+                                },
+                                {
+                                    id: 'uploads',
+                                    config: () => ({
+                                        width: '100%',
+                                        ...layouts.column('start', 'start', '0.5rem'),
+                                        display: uploads[noteId] ? 'flex' : 'none',
+                                        children: uploads[noteId]?.map(fu => ({
+                                            id: `file-upload-${fu.id}`,
+                                            config: () => ({
+                                                width: '100%',
+                                                height: '1rem',
+                                                backgroundColor: colors[theme][palette.base](3),
+                                                ...layouts.row(),
+                                                children: [
+                                                    {
+                                                        width: `max(5%, ${fu.completed}%)`,
+                                                        height: '100%',
+                                                        backgroundColor: colors[theme][palette.base](5)
+                                                    }
+                                                ]
+                                            })
+                                        }))
+                                    })
+                                },
+                                {
+                                    id: 'filter-paragraphs',
+                                    config: () => ({
+                                        width: '100%',
+                                        padding: '0 0.25rem 0 0',
+                                        border: `1px solid ${colors[theme][palette.base](6)}`,
+                                        borderRadius: '0.5rem',
+                                        ...layouts.row('start', 'center'),
+                                        children: [
+                                            {
+                                                tag: 'input',
+                                                flexGrow: 1,
+                                                padding: '0.5rem',
+                                                border: 'none',
+                                                backgroundColor: 'inherit',
+                                                fontFamily: 'inherit',
+                                                fontSize: '1rem',
+                                                lineHeight: 1.5,
+                                                color: 'inherit',
+                                                appearance: 'none',
+                                                type: 'text',
+                                                placeholder: 'Search',
+                                                value: filterParagraphQuery,
+                                                onfocus: function () {
+                                                    this.domElement.style.outline = 'none';
+                                                },
+                                                oninput: function (event) {
+                                                    filterParagraphQuery = event.target.value;
+                                                    this.layer.widgets['paragraphs'].update();
+                                                },
+                                            },
+                                            components.button({
+                                                backgroundHoverColor: colors[theme][filterParagraphColor || palette.base](3),
+                                                padding: '0.25rem',
+                                                child: components.icon({
+                                                    fontSize: '1.25rem',
+                                                    color: filterParagraphColor ? colors[theme][filterParagraphColor](9) : colors.foreground.secondary(),
+                                                    ligature: 'palette'
+                                                }),
+                                                onclick: function (event) {
+                                                    stack.push({
+                                                        path: '#color',
+                                                        hidePrior: false,
+                                                        config: () => components.modalCloseBackground({
+                                                            ...styles.modalCloseBackground(),
+                                                            child: {
+                                                                ...styles.modal(),
+                                                                ...layouts.column('start', 'start', '1rem'),
+                                                                children: [
+                                                                    {
+                                                                        fontWeight: 600,
+                                                                        text: 'Color'
+                                                                    },
+                                                                    {
+                                                                        ...layouts.grid(),
+                                                                        width: '100%',
+                                                                        alignSelf: 'center',
+                                                                        gridTemplateColumns: 'repeat(auto-fill, 3rem)',
+                                                                        justifyContent: 'center',
+                                                                        gap: '1rem',
+                                                                        children: [undefined, 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
+                                                                            padding: '0.25rem',
+                                                                            borderRadius: '2rem',
+                                                                            backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
+                                                                            backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
+                                                                            child: components.icon({
+                                                                                fontSize: '2.5rem',
+                                                                                color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
+                                                                                ligature: 'circle',
+                                                                            }),
+                                                                            onclick: async function (event) {
+                                                                                stack.pop();
+                                                                                filterParagraphColor = color;
+                                                                                pageLayer.widgets['filter-paragraphs'].update();
+                                                                                pageLayer.widgets['paragraphs'].update();
+                                                                            }
+                                                                        })
+                                                                        )
+                                                                    }
+                                                                ]
+                                                            }
+                                                        })
+                                                    });
+                                                }
+                                            }),
+                                            components.button({
+                                                backgroundHoverColor: colors[theme][palette.base](3),
+                                                padding: '0.25rem',
+                                                child: components.icon({
+                                                    fontSize: '1.25rem',
+                                                    color: colors.foreground.secondary(),
+                                                    ligature: 'cancel'
+                                                }),
+                                                onclick: function (event) {
+                                                    filterParagraphColor = undefined;
+                                                    filterParagraphQuery = undefined;
+                                                    this.layer.widgets['filter-paragraphs'].update();
+                                                    this.layer.widgets['paragraphs'].update();
+                                                }
+                                            }),
+                                        ]
+                                    })
+                                },
+                                {
+                                    id: 'paragraphs',
+                                    config: () => ({
+                                        width: '100%',
+                                        ...layouts.column('start', 'start', '1rem'),
+                                        children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphColor && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
+                                            if (!filterParagraphColor && !filterParagraphQuery) {
+                                                return true;
+                                            }
+                                            if (p.id === editParagraphId) {
+                                                return true;
+                                            }
+                                            if (filterParagraphColor && filterParagraphColor !== p.color) {
+                                                return false;
+                                            }
+                                            if (!filterParagraphQuery) {
+                                                return true;
+                                            }
+                                            if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                return true;
+                                            }
+                                            for (const nid of p.notes || []) {
+                                                if (nid === noteId) continue;
+                                                if (tree[nid].name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                    return true;
+                                                }
+                                            }
+                                            for (const file of p.files || []) {
+                                                if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
+                                                    return true;
+                                                }
+                                            }
+                                            return false;
+                                        }).map((paragraph, index) => {
+                                            let borderColor, backgroundColor, textColor, dateColor, buttonColor, buttonBackgroundHoverColor, fileBackgroundColor, fileTextColor, fileButtonColor, fileButtonBackgroundHoverColor;
+                                            if (paragraph.color) {
+                                                borderColor = colors[theme][paragraph.color](7);
+                                                backgroundColor = colors[theme][paragraph.color](3);
+                                                textColor = colors[theme][paragraph.color](12);
+                                                dateColor = colors[theme][paragraph.color](11);
+                                                buttonColor = colors[theme][paragraph.color](11);
+                                                buttonBackgroundHoverColor = colors[theme][paragraph.color](5);
+                                                fileBackgroundColor = colors[theme][paragraph.color](4);
+                                                fileTextColor = colors[theme][paragraph.color](11);
+                                                fileButtonColor = colors[theme][paragraph.color](11);
+                                                fileButtonBackgroundHoverColor = colors[theme][paragraph.color](6);
+                                            } else {
+                                                borderColor = colors.border.normal();
+                                                backgroundColor = undefined;
+                                                textColor = undefined;
+                                                dateColor = colors.foreground.secondary();
+                                                buttonColor = colors.foreground.secondary();
+                                                buttonBackgroundHoverColor = colors[theme][palette.base](3);
+                                                fileBackgroundColor = colors[theme][palette.base](2);
+                                                fileTextColor = colors.foreground.secondary();
+                                                fileButtonColor = colors.foreground.secondary();
+                                                fileButtonBackgroundHoverColor = colors[theme][palette.base](4);
+                                            }
+                                            if (paragraph.id === editParagraphId) {
+                                                return {
+                                                    id: 'edit-paragraph',
+                                                    config: {
+                                                        width: '100%',
                                                         ...layouts.column('start', 'start', '1rem'),
                                                         children: [
                                                             {
-                                                                fontWeight: 600,
-                                                                text: 'Color'
+                                                                id: 'edit-paragraph-hint',
+                                                                config: () => ({
+                                                                    display: editParagraphValid ? 'none' : 'block',
+                                                                    fontWeight: 500,
+                                                                    color: colors.foreground.danger(),
+                                                                    text: 'Required'
+                                                                })
                                                             },
                                                             {
-                                                                ...layouts.grid(),
-                                                                width: '100%',
-                                                                alignSelf: 'center',
-                                                                gridTemplateColumns: 'repeat(auto-fill, 3rem)',
-                                                                justifyContent: 'center',
-                                                                gap: '1rem',
-                                                                children: [undefined, 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
-                                                                    padding: '0.25rem',
-                                                                    borderRadius: '2rem',
-                                                                    backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
-                                                                    backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
-                                                                    child: components.icon({
-                                                                        fontSize: '2.5rem',
-                                                                        color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
-                                                                        ligature: 'circle',
-                                                                    }),
-                                                                    onclick: async function (event) {
-                                                                        stack.pop();
-                                                                        filterParagraphColor = color;
-                                                                        pageLayer.widgets['filter-paragraphs'].update();
-                                                                        pageLayer.widgets['paragraphs'].update();
+                                                                id: 'edit-paragraph-input',
+                                                                config: components.inputs.textArea({
+                                                                    width: '100%',
+                                                                    height: `max(${editParagraphHeight}px, 16rem)`,
+                                                                    border: `1px solid ${borderColor}`,
+                                                                    backgroundColor,
+                                                                    color: textColor,
+                                                                    text: editParagraphText,
+                                                                    oninput: function (event) {
+                                                                        editParagraphText = event.target.value;
                                                                     }
                                                                 })
-                                                                )
-                                                            }
-                                                        ]
-                                                    }
-                                                })
-                                            });
-                                        }
-                                    }),
-                                    components.button({
-                                        backgroundHoverColor: colors[theme][palette.base](3),
-                                        padding: '0.25rem',
-                                        child: components.icon({
-                                            fontSize: '1.25rem',
-                                            color: colors.foreground.secondary(),
-                                            ligature: 'cancel'
-                                        }),
-                                        onclick: function (event) {
-                                            filterParagraphColor = undefined;
-                                            filterParagraphQuery = undefined;
-                                            this.layer.widgets['filter-paragraphs'].update();
-                                            this.layer.widgets['paragraphs'].update();
-                                        }
-                                    }),
-                                ]
-                            }),
-                            () => ({
-                                id: 'paragraphs',
-                                width: '100%',
-                                ...layouts.column('start', 'start', '1rem'),
-                                children: [...paragraphs.slice(0, limitParagraphs && !filterParagraphColor && !filterParagraphQuery ? 32 : paragraphs.length).filter(p => {
-                                    if (!filterParagraphColor && !filterParagraphQuery) {
-                                        return true;
-                                    }
-                                    if (p.id === editParagraphId) {
-                                        return true;
-                                    }
-                                    if (filterParagraphColor && filterParagraphColor !== p.color) {
-                                        return false;
-                                    }
-                                    if (!filterParagraphQuery) {
-                                        return true;
-                                    }
-                                    if (p.text?.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                        return true;
-                                    }
-                                    for (const nid of p.notes || []) {
-                                        if (nid === noteId) continue;
-                                        if (tree[nid].name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                            return true;
-                                        }
-                                    }
-                                    for (const file of p.files || []) {
-                                        if (file.name.toLowerCase().includes(filterParagraphQuery.toLowerCase())) {
-                                            return true;
-                                        }
-                                    }
-                                    return false;
-                                }).map((paragraph, index) => {
-                                    let borderColor, backgroundColor, textColor, dateColor, buttonColor, buttonBackgroundHoverColor, fileBackgroundColor, fileTextColor, fileButtonColor, fileButtonBackgroundHoverColor;
-                                    if (paragraph.color) {
-                                        borderColor = colors[theme][paragraph.color](7);
-                                        backgroundColor = colors[theme][paragraph.color](3);
-                                        textColor = colors[theme][paragraph.color](12);
-                                        dateColor = colors[theme][paragraph.color](11);
-                                        buttonColor = colors[theme][paragraph.color](11);
-                                        buttonBackgroundHoverColor = colors[theme][paragraph.color](5);
-                                        fileBackgroundColor = colors[theme][paragraph.color](4);
-                                        fileTextColor = colors[theme][paragraph.color](11);
-                                        fileButtonColor = colors[theme][paragraph.color](11);
-                                        fileButtonBackgroundHoverColor = colors[theme][paragraph.color](6);
-                                    } else {
-                                        borderColor = colors.border.normal();
-                                        backgroundColor = undefined;
-                                        textColor = undefined;
-                                        dateColor = colors.foreground.secondary();
-                                        buttonColor = colors.foreground.secondary();
-                                        buttonBackgroundHoverColor = colors[theme][palette.base](3);
-                                        fileBackgroundColor = colors[theme][palette.base](2);
-                                        fileTextColor = colors.foreground.secondary();
-                                        fileButtonColor = colors.foreground.secondary();
-                                        fileButtonBackgroundHoverColor = colors[theme][palette.base](4);
-                                    }
-                                    if (paragraph.id === editParagraphId) {
-                                        return {
-                                            id: 'edit-paragraph',
-                                            width: '100%',
-                                            ...layouts.column('start', 'start', '1rem'),
-                                            children: [
-                                                () => ({
-                                                    id: 'edit-paragraph-hint',
-                                                    display: editParagraphValid ? 'none' : 'block',
-                                                    fontWeight: 500,
-                                                    color: colors.foreground.danger(),
-                                                    text: 'Required'
-                                                }),
-                                                components.inputs.textArea({
-                                                    id: 'edit-paragraph-input',
-                                                    width: '100%',
-                                                    height: `max(${editParagraphHeight}px, 16rem)`,
-                                                    border: `1px solid ${borderColor}`,
-                                                    backgroundColor,
-                                                    color: textColor,
-                                                    text: editParagraphText,
-                                                    oninput: function (event) {
-                                                        editParagraphText = event.target.value;
-                                                    }
-                                                }),
-                                                {
-                                                    width: '100%',
-                                                    ...layouts.row('end', 'center', '1rem'),
-                                                    children: [
-                                                        components.buttons.form({
-                                                            text: 'Cancel',
-                                                            onclick: function (event) {
-                                                                editParagraphId = undefined;
-                                                                editParagraphValid = undefined;
-                                                                editParagraphText = undefined;
-                                                                this.layer.widgets['paragraphs'].update();
-                                                            }
-                                                        }),
-                                                        components.buttons.form({
-                                                            priority: 'primary',
-                                                            text: 'Save',
-                                                            onclick: async function (event) {
-                                                                editParagraphValid = true;
-                                                                if (!this.layer.widgets['edit-paragraph-input'].domElement.value.trim()) {
-                                                                    editParagraphValid = false;
-                                                                }
-                                                                this.layer.widgets['edit-paragraph-hint'].update();
-                                                                if (!editParagraphValid) {
-                                                                    return;
-                                                                }
-                                                                editParagraphId = undefined;
-                                                                editParagraphValid = undefined;
-                                                                editParagraphText = undefined;
-                                                                const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
-                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                    text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-                                                                });
-                                                            }
-                                                        })
-                                                    ]
-                                                }
-                                            ]
-                                        };
-                                    } else {
-                                        return {
-                                            id: `paragraph-${paragraph.id}`,
-                                            width: '100%',
-                                            padding: '0.5rem',
-                                            border: `1px solid ${borderColor}`,
-                                            borderRadius: '0.5rem',
-                                            backgroundColor,
-                                            color: textColor,
-                                            ...layouts.column('start', 'start', '1rem'),
-                                            children: [
-                                                paragraph.text ? {
-                                                    width: '100%',
-                                                    whiteSpace: 'pre-wrap',
-                                                    wordBreak: 'break-word',
-                                                    text: paragraph.text
-                                                } : null,
-                                                paragraph.files ? {
-                                                    width: '100%',
-                                                    ...layouts.column('start', 'start', '0.5rem'),
-                                                    children: paragraph.files.map(f => ({
-                                                        width: '100%',
-                                                        padding: '0.25rem 0.25rem 0.25rem 0.5rem',
-                                                        borderRadius: '0.5rem',
-                                                        backgroundColor: fileBackgroundColor,
-                                                        ...layouts.row('space-between', 'center'),
-                                                        children: [
-                                                            {
-                                                                minWidth: 0,
-                                                                fontWeight: 600,
-                                                                color: fileTextColor,
-                                                                ...styles.unselectable(),
-                                                                whiteSpace: 'nowrap',
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                                text: f.name
                                                             },
-                                                            () => ({
-                                                                id: `file-actions-${f.id}`,
-                                                                ...layouts.row('start', 'center'),
+                                                            {
+                                                                width: '100%',
+                                                                ...layouts.row('end', 'center', '1rem'),
                                                                 children: [
-                                                                    !downloads[f.id] ? components.button({
-                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
-                                                                        child: components.icon({
-                                                                            fontSize: '1.25rem',
-                                                                            color: fileButtonColor,
-                                                                            ligature: 'cloud_download'
-                                                                        }),
-                                                                        onclick: async function (event) {
-                                                                            downloads[f.id] = {
-                                                                                status: 'downloading'
-                                                                            };
-                                                                            stack.updateAll({
-                                                                                type: 'download',
-                                                                                fileId: f.id
-                                                                            });
-                                                                            try {
-                                                                                const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
-                                                                                const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
-                                                                                downloads[f.id] = {
-                                                                                    status: 'ready',
-                                                                                    file: new File([fileDecrypted], f.name, {
-                                                                                        type: f.type,
-                                                                                        lastModified: f.lastModified,
-                                                                                    })
-                                                                                };
-                                                                                stack.updateAll({
-                                                                                    type: 'download',
-                                                                                    fileId: f.id
-                                                                                });
-                                                                            } catch (e) {
-                                                                                console.error(e);
-                                                                                downloads[f.id] = undefined;
-                                                                                stack.updateAll({
-                                                                                    type: 'download',
-                                                                                    fileId: f.id
-                                                                                });
-                                                                            }
-                                                                        }
-                                                                    }) : null,
-                                                                    downloads[f.id]?.status === 'downloading' ? components.animations.spinner({
-                                                                        width: '2.25rem',
-                                                                        height: '2.25rem',
-                                                                        padding: '0.5rem',
-                                                                        color: fileButtonColor,
-                                                                    }) : null,
-                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
-                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
-                                                                        child: components.icon({
-                                                                            fontSize: '1.25rem',
-                                                                            color: fileButtonColor,
-                                                                            ligature: 'image'
-                                                                        }),
+                                                                    components.buttons.form({
+                                                                        text: 'Cancel',
                                                                         onclick: function (event) {
-                                                                            const url = URL.createObjectURL(downloads[f.id].file);
-                                                                            stack.push({
-                                                                                path: '#image',
-                                                                                onPop: function () {
-                                                                                    URL.revokeObjectURL(url);
-                                                                                },
-                                                                                config: {
-                                                                                    tag: 'img',
-                                                                                    width: '100%',
-                                                                                    height: '100%',
-                                                                                    objectFit: 'contain',
-                                                                                    objectPosition: 'center',
-                                                                                    src: url
-                                                                                }
-                                                                            });
-                                                                        }
-                                                                    }) : null,
-                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
-                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
-                                                                        child: components.icon({
-                                                                            fontSize: '1.25rem',
-                                                                            color: fileButtonColor,
-                                                                            ligature: 'play_circle'
-                                                                        }),
-                                                                        onclick: function (event) {
-                                                                            const url = URL.createObjectURL(downloads[f.id].file);
-                                                                            stack.push({
-                                                                                path: '#audio',
-                                                                                onPop: function () {
-                                                                                    URL.revokeObjectURL(url);
-                                                                                },
-                                                                                config: {
-                                                                                    width: '100%',
-                                                                                    height: '100%',
-                                                                                    ...layouts.row('center', 'center'),
-                                                                                    children: [
-                                                                                        {
-                                                                                            tag: 'audio',
-                                                                                            width: '100%',
-                                                                                            controls: true,
-                                                                                            src: url
-                                                                                        }
-                                                                                    ]
-                                                                                }
-                                                                            });
-                                                                        }
-                                                                    }) : null,
-                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
-                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
-                                                                        child: components.icon({
-                                                                            fontSize: '1.25rem',
-                                                                            color: fileButtonColor,
-                                                                            ligature: 'play_circle'
-                                                                        }),
-                                                                        onclick: function (event) {
-                                                                            const url = URL.createObjectURL(downloads[f.id].file);
-                                                                            stack.push({
-                                                                                path: '#video',
-                                                                                onPop: function () {
-                                                                                    URL.revokeObjectURL(url);
-                                                                                },
-                                                                                config: {
-                                                                                    width: '100%',
-                                                                                    height: '100%',
-                                                                                    ...layouts.row('center', 'center'),
-                                                                                    children: [
-                                                                                        {
-                                                                                            tag: 'video',
-                                                                                            width: '100%',
-                                                                                            height: '100%',
-                                                                                            objectFit: 'contain',
-                                                                                            objectPosition: 'center',
-                                                                                            controls: true,
-                                                                                            src: url
-                                                                                        }
-                                                                                    ]
-                                                                                }
-                                                                            });
-                                                                        }
-                                                                    }) : null,
-                                                                    downloads[f.id]?.status === 'ready' ? components.button({
-                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
-                                                                        child: components.icon({
-                                                                            fontSize: '1.25rem',
-                                                                            color: fileButtonColor,
-                                                                            ligature: 'download'
-                                                                        }),
-                                                                        onclick: function (event) {
-                                                                            const url = URL.createObjectURL(downloads[f.id].file);
-                                                                            const a = document.createElement('a');
-                                                                            a.href = url;
-                                                                            a.download = downloads[f.id].file.name;
-                                                                            a.click();
-                                                                            requestAnimationFrame(() => URL.revokeObjectURL(url));
-                                                                        }
-                                                                    }) : null,
-                                                                ]
-                                                            }),
-                                                        ]
-                                                    }))
-                                                } : null,
-                                                paragraph.notes.filter(nid => tree[nid].parent !== 'deleted').length > 1 ? {
-                                                    width: '100%',
-                                                    ...layouts.column('start', 'start', '0.5rem'),
-                                                    children: paragraph.notes.filter(nid => tree[nid].parent !== 'deleted' && nid !== noteId).map(nid => components.textLink({
-                                                        color: colors.foreground.textLink(),
-                                                        href: `/note/${nid}`,
-                                                        text: tree[nid].name,
-                                                        onclick: function (event) {
-                                                            stack.push(pages.note(`/note/${nid}`, nid));
-                                                        }
-                                                    }))
-                                                } : null,
-                                                {
-                                                    width: '100%',
-                                                    ...layouts.row('space-between', 'center', '1rem'),
-                                                    children: [
-                                                        {
-                                                            fontSize: '0.875rem',
-                                                            color: dateColor,
-                                                            ...styles.unselectable(),
-                                                            text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                        },
-                                                        {
-                                                            ...layouts.row(),
-                                                            children: [
-                                                                components.button({
-                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
-                                                                    child: components.icon({
-                                                                        fontSize: '1.25rem',
-                                                                        color: buttonColor,
-                                                                        ligature: 'content_copy',
-                                                                    }),
-                                                                    onclick: function (event) {
-                                                                        navigator.clipboard.writeText(paragraph.text);
-                                                                    }
-                                                                }),
-                                                                components.button({
-                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
-                                                                    child: components.icon({
-                                                                        fontSize: '1.25rem',
-                                                                        color: buttonColor,
-                                                                        ligature: 'link',
-                                                                    }),
-                                                                    onclick: function (event) {
-                                                                        function linkNotePage(targetFolderId) {
-                                                                            return {
-                                                                                path: `#link-${targetFolderId}`,
-                                                                                config: () => {
-                                                                                    const children = Object.keys(tree).filter(id => !paragraph.notes.includes(id) && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                                                                                    return {
-                                                                                        ...layouts.base('start', 'center'),
-                                                                                        children: [
-                                                                                            components.header({
-                                                                                                leading: components.button({
-                                                                                                    backgroundHoverColor: colors[theme][palette.base](3),
-                                                                                                    color: colors.foreground.secondary(),
-                                                                                                    child: components.icon({
-                                                                                                        fontSize: '1.25rem',
-                                                                                                        ligature: 'close'
-                                                                                                    }),
-                                                                                                    onclick: async function (event) {
-                                                                                                        let steps = 0;
-                                                                                                        for (let i = stack.length - 1; i > 0; i--) {
-                                                                                                            if (stack.at(i) === pageLayer) {
-                                                                                                                break;
-                                                                                                            }
-                                                                                                            steps += 1;
-                                                                                                        }
-                                                                                                        await stack.pop(steps);
-                                                                                                    }
-                                                                                                }),
-                                                                                                title: 'Link note',
-                                                                                            }),
-                                                                                            {
-                                                                                                flexGrow: 1,
-                                                                                                width: 'min(640px, 100% - 1rem)',
-                                                                                                padding: '1rem 0',
-                                                                                                ...layouts.column('center', 'center', '1rem'),
-                                                                                                children: children.map(cid => components.buttons.menu({
-                                                                                                    size: 'l',
-                                                                                                    text: tree[cid]['name'],
-                                                                                                    onclick: function (event) {
-                                                                                                        if (tree[cid].type === 'folder') {
-                                                                                                            stack.push(linkNotePage(cid));
-                                                                                                        } else if (tree[cid].type === 'note') {
-                                                                                                            stack.push({
-                                                                                                                path: '#confirm',
-                                                                                                                hidePrior: false,
-                                                                                                                config: () => components.modals.prompt({
-                                                                                                                    title: 'Link Note',
-                                                                                                                    description: 'Are you sure?',
-                                                                                                                    buttons: [
-                                                                                                                        components.buttons.form({
-                                                                                                                            priority: 'primary',
-                                                                                                                            text: 'Link',
-                                                                                                                            onclick: async function (event) {
-                                                                                                                                let steps = 0;
-                                                                                                                                for (let i = stack.length - 1; i > 0; i--) {
-                                                                                                                                    if (stack.at(i) === pageLayer) {
-                                                                                                                                        break;
-                                                                                                                                    }
-                                                                                                                                    steps += 1;
-                                                                                                                                }
-                                                                                                                                await stack.pop(steps);
-                                                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                                    notes: arrayUnion(cid),
-                                                                                                                                });
-                                                                                                                            }
-                                                                                                                        })
-                                                                                                                    ]
-                                                                                                                })
-                                                                                                            });
-                                                                                                        }
-                                                                                                    },
-                                                                                                }))
-                                                                                            }
-                                                                                        ]
-                                                                                    };
-                                                                                }
-                                                                            };
-                                                                        }
-                                                                        stack.push(linkNotePage('root'));
-                                                                    }
-                                                                }),
-                                                                components.button({
-                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
-                                                                    child: components.icon({
-                                                                        fontSize: '1.25rem',
-                                                                        color: buttonColor,
-                                                                        ligature: 'palette',
-                                                                    }),
-                                                                    onclick: function (event) {
-                                                                        stack.push({
-                                                                            path: '#color',
-                                                                            hidePrior: false,
-                                                                            config: () => components.modalCloseBackground({
-                                                                                ...styles.modalCloseBackground(),
-                                                                                child: {
-                                                                                    ...styles.modal(),
-                                                                                    ...layouts.column('start', 'start', '1rem'),
-                                                                                    children: [
-                                                                                        {
-                                                                                            fontWeight: 600,
-                                                                                            text: 'Color'
-                                                                                        },
-                                                                                        {
-                                                                                            ...layouts.grid(),
-                                                                                            width: '100%',
-                                                                                            alignSelf: 'center',
-                                                                                            gridTemplateColumns: 'repeat(auto-fill, 3rem)',
-                                                                                            justifyContent: 'center',
-                                                                                            gap: '1rem',
-                                                                                            children: [undefined, 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
-                                                                                                padding: '0.25rem',
-                                                                                                borderRadius: '2rem',
-                                                                                                backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
-                                                                                                backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
-                                                                                                child: components.icon({
-                                                                                                    fontSize: '2.5rem',
-                                                                                                    color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
-                                                                                                    ligature: 'circle',
-                                                                                                }),
-                                                                                                onclick: async function (event) {
-                                                                                                    stack.pop();
-                                                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                        color: color || deleteField(),
-                                                                                                    });
-                                                                                                }
-                                                                                            })
-                                                                                            )
-                                                                                        }
-                                                                                    ]
-                                                                                }
-                                                                            })
-                                                                        });
-                                                                    }
-                                                                }),
-                                                                components.button({
-                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
-                                                                    child: components.icon({
-                                                                        fontSize: '1.25rem',
-                                                                        color: buttonColor,
-                                                                        ligature: 'edit',
-                                                                    }),
-                                                                    disabled: editParagraphId,
-                                                                    onclick: function (event) {
-                                                                        if (!editParagraphId) {
-                                                                            editParagraphId = paragraph.id;
-                                                                            editParagraphHeight = this.layer.widgets[`paragraph-${paragraph.id}`].domElement.getBoundingClientRect().height;
-                                                                            editParagraphValid = true;
-                                                                            editParagraphText = paragraph.text;
+                                                                            editParagraphId = undefined;
+                                                                            editParagraphValid = undefined;
+                                                                            editParagraphText = undefined;
                                                                             this.layer.widgets['paragraphs'].update();
                                                                         }
-                                                                    }
-                                                                }),
-                                                                components.button({
-                                                                    backgroundHoverColor: buttonBackgroundHoverColor,
-                                                                    child: components.icon({
-                                                                        fontSize: '1.25rem',
-                                                                        color: buttonColor,
-                                                                        ligature: 'delete',
                                                                     }),
-                                                                    onclick: function (event) {
-                                                                        stack.push({
-                                                                            path: '#delete',
-                                                                            hidePrior: false,
-                                                                            config: () => components.modals.prompt({
-                                                                                title: 'Delete',
-                                                                                description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
-                                                                                buttons: [
-                                                                                    components.buttons.form({
-                                                                                        priority: 'danger',
-                                                                                        text: 'Delete',
-                                                                                        onclick: function (event) {
-                                                                                            stack.pop();
-                                                                                            if (paragraph.notes.length > 1) {
-                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                    notes: arrayRemove(noteId),
+                                                                    components.buttons.form({
+                                                                        priority: 'primary',
+                                                                        text: 'Save',
+                                                                        onclick: async function (event) {
+                                                                            editParagraphValid = true;
+                                                                            if (!this.layer.widgets['edit-paragraph-input'].domElement.value.trim()) {
+                                                                                editParagraphValid = false;
+                                                                            }
+                                                                            this.layer.widgets['edit-paragraph-hint'].update();
+                                                                            if (!editParagraphValid) {
+                                                                                return;
+                                                                            }
+                                                                            editParagraphId = undefined;
+                                                                            editParagraphValid = undefined;
+                                                                            editParagraphText = undefined;
+                                                                            const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
+                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+                                                                            });
+                                                                        }
+                                                                    })
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                };
+                                            } else {
+                                                return {
+                                                    id: `paragraph-${paragraph.id}`,
+                                                    config: {
+                                                        width: '100%',
+                                                        padding: '0.5rem',
+                                                        border: `1px solid ${borderColor}`,
+                                                        borderRadius: '0.5rem',
+                                                        backgroundColor,
+                                                        color: textColor,
+                                                        ...layouts.column('start', 'start', '1rem'),
+                                                        children: [
+                                                            paragraph.text ? {
+                                                                width: '100%',
+                                                                whiteSpace: 'pre-wrap',
+                                                                wordBreak: 'break-word',
+                                                                text: paragraph.text
+                                                            } : null,
+                                                            paragraph.files ? {
+                                                                width: '100%',
+                                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                                children: paragraph.files.map(f => ({
+                                                                    width: '100%',
+                                                                    padding: '0.25rem 0.25rem 0.25rem 0.5rem',
+                                                                    borderRadius: '0.5rem',
+                                                                    backgroundColor: fileBackgroundColor,
+                                                                    ...layouts.row('space-between', 'center'),
+                                                                    children: [
+                                                                        {
+                                                                            minWidth: 0,
+                                                                            fontWeight: 600,
+                                                                            color: fileTextColor,
+                                                                            ...styles.unselectable(),
+                                                                            whiteSpace: 'nowrap',
+                                                                            overflow: 'hidden',
+                                                                            textOverflow: 'ellipsis',
+                                                                            text: f.name
+                                                                        },
+                                                                        {
+                                                                            id: `file-actions-${f.id}`,
+                                                                            config: () => ({
+                                                                                ...layouts.row('start', 'center'),
+                                                                                children: [
+                                                                                    !downloads[f.id] ? components.button({
+                                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                                        child: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: fileButtonColor,
+                                                                                            ligature: 'cloud_download'
+                                                                                        }),
+                                                                                        onclick: async function (event) {
+                                                                                            downloads[f.id] = {
+                                                                                                status: 'downloading'
+                                                                                            };
+                                                                                            stack.updateAll({
+                                                                                                type: 'download',
+                                                                                                fileId: f.id
+                                                                                            });
+                                                                                            try {
+                                                                                                const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
+                                                                                                const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
+                                                                                                downloads[f.id] = {
+                                                                                                    status: 'ready',
+                                                                                                    file: new File([fileDecrypted], f.name, {
+                                                                                                        type: f.type,
+                                                                                                        lastModified: f.lastModified,
+                                                                                                    })
+                                                                                                };
+                                                                                                stack.updateAll({
+                                                                                                    type: 'download',
+                                                                                                    fileId: f.id
                                                                                                 });
-                                                                                            } else {
-                                                                                                deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                            } catch (e) {
+                                                                                                console.error(e);
+                                                                                                downloads[f.id] = undefined;
+                                                                                                stack.updateAll({
+                                                                                                    type: 'download',
+                                                                                                    fileId: f.id
+                                                                                                });
                                                                                             }
                                                                                         }
-                                                                                    })
+                                                                                    }) : null,
+                                                                                    downloads[f.id]?.status === 'downloading' ? components.animations.spinner({
+                                                                                        width: '2.25rem',
+                                                                                        height: '2.25rem',
+                                                                                        padding: '0.5rem',
+                                                                                        color: fileButtonColor,
+                                                                                    }) : null,
+                                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('image')) ? components.button({
+                                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                                        child: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: fileButtonColor,
+                                                                                            ligature: 'image'
+                                                                                        }),
+                                                                                        onclick: function (event) {
+                                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                                            stack.push({
+                                                                                                path: '#image',
+                                                                                                onPop: function () {
+                                                                                                    URL.revokeObjectURL(url);
+                                                                                                },
+                                                                                                config: {
+                                                                                                    tag: 'img',
+                                                                                                    width: '100%',
+                                                                                                    height: '100%',
+                                                                                                    objectFit: 'contain',
+                                                                                                    objectPosition: 'center',
+                                                                                                    src: url
+                                                                                                }
+                                                                                            });
+                                                                                        }
+                                                                                    }) : null,
+                                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('audio')) ? components.button({
+                                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                                        child: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: fileButtonColor,
+                                                                                            ligature: 'play_circle'
+                                                                                        }),
+                                                                                        onclick: function (event) {
+                                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                                            stack.push({
+                                                                                                path: '#audio',
+                                                                                                onPop: function () {
+                                                                                                    URL.revokeObjectURL(url);
+                                                                                                },
+                                                                                                config: {
+                                                                                                    width: '100%',
+                                                                                                    height: '100%',
+                                                                                                    ...layouts.row('center', 'center'),
+                                                                                                    children: [
+                                                                                                        {
+                                                                                                            tag: 'audio',
+                                                                                                            width: '100%',
+                                                                                                            controls: true,
+                                                                                                            src: url
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            });
+                                                                                        }
+                                                                                    }) : null,
+                                                                                    (downloads[f.id]?.status === 'ready' && downloads[f.id].file.type.startsWith('video')) ? components.button({
+                                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                                        child: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: fileButtonColor,
+                                                                                            ligature: 'play_circle'
+                                                                                        }),
+                                                                                        onclick: function (event) {
+                                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                                            stack.push({
+                                                                                                path: '#video',
+                                                                                                onPop: function () {
+                                                                                                    URL.revokeObjectURL(url);
+                                                                                                },
+                                                                                                config: {
+                                                                                                    width: '100%',
+                                                                                                    height: '100%',
+                                                                                                    ...layouts.row('center', 'center'),
+                                                                                                    children: [
+                                                                                                        {
+                                                                                                            tag: 'video',
+                                                                                                            width: '100%',
+                                                                                                            height: '100%',
+                                                                                                            objectFit: 'contain',
+                                                                                                            objectPosition: 'center',
+                                                                                                            controls: true,
+                                                                                                            src: url
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            });
+                                                                                        }
+                                                                                    }) : null,
+                                                                                    downloads[f.id]?.status === 'ready' ? components.button({
+                                                                                        backgroundHoverColor: fileButtonBackgroundHoverColor,
+                                                                                        child: components.icon({
+                                                                                            fontSize: '1.25rem',
+                                                                                            color: fileButtonColor,
+                                                                                            ligature: 'download'
+                                                                                        }),
+                                                                                        onclick: function (event) {
+                                                                                            const url = URL.createObjectURL(downloads[f.id].file);
+                                                                                            const a = document.createElement('a');
+                                                                                            a.href = url;
+                                                                                            a.download = downloads[f.id].file.name;
+                                                                                            a.click();
+                                                                                            requestAnimationFrame(() => URL.revokeObjectURL(url));
+                                                                                        }
+                                                                                    }) : null,
                                                                                 ]
                                                                             })
-                                                                        });
+                                                                        },
+                                                                    ]
+                                                                }))
+                                                            } : null,
+                                                            paragraph.notes.filter(nid => tree[nid].parent !== 'deleted').length > 1 ? {
+                                                                width: '100%',
+                                                                ...layouts.column('start', 'start', '0.5rem'),
+                                                                children: paragraph.notes.filter(nid => tree[nid].parent !== 'deleted' && nid !== noteId).map(nid => components.textLink({
+                                                                    color: colors.foreground.textLink(),
+                                                                    href: `/note/${nid}`,
+                                                                    text: tree[nid].name,
+                                                                    onclick: function (event) {
+                                                                        stack.push(pages.note(`/note/${nid}`, nid));
                                                                     }
-                                                                }),
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        };
-                                    }
-                                }),
-                                !filterParagraphColor && !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button({
-                                    width: '100%',
-                                    height: '2.5rem',
-                                    padding: '0 0.75rem',
-                                    backgroundColor: colors[theme][palette.base](3),
-                                    backgroundHoverColor: colors[theme][palette.base](4),
-                                    color: colors.foreground.secondary(),
-                                    onclick: function (event) {
-                                        limitParagraphs = false;
-                                        this.layer.widgets['paragraphs'].update();
-                                    },
-                                    child: {
-                                        fontWeight: 600,
-                                        text: 'More'
-                                    }
-                                }) : null]
-                            })
-                        ]
-                    },
-                ]
-            }),
+                                                                }))
+                                                            } : null,
+                                                            {
+                                                                width: '100%',
+                                                                ...layouts.row('space-between', 'center', '1rem'),
+                                                                children: [
+                                                                    {
+                                                                        fontSize: '0.875rem',
+                                                                        color: dateColor,
+                                                                        ...styles.unselectable(),
+                                                                        text: new Date(paragraph.timestamp * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                    },
+                                                                    {
+                                                                        ...layouts.row(),
+                                                                        children: [
+                                                                            components.button({
+                                                                                backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                                child: components.icon({
+                                                                                    fontSize: '1.25rem',
+                                                                                    color: buttonColor,
+                                                                                    ligature: 'content_copy',
+                                                                                }),
+                                                                                onclick: function (event) {
+                                                                                    navigator.clipboard.writeText(paragraph.text);
+                                                                                }
+                                                                            }),
+                                                                            components.button({
+                                                                                backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                                child: components.icon({
+                                                                                    fontSize: '1.25rem',
+                                                                                    color: buttonColor,
+                                                                                    ligature: 'link',
+                                                                                }),
+                                                                                onclick: function (event) {
+                                                                                    function linkNotePage(targetFolderId) {
+                                                                                        return {
+                                                                                            path: `#link-${targetFolderId}`,
+                                                                                            config: () => {
+                                                                                                const children = Object.keys(tree).filter(id => !paragraph.notes.includes(id) && tree[id].parent === targetFolderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
+                                                                                                return {
+                                                                                                    ...layouts.base('start', 'center'),
+                                                                                                    children: [
+                                                                                                        components.header({
+                                                                                                            leading: components.button({
+                                                                                                                backgroundHoverColor: colors[theme][palette.base](3),
+                                                                                                                color: colors.foreground.secondary(),
+                                                                                                                child: components.icon({
+                                                                                                                    fontSize: '1.25rem',
+                                                                                                                    ligature: 'close'
+                                                                                                                }),
+                                                                                                                onclick: async function (event) {
+                                                                                                                    let steps = 0;
+                                                                                                                    for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                                        if (stack.at(i) === pageLayer) {
+                                                                                                                            break;
+                                                                                                                        }
+                                                                                                                        steps += 1;
+                                                                                                                    }
+                                                                                                                    await stack.pop(steps);
+                                                                                                                }
+                                                                                                            }),
+                                                                                                            title: 'Link note',
+                                                                                                        }),
+                                                                                                        {
+                                                                                                            flexGrow: 1,
+                                                                                                            width: 'min(640px, 100% - 1rem)',
+                                                                                                            padding: '1rem 0',
+                                                                                                            ...layouts.column('center', 'center', '1rem'),
+                                                                                                            children: children.map(cid => components.buttons.menu({
+                                                                                                                size: 'l',
+                                                                                                                text: tree[cid]['name'],
+                                                                                                                onclick: function (event) {
+                                                                                                                    if (tree[cid].type === 'folder') {
+                                                                                                                        stack.push(linkNotePage(cid));
+                                                                                                                    } else if (tree[cid].type === 'note') {
+                                                                                                                        stack.push({
+                                                                                                                            path: '#confirm',
+                                                                                                                            hidePrior: false,
+                                                                                                                            config: () => components.modals.prompt({
+                                                                                                                                title: 'Link Note',
+                                                                                                                                description: 'Are you sure?',
+                                                                                                                                buttons: [
+                                                                                                                                    components.buttons.form({
+                                                                                                                                        priority: 'primary',
+                                                                                                                                        text: 'Link',
+                                                                                                                                        onclick: async function (event) {
+                                                                                                                                            let steps = 0;
+                                                                                                                                            for (let i = stack.length - 1; i > 0; i--) {
+                                                                                                                                                if (stack.at(i) === pageLayer) {
+                                                                                                                                                    break;
+                                                                                                                                                }
+                                                                                                                                                steps += 1;
+                                                                                                                                            }
+                                                                                                                                            await stack.pop(steps);
+                                                                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                                                notes: arrayUnion(cid),
+                                                                                                                                            });
+                                                                                                                                        }
+                                                                                                                                    })
+                                                                                                                                ]
+                                                                                                                            })
+                                                                                                                        });
+                                                                                                                    }
+                                                                                                                },
+                                                                                                            }))
+                                                                                                        }
+                                                                                                    ]
+                                                                                                };
+                                                                                            }
+                                                                                        };
+                                                                                    }
+                                                                                    stack.push(linkNotePage('root'));
+                                                                                }
+                                                                            }),
+                                                                            components.button({
+                                                                                backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                                child: components.icon({
+                                                                                    fontSize: '1.25rem',
+                                                                                    color: buttonColor,
+                                                                                    ligature: 'palette',
+                                                                                }),
+                                                                                onclick: function (event) {
+                                                                                    stack.push({
+                                                                                        path: '#color',
+                                                                                        hidePrior: false,
+                                                                                        config: () => components.modalCloseBackground({
+                                                                                            ...styles.modalCloseBackground(),
+                                                                                            child: {
+                                                                                                ...styles.modal(),
+                                                                                                ...layouts.column('start', 'start', '1rem'),
+                                                                                                children: [
+                                                                                                    {
+                                                                                                        fontWeight: 600,
+                                                                                                        text: 'Color'
+                                                                                                    },
+                                                                                                    {
+                                                                                                        ...layouts.grid(),
+                                                                                                        width: '100%',
+                                                                                                        alignSelf: 'center',
+                                                                                                        gridTemplateColumns: 'repeat(auto-fill, 3rem)',
+                                                                                                        justifyContent: 'center',
+                                                                                                        gap: '1rem',
+                                                                                                        children: [undefined, 'brown', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'indigo', 'purple'].map(color => components.button({
+                                                                                                            padding: '0.25rem',
+                                                                                                            borderRadius: '2rem',
+                                                                                                            backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
+                                                                                                            backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
+                                                                                                            child: components.icon({
+                                                                                                                fontSize: '2.5rem',
+                                                                                                                color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
+                                                                                                                ligature: 'circle',
+                                                                                                            }),
+                                                                                                            onclick: async function (event) {
+                                                                                                                stack.pop();
+                                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                    color: color || deleteField(),
+                                                                                                                });
+                                                                                                            }
+                                                                                                        })
+                                                                                                        )
+                                                                                                    }
+                                                                                                ]
+                                                                                            }
+                                                                                        })
+                                                                                    });
+                                                                                }
+                                                                            }),
+                                                                            components.button({
+                                                                                backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                                child: components.icon({
+                                                                                    fontSize: '1.25rem',
+                                                                                    color: buttonColor,
+                                                                                    ligature: 'edit',
+                                                                                }),
+                                                                                disabled: editParagraphId,
+                                                                                onclick: function (event) {
+                                                                                    if (!editParagraphId) {
+                                                                                        editParagraphId = paragraph.id;
+                                                                                        editParagraphHeight = this.layer.widgets[`paragraph-${paragraph.id}`].domElement.getBoundingClientRect().height;
+                                                                                        editParagraphValid = true;
+                                                                                        editParagraphText = paragraph.text;
+                                                                                        this.layer.widgets['paragraphs'].update();
+                                                                                    }
+                                                                                }
+                                                                            }),
+                                                                            components.button({
+                                                                                backgroundHoverColor: buttonBackgroundHoverColor,
+                                                                                child: components.icon({
+                                                                                    fontSize: '1.25rem',
+                                                                                    color: buttonColor,
+                                                                                    ligature: 'delete',
+                                                                                }),
+                                                                                onclick: function (event) {
+                                                                                    stack.push({
+                                                                                        path: '#delete',
+                                                                                        hidePrior: false,
+                                                                                        config: () => components.modals.prompt({
+                                                                                            title: 'Delete',
+                                                                                            description: paragraph.notes.length > 1 ? 'Linked copies will not be affected.' : 'You won\'t be able to restore it.',
+                                                                                            buttons: [
+                                                                                                components.buttons.form({
+                                                                                                    priority: 'danger',
+                                                                                                    text: 'Delete',
+                                                                                                    onclick: function (event) {
+                                                                                                        stack.pop();
+                                                                                                        if (paragraph.notes.length > 1) {
+                                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                notes: arrayRemove(noteId),
+                                                                                                            });
+                                                                                                        } else {
+                                                                                                            deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                                        }
+                                                                                                    }
+                                                                                                })
+                                                                                            ]
+                                                                                        })
+                                                                                    });
+                                                                                }
+                                                                            }),
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                };
+                                            }
+                                        }),
+                                        !filterParagraphColor && !filterParagraphQuery && limitParagraphs && paragraphs.length > 32 ? components.button({
+                                            width: '100%',
+                                            height: '2.5rem',
+                                            padding: '0 0.75rem',
+                                            backgroundColor: colors[theme][palette.base](3),
+                                            backgroundHoverColor: colors[theme][palette.base](4),
+                                            color: colors.foreground.secondary(),
+                                            onclick: function (event) {
+                                                limitParagraphs = false;
+                                                this.layer.widgets['paragraphs'].update();
+                                            },
+                                            child: {
+                                                fontWeight: 600,
+                                                text: 'More'
+                                            }
+                                        }) : null]
+                                    })
+                                },
+                            ]
+                        },
+                    ]
+                })
+            },
         };
     }
 }
