@@ -324,6 +324,7 @@ const pages = {
             })]
         }),
     }),
+
     notFound: (path = '') => ({
         path,
         meta: () => ({
@@ -342,6 +343,7 @@ const pages = {
             ]
         }),
     }),
+
     notebookDeleted(path = '') {
         return {
             path,
@@ -375,6 +377,7 @@ const pages = {
             }),
         };
     },
+
     login(path = '') {
         let loggingIn = false;
         return {
@@ -424,6 +427,7 @@ const pages = {
             }),
         };
     },
+
     setup(path = '') {
         let pageLayer;
         let error;
@@ -615,6 +619,7 @@ const pages = {
             }),
         };
     },
+
     keyphrase(path = '') {
         let pageLayer;
         let error;
@@ -737,6 +742,7 @@ const pages = {
             }),
         };
     },
+
     folder(path = '', folderId) {
         function generateTreeId() {
             while (true) {
@@ -1643,6 +1649,7 @@ const pages = {
             },
         };
     },
+
     note(path = '', noteId) {
         let pageLayer;
         let error;
