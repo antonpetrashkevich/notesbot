@@ -285,7 +285,8 @@ function startListenNotebook() {
             }
         },
         (e) => {
-            if (e.code === 'unavailable') {
+            if (e.code === 'unavailable' || e.code === 'resource-exhausted') {
+                console.error(e);
                 stack.updateAll({
                     type: 'error_network',
                     error: e,
@@ -325,7 +326,10 @@ const pages = {
         let pageLayer;
         let errorRuntime = false;
         let errorNetwork = false;
-        let initializing = true;
+        let errorAccessDenied = false;
+        let errorNotFound = false;
+        let errorOutOfSync = false;
+        let loading = false;
 
         return ({
             path,
@@ -357,7 +361,10 @@ const pages = {
                             config: () => components.blockers.common({
                                 errorRuntime,
                                 errorNetwork,
-                                loading: initializing,
+                                errorAccessDenied,
+                                errorNotFound,
+                                errorOutOfSync,
+                                loading,
                             })
                         },
                     ]
@@ -370,6 +377,10 @@ const pages = {
         let pageLayer;
         let errorRuntime = false;
         let errorNetwork = false;
+        let errorAccessDenied = false;
+        let errorNotFound = false;
+        let errorOutOfSync = false;
+        let loading = false;
 
         return {
             path,
@@ -401,6 +412,17 @@ const pages = {
                     ...layouts.column('center', 'center', '2rem'),
                     children: [
                         {
+                            id: 'blocker',
+                            config: () => components.blockers.common({
+                                errorRuntime,
+                                errorNetwork,
+                                errorAccessDenied,
+                                errorNotFound,
+                                errorOutOfSync,
+                                loading,
+                            })
+                        },
+                        {
                             text: 'Your notebook will be permanently deleted within 30 days. You\'ll be able to create a new one afterward.'
                         },
                         {
@@ -426,7 +448,10 @@ const pages = {
         let pageLayer;
         let errorRuntime = false;
         let errorNetwork = false;
-        let loggingIn = false;
+        let errorAccessDenied = false;
+        let errorNotFound = false;
+        let errorOutOfSync = false;
+        let loading = false;
 
         return {
             path,
@@ -462,7 +487,10 @@ const pages = {
                             config: () => components.blockers.common({
                                 errorRuntime,
                                 errorNetwork,
-                                loading: loggingIn,
+                                errorAccessDenied,
+                                errorNotFound,
+                                errorOutOfSync,
+                                loading,
                             })
                         },
                         components.button({
@@ -470,13 +498,13 @@ const pages = {
                             backgroundHoverColor: colors[theme][palette.base](2),
                             onclick: function (event) {
                                 try {
-                                    loggingIn = true;
-                                    this.layer.widgets['blocker'].update();
+                                    loading = true;
+                                    pageLayer.widgets['blocker'].update();
                                     signInWithPopup(firebase.auth, new GoogleAuthProvider());
                                 } catch (e) {
                                     console.error(e);
                                     errorRuntime = true;
-                                    this.layer.widgets['blocker'].update();
+                                    pageLayer.widgets['blocker'].update();
                                 }
                             },
                             child: {
@@ -503,8 +531,10 @@ const pages = {
         let pageLayer;
         let errorRuntime = false;
         let errorNetwork = false;
+        let errorAccessDenied = false;
+        let errorNotFound = false;
         let errorOutOfSync = false;
-        let keyBuilding = false;
+        let loading = false;
         let keyphraseValid = true;
         let keyphraseRepeatValid = true;
 
@@ -540,8 +570,10 @@ const pages = {
                             config: () => components.blockers.common({
                                 errorRuntime,
                                 errorNetwork,
+                                errorAccessDenied,
+                                errorNotFound,
                                 errorOutOfSync,
-                                loading: keyBuilding,
+                                loading,
                                 loadingText: 'Building the encryption key... This may take over a minute on older devices.',
                             })
                         },
@@ -662,7 +694,7 @@ const pages = {
                                                     return;
                                                 }
                                                 const salt = window.crypto.getRandomValues(new Uint8Array(32));
-                                                keyBuilding = true;
+                                                loading = true;
                                                 pageLayer.widgets['blocker'].update();
                                                 const worker = new Argon2Worker();
                                                 worker.onmessage = async (event) => {
@@ -689,10 +721,17 @@ const pages = {
                                                                 }
                                                             });
                                                         } catch (e) {
-                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                console.error(e);
                                                                 errorNetwork = true;
                                                                 pageLayer.widgets['blocker'].update();
-                                                            } else {
+                                                            }
+                                                            else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                console.log(e);
+                                                                errorOutOfSync = true;
+                                                                pageLayer.widgets['blocker'].update();
+                                                            }
+                                                            else {
                                                                 console.error(e);
                                                                 errorRuntime = true;
                                                                 pageLayer.widgets['blocker'].update();
@@ -724,7 +763,10 @@ const pages = {
         let pageLayer;
         let errorRuntime = false;
         let errorNetwork = false;
-        let keyBuilding = false;
+        let errorAccessDenied = false;
+        let errorNotFound = false;
+        let errorOutOfSync = false;
+        let loading = false;
         let keyphraseValid = true;
 
         return {
@@ -759,7 +801,10 @@ const pages = {
                             config: () => components.blockers.common({
                                 errorRuntime,
                                 errorNetwork,
-                                loading: keyBuilding,
+                                errorAccessDenied,
+                                errorNotFound,
+                                errorOutOfSync,
+                                loading,
                                 loadingText: 'Building the encryption key... This may take over a minute on older devices.',
                             })
                         },
@@ -816,7 +861,7 @@ const pages = {
                                             priority: 'primary',
                                             text: 'Save',
                                             onclick: async function (event) {
-                                                keyBuilding = true;
+                                                loading = true;
                                                 pageLayer.widgets['blocker'].update();
                                                 const worker = new Argon2Worker();
                                                 worker.onmessage = async (event) => {
@@ -840,7 +885,7 @@ const pages = {
                                                             }
                                                         } catch (e) {
                                                             keyphraseValid = false;
-                                                            keyBuilding = false;
+                                                            loading = false;
                                                             pageLayer.widgets['page'].update();
                                                         }
                                                     } else {
@@ -869,8 +914,10 @@ const pages = {
         let pageLayer;
         let errorRuntime = false;
         let errorNetwork = false;
+        let errorAccessDenied = false;
+        let errorNotFound = false;
         let errorOutOfSync = false;
-        let updating = false;
+        let loading = false;
         let children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
         let filterTreeQuery;
 
@@ -925,8 +972,10 @@ const pages = {
                             config: () => components.blockers.common({
                                 errorRuntime,
                                 errorNetwork,
+                                errorAccessDenied,
+                                errorNotFound,
                                 errorOutOfSync,
-                                loading: updating,
+                                loading,
                             })
                         },
                         {
@@ -975,7 +1024,7 @@ const pages = {
                                                         text: 'Move Up',
                                                         onclick: async function (event) {
                                                             await stack.pop();
-                                                            updating = true;
+                                                            loading = true;
                                                             pageLayer.widgets['blocker'].update();
                                                             const neighborId = children[children.indexOf(cid) - 1];
                                                             try {
@@ -994,13 +1043,20 @@ const pages = {
                                                                         pageLayer.widgets['blocker'].update();
                                                                     }
                                                                 });
-                                                                updating = false;
+                                                                loading = false;
                                                                 pageLayer.widgets['blocker'].update();
                                                             } catch (e) {
-                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                    console.error(e);
                                                                     errorNetwork = true;
                                                                     pageLayer.widgets['blocker'].update();
-                                                                } else {
+                                                                }
+                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                    console.log(e);
+                                                                    errorOutOfSync = true;
+                                                                    pageLayer.widgets['blocker'].update();
+                                                                }
+                                                                else {
                                                                     console.error(e);
                                                                     errorRuntime = true;
                                                                     pageLayer.widgets['blocker'].update();
@@ -1012,7 +1068,7 @@ const pages = {
                                                         text: 'Move Down',
                                                         onclick: async function (event) {
                                                             await stack.pop();
-                                                            updating = true;
+                                                            loading = true;
                                                             pageLayer.widgets['blocker'].update();
                                                             const neighborId = children[children.indexOf(cid) + 1];
                                                             try {
@@ -1031,13 +1087,20 @@ const pages = {
                                                                         pageLayer.widgets['blocker'].update();
                                                                     }
                                                                 });
-                                                                updating = false;
+                                                                loading = false;
                                                                 pageLayer.widgets['blocker'].update();
                                                             } catch (e) {
-                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                    console.error(e);
                                                                     errorNetwork = true;
                                                                     pageLayer.widgets['blocker'].update();
-                                                                } else {
+                                                                }
+                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                    console.log(e);
+                                                                    errorOutOfSync = true;
+                                                                    pageLayer.widgets['blocker'].update();
+                                                                }
+                                                                else {
                                                                     console.error(e);
                                                                     errorRuntime = true;
                                                                     pageLayer.widgets['blocker'].update();
@@ -1089,7 +1152,7 @@ const pages = {
                                                                                                 steps += 1;
                                                                                             }
                                                                                             await stack.pop(steps);
-                                                                                            updating = true;
+                                                                                            loading = true;
                                                                                             pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1107,13 +1170,20 @@ const pages = {
                                                                                                         pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                updating = false;
+                                                                                                loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                    console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
-                                                                                                } else {
+                                                                                                }
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                    console.log(e);
+                                                                                                    errorOutOfSync = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
                                                                                                     pageLayer.widgets['blocker'].update();
@@ -1198,7 +1268,7 @@ const pages = {
                                                                                             }
                                                                                             const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
                                                                                             await stack.pop();
-                                                                                            updating = true;
+                                                                                            loading = true;
                                                                                             pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1216,13 +1286,20 @@ const pages = {
                                                                                                         pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                updating = false;
+                                                                                                loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                    console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
-                                                                                                } else {
+                                                                                                }
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                    console.log(e);
+                                                                                                    errorOutOfSync = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
                                                                                                     pageLayer.widgets['blocker'].update();
@@ -1255,7 +1332,7 @@ const pages = {
                                                                             text: 'Delete',
                                                                             onclick: async function (event) {
                                                                                 await stack.pop();
-                                                                                updating = true;
+                                                                                loading = true;
                                                                                 pageLayer.widgets['blocker'].update();
                                                                                 try {
                                                                                     const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1272,13 +1349,20 @@ const pages = {
                                                                                             pageLayer.widgets['blocker'].update();
                                                                                         }
                                                                                     });
-                                                                                    updating = false;
+                                                                                    loading = false;
                                                                                     pageLayer.widgets['blocker'].update();
                                                                                 } catch (e) {
-                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                        console.error(e);
                                                                                         errorNetwork = true;
                                                                                         pageLayer.widgets['blocker'].update();
-                                                                                    } else {
+                                                                                    }
+                                                                                    else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                        console.log(e);
+                                                                                        errorOutOfSync = true;
+                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                    }
+                                                                                    else {
                                                                                         console.error(e);
                                                                                         errorRuntime = true;
                                                                                         pageLayer.widgets['blocker'].update();
@@ -1427,7 +1511,7 @@ const pages = {
                                                                                 text: 'Delete',
                                                                                 onclick: async function (event) {
                                                                                     await stack.pop();
-                                                                                    updating = true;
+                                                                                    loading = true;
                                                                                     pageLayer.widgets['blocker'].update();
                                                                                     try {
                                                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1444,13 +1528,20 @@ const pages = {
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             }
                                                                                         });
-                                                                                        updating = false;
+                                                                                        loading = false;
                                                                                         pageLayer.widgets['blocker'].update();
                                                                                     } catch (e) {
-                                                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                            console.error(e);
                                                                                             errorNetwork = true;
                                                                                             pageLayer.widgets['blocker'].update();
-                                                                                        } else {
+                                                                                        }
+                                                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                            console.log(e);
+                                                                                            errorOutOfSync = true;
+                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                        }
+                                                                                        else {
                                                                                             console.error(e);
                                                                                             errorRuntime = true;
                                                                                             pageLayer.widgets['blocker'].update();
@@ -1670,7 +1761,7 @@ const pages = {
                                                                                             }
                                                                                             const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
                                                                                             await stack.pop();
-                                                                                            updating = true;
+                                                                                            loading = true;
                                                                                             pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1688,13 +1779,20 @@ const pages = {
                                                                                                         pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                updating = false;
+                                                                                                loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                    console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
-                                                                                                } else {
+                                                                                                }
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                    console.log(e);
+                                                                                                    errorOutOfSync = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
                                                                                                     pageLayer.widgets['blocker'].update();
@@ -1766,7 +1864,7 @@ const pages = {
                                                                                             }
                                                                                             const name = this.layer.widgets['new-note-name-input'].domElement.value.trim();
                                                                                             await stack.pop();
-                                                                                            updating = true;
+                                                                                            loading = true;
                                                                                             pageLayer.widgets['blocker'].update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1784,13 +1882,20 @@ const pages = {
                                                                                                         pageLayer.widgets['blocker'].update();
                                                                                                     }
                                                                                                 });
-                                                                                                updating = false;
+                                                                                                loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                    console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
-                                                                                                } else {
+                                                                                                }
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                    console.log(e);
+                                                                                                    errorOutOfSync = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
                                                                                                     pageLayer.widgets['blocker'].update();
@@ -1823,9 +1928,12 @@ const pages = {
         let pageLayer;
         let errorRuntime = false;
         let errorNetwork = false;
+        let errorAccessDenied = false;
+        let errorNotFound = false;
         let errorOutOfSync = false;
+        let loading = false;
         const paragraphs = [];
-        let stopListenParagraphs;
+        let paragraphsListener;
         let limitParagraphs = true;
         let filterParagraphColor;
         let filterParagraphQuery;
@@ -1844,7 +1952,7 @@ const pages = {
             }),
             onPush: function () {
                 pageLayer = this;
-                stopListenParagraphs = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', noteId), orderBy('timestamp', 'desc')),
+                paragraphsListener = onSnapshot(query(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), where('notes', 'array-contains', noteId), orderBy('timestamp', 'desc')),
                     async (querySnapshot) => {
                         paragraphs.length = 0;
                         for (const docSnap of querySnapshot.docs) {
@@ -1866,6 +1974,17 @@ const pages = {
                             });
                         }
                         this.widgets['paragraphs'].update();
+                    },
+                    (e) => {
+                        if (e.code === 'unavailable' || e.code === 'resource-exhausted') {
+                            console.error(e);
+                            errorNetwork = true;
+                            pageLayer.widgets['blocker'].update();
+                        } else {
+                            console.error(e);
+                            errorRuntime = true;
+                            pageLayer.widgets['blocker'].update();
+                        }
                     }
                 );
                 let recentNotes = JSON.parse(window.localStorage.getItem('recent_notes')) || [];
@@ -1877,7 +1996,7 @@ const pages = {
                 window.localStorage.setItem('recent_notes', JSON.stringify(recentNotes));
             },
             onPop: function () {
-                stopListenParagraphs();
+                paragraphsListener();
             },
             update: function (message) {
                 if (errorRuntime || errorNetwork || errorOutOfSync) {
@@ -1917,7 +2036,10 @@ const pages = {
                             config: () => components.blockers.common({
                                 errorRuntime,
                                 errorNetwork,
+                                errorAccessDenied,
+                                errorNotFound,
                                 errorOutOfSync,
+                                loading,
                             })
                         },
                         {
@@ -2114,6 +2236,27 @@ const pages = {
                                                             noteId
                                                         });
                                                     } catch (e) {
+
+
+
+                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                            console.error(e);
+                                                            errorNetwork = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                        }
+                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                            console.error(e);
+                                                            errorOutOfSync = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                        }
+                                                        else {
+                                                            console.error(e);
+                                                            errorRuntime = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                        }
+
+
+
                                                         console.error(e);
                                                         uploads[noteId] = undefined;
                                                         stack.updateAll({
@@ -2122,12 +2265,30 @@ const pages = {
                                                         });
                                                     }
                                                 } else {
-                                                    const textEncrypted = await encrypt(key, textEncoder.encode(text));
-                                                    addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
-                                                        timestamp: Math.floor(Date.now() / 1000),
-                                                        notes: [noteId],
-                                                        text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-                                                    });
+                                                    try {
+                                                        const textEncrypted = await encrypt(key, textEncoder.encode(text));
+                                                        addDoc(collection(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs'), {
+                                                            timestamp: Math.floor(Date.now() / 1000),
+                                                            notes: [noteId],
+                                                            text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+                                                        });
+                                                    } catch (e) {
+                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                            console.error(e);
+                                                            errorNetwork = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                        }
+                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                            console.error(e);
+                                                            errorOutOfSync = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                        }
+                                                        else {
+                                                            console.error(e);
+                                                            errorRuntime = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                        }
+                                                    }
                                                 }
                                             }
                                         })
@@ -2365,21 +2526,39 @@ const pages = {
                                                                         priority: 'primary',
                                                                         text: 'Save',
                                                                         onclick: async function (event) {
-                                                                            editParagraphValid = true;
-                                                                            if (!this.layer.widgets['edit-paragraph-input'].domElement.value.trim()) {
-                                                                                editParagraphValid = false;
+                                                                            try {
+                                                                                editParagraphValid = true;
+                                                                                if (!this.layer.widgets['edit-paragraph-input'].domElement.value.trim()) {
+                                                                                    editParagraphValid = false;
+                                                                                }
+                                                                                this.layer.widgets['edit-paragraph-hint'].update();
+                                                                                if (!editParagraphValid) {
+                                                                                    return;
+                                                                                }
+                                                                                editParagraphId = undefined;
+                                                                                editParagraphValid = undefined;
+                                                                                editParagraphText = undefined;
+                                                                                const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
+                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                    text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+                                                                                });
+                                                                            } catch (e) {
+                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                    console.error(e);
+                                                                                    errorNetwork = true;
+                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                }
+                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                    console.error(e);
+                                                                                    errorOutOfSync = true;
+                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                }
+                                                                                else {
+                                                                                    console.error(e);
+                                                                                    errorRuntime = true;
+                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                }
                                                                             }
-                                                                            this.layer.widgets['edit-paragraph-hint'].update();
-                                                                            if (!editParagraphValid) {
-                                                                                return;
-                                                                            }
-                                                                            editParagraphId = undefined;
-                                                                            editParagraphValid = undefined;
-                                                                            editParagraphText = undefined;
-                                                                            const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
-                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-                                                                            });
                                                                         }
                                                                     })
                                                                 ]
@@ -2689,9 +2868,28 @@ const pages = {
                                                                                                                                                 steps += 1;
                                                                                                                                             }
                                                                                                                                             await stack.pop(steps);
-                                                                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                                                notes: arrayUnion(cid),
-                                                                                                                                            });
+                                                                                                                                            try {
+                                                                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                                                    notes: arrayUnion(cid),
+                                                                                                                                                });
+                                                                                                                                            } catch (e) {
+                                                                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                                                                    console.error(e);
+                                                                                                                                                    errorNetwork = true;
+                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                }
+                                                                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                                                                    console.error(e);
+                                                                                                                                                    errorOutOfSync = true;
+                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                    i
+                                                                                                                                                }
+                                                                                                                                                else {
+                                                                                                                                                    console.error(e);
+                                                                                                                                                    errorRuntime = true;
+                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                }
+                                                                                                                                            }
                                                                                                                                         }
                                                                                                                                     })
                                                                                                                                 ]
@@ -2749,9 +2947,27 @@ const pages = {
                                                                                                             }),
                                                                                                             onclick: async function (event) {
                                                                                                                 stack.pop();
-                                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                    color: color || deleteField(),
-                                                                                                                });
+                                                                                                                try {
+                                                                                                                    updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                        color: color || deleteField(),
+                                                                                                                    });
+                                                                                                                } catch (e) {
+                                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                                        console.error(e);
+                                                                                                                        errorNetwork = true;
+                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                    }
+                                                                                                                    else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                                        console.error(e);
+                                                                                                                        errorOutOfSync = true;
+                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                    }
+                                                                                                                    else {
+                                                                                                                        console.error(e);
+                                                                                                                        errorRuntime = true;
+                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                    }
+                                                                                                                }
                                                                                                             }
                                                                                                         })
                                                                                                         )
@@ -2800,12 +3016,30 @@ const pages = {
                                                                                                     text: 'Delete',
                                                                                                     onclick: function (event) {
                                                                                                         stack.pop();
-                                                                                                        if (paragraph.notes.length > 1) {
-                                                                                                            updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
-                                                                                                                notes: arrayRemove(noteId),
-                                                                                                            });
-                                                                                                        } else {
-                                                                                                            deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                                        try {
+                                                                                                            if (paragraph.notes.length > 1) {
+                                                                                                                updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
+                                                                                                                    notes: arrayRemove(noteId),
+                                                                                                                });
+                                                                                                            } else {
+                                                                                                                deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
+                                                                                                            }
+                                                                                                        } catch (e) {
+                                                                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                                console.error(e);
+                                                                                                                errorNetwork = true;
+                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                            }
+                                                                                                            else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                                console.error(e);
+                                                                                                                errorOutOfSync = true;
+                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                            }
+                                                                                                            else {
+                                                                                                                console.error(e);
+                                                                                                                errorRuntime = true;
+                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                            }
                                                                                                         }
                                                                                                     }
                                                                                                 })
