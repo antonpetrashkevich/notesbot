@@ -355,9 +355,9 @@ const pages = {
                         {
                             id: 'blocker',
                             config: () => components.blockers.common({
-                                loading: initializing,
                                 errorRuntime,
                                 errorNetwork,
+                                loading: initializing,
                             })
                         },
                     ]
@@ -460,9 +460,9 @@ const pages = {
                         {
                             id: 'blocker',
                             config: () => components.blockers.common({
-                                loading: loggingIn,
                                 errorRuntime,
                                 errorNetwork,
+                                loading: loggingIn,
                             })
                         },
                         components.button({
@@ -538,11 +538,11 @@ const pages = {
                         {
                             id: 'blocker',
                             config: () => components.blockers.common({
-                                loading: keyBuilding,
-                                loadingText: 'Building the encryption key... This may take over a minute on older devices.',
                                 errorRuntime,
                                 errorNetwork,
                                 errorOutOfSync,
+                                loading: keyBuilding,
+                                loadingText: 'Building the encryption key... This may take over a minute on older devices.',
                             })
                         },
                         {
@@ -757,10 +757,10 @@ const pages = {
                         {
                             id: 'blocker',
                             config: () => components.blockers.common({
-                                loading: keyBuilding,
-                                loadingText: 'Building the encryption key... This may take over a minute on older devices.',
                                 errorRuntime,
                                 errorNetwork,
+                                loading: keyBuilding,
+                                loadingText: 'Building the encryption key... This may take over a minute on older devices.',
                             })
                         },
                         {
@@ -923,10 +923,10 @@ const pages = {
                         {
                             id: 'blocker',
                             config: () => components.blockers.common({
-                                loading: updating,
                                 errorRuntime,
                                 errorNetwork,
                                 errorOutOfSync,
+                                loading: updating,
                             })
                         },
                         {
