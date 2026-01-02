@@ -285,7 +285,7 @@ function startListenNotebook() {
             }
         },
         (e) => {
-            if (e.code === 'unavailable' || e.code === 'resource-exhausted') {
+            if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                 console.error(e);
                 stack.updateAll({
                     type: 'error_network',
@@ -737,13 +737,18 @@ const pages = {
                                                                 }
                                                             });
                                                         } catch (e) {
-                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                 console.error(e);
                                                                 errorNetwork = true;
                                                                 pageLayer.widgets['blocker'].update();
                                                             }
-                                                            else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                console.log(e);
+                                                            else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                console.error(e);
+                                                                errorAccessDenied = true;
+                                                                pageLayer.widgets['blocker'].update();
+                                                            }
+                                                            else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                console.error(e);
                                                                 errorOutOfSync = true;
                                                                 pageLayer.widgets['blocker'].update();
                                                             }
@@ -1066,13 +1071,18 @@ const pages = {
                                                                 loading = false;
                                                                 pageLayer.widgets['blocker'].update();
                                                             } catch (e) {
-                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                     console.error(e);
                                                                     errorNetwork = true;
                                                                     pageLayer.widgets['blocker'].update();
                                                                 }
-                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                    console.log(e);
+                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                    console.error(e);
+                                                                    errorAccessDenied = true;
+                                                                    pageLayer.widgets['blocker'].update();
+                                                                }
+                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                    console.error(e);
                                                                     errorOutOfSync = true;
                                                                     pageLayer.widgets['blocker'].update();
                                                                 }
@@ -1110,13 +1120,18 @@ const pages = {
                                                                 loading = false;
                                                                 pageLayer.widgets['blocker'].update();
                                                             } catch (e) {
-                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                     console.error(e);
                                                                     errorNetwork = true;
                                                                     pageLayer.widgets['blocker'].update();
                                                                 }
-                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                    console.log(e);
+                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                    console.error(e);
+                                                                    errorAccessDenied = true;
+                                                                    pageLayer.widgets['blocker'].update();
+                                                                }
+                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                    console.error(e);
                                                                     errorOutOfSync = true;
                                                                     pageLayer.widgets['blocker'].update();
                                                                 }
@@ -1193,13 +1208,18 @@ const pages = {
                                                                                                 loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
-                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                                                    console.log(e);
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                                    console.error(e);
+                                                                                                    errorAccessDenied = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                                                    console.error(e);
                                                                                                     errorOutOfSync = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
@@ -1309,13 +1329,18 @@ const pages = {
                                                                                                 loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
-                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                                                    console.log(e);
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                                    console.error(e);
+                                                                                                    errorAccessDenied = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                                                    console.error(e);
                                                                                                     errorOutOfSync = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
@@ -1372,13 +1397,18 @@ const pages = {
                                                                                     loading = false;
                                                                                     pageLayer.widgets['blocker'].update();
                                                                                 } catch (e) {
-                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                         console.error(e);
                                                                                         errorNetwork = true;
                                                                                         pageLayer.widgets['blocker'].update();
                                                                                     }
-                                                                                    else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                                        console.log(e);
+                                                                                    else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                        console.error(e);
+                                                                                        errorAccessDenied = true;
+                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                    }
+                                                                                    else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                                        console.error(e);
                                                                                         errorOutOfSync = true;
                                                                                         pageLayer.widgets['blocker'].update();
                                                                                     }
@@ -1551,13 +1581,18 @@ const pages = {
                                                                                         loading = false;
                                                                                         pageLayer.widgets['blocker'].update();
                                                                                     } catch (e) {
-                                                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                             console.error(e);
                                                                                             errorNetwork = true;
                                                                                             pageLayer.widgets['blocker'].update();
                                                                                         }
-                                                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                                            console.log(e);
+                                                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                            console.error(e);
+                                                                                            errorAccessDenied = true;
+                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                        }
+                                                                                        else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                                            console.error(e);
                                                                                             errorOutOfSync = true;
                                                                                             pageLayer.widgets['blocker'].update();
                                                                                         }
@@ -1802,13 +1837,18 @@ const pages = {
                                                                                                 loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
-                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                                                    console.log(e);
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                                    console.error(e);
+                                                                                                    errorAccessDenied = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                                                    console.error(e);
                                                                                                     errorOutOfSync = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
@@ -1905,13 +1945,18 @@ const pages = {
                                                                                                 loading = false;
                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                             } catch (e) {
-                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
-                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
-                                                                                                    console.log(e);
+                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                                    console.error(e);
+                                                                                                    errorAccessDenied = true;
+                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                }
+                                                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
+                                                                                                    console.error(e);
                                                                                                     errorOutOfSync = true;
                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                 }
@@ -1996,7 +2041,7 @@ const pages = {
                         this.widgets['paragraphs'].update();
                     },
                     (e) => {
-                        if (e.code === 'unavailable' || e.code === 'resource-exhausted') {
+                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                             console.error(e);
                             errorNetwork = true;
                             pageLayer.widgets['blocker'].update();
@@ -2212,33 +2257,35 @@ const pages = {
                                                         noteId
                                                     });
                                                     try {
-                                                        await Promise.all(uploads[noteId].map(fu => new Promise(async (resolve, reject) => {
+                                                        await Promise.all(uploads[noteId].map(async fu => {
                                                             const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
-                                                            fu.iv = fileEncrypted.iv;
-                                                            const uploadTask = uploadBytesResumable(
-                                                                ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`),
-                                                                fileEncrypted.data,
-                                                                {
-                                                                    cacheControl: 'private, max-age=31536000, immutable'
-                                                                }
-                                                            );
-                                                            uploadTask.on(
-                                                                "state_changed",
-                                                                (snapshot) => {
-                                                                    fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                                                    stack.updateAll({
-                                                                        type: 'upload',
-                                                                        noteId
-                                                                    });
-                                                                },
-                                                                (error) => {
-                                                                    reject(error);
-                                                                },
-                                                                async () => {
-                                                                    resolve();
-                                                                }
-                                                            );
-                                                        })));
+                                                            return new Promise((resolve, reject) => {
+                                                                fu.iv = fileEncrypted.iv;
+                                                                const uploadTask = uploadBytesResumable(
+                                                                    ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`),
+                                                                    fileEncrypted.data,
+                                                                    {
+                                                                        cacheControl: 'private, max-age=31536000, immutable'
+                                                                    }
+                                                                );
+                                                                uploadTask.on(
+                                                                    "state_changed",
+                                                                    (snapshot) => {
+                                                                        fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                                                        stack.updateAll({
+                                                                            type: 'upload',
+                                                                            noteId
+                                                                        });
+                                                                    },
+                                                                    (error) => {
+                                                                        reject(error);
+                                                                    },
+                                                                    () => {
+                                                                        resolve();
+                                                                    }
+                                                                );
+                                                            });
+                                                        }));
                                                         const files = [];
                                                         for (const fu of uploads[noteId]) {
                                                             const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
@@ -2264,33 +2311,46 @@ const pages = {
                                                             noteId
                                                         });
                                                     } catch (e) {
-
-
-
-                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'storage/retry-limit-exceeded') {
                                                             console.error(e);
                                                             errorNetwork = true;
                                                             pageLayer.widgets['blocker'].update();
+                                                            uploads[noteId] = undefined;
+                                                            stack.updateAll({
+                                                                type: 'upload',
+                                                                noteId
+                                                            });
                                                         }
-                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'storage/unauthorized' || e.code === 'storage/unauthenticated') {
+                                                            console.error(e);
+                                                            errorAccessDenied = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                            uploads[noteId] = undefined;
+                                                            stack.updateAll({
+                                                                type: 'upload',
+                                                                noteId
+                                                            });
+                                                        }
+                                                        else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                             console.error(e);
                                                             errorOutOfSync = true;
                                                             pageLayer.widgets['blocker'].update();
+                                                            uploads[noteId] = undefined;
+                                                            stack.updateAll({
+                                                                type: 'upload',
+                                                                noteId
+                                                            });
                                                         }
                                                         else {
                                                             console.error(e);
                                                             errorRuntime = true;
                                                             pageLayer.widgets['blocker'].update();
+                                                            uploads[noteId] = undefined;
+                                                            stack.updateAll({
+                                                                type: 'upload',
+                                                                noteId
+                                                            });
                                                         }
-
-
-
-                                                        console.error(e);
-                                                        uploads[noteId] = undefined;
-                                                        stack.updateAll({
-                                                            type: 'upload',
-                                                            noteId
-                                                        });
                                                     }
                                                 } else {
                                                     try {
@@ -2301,12 +2361,17 @@ const pages = {
                                                             text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                         });
                                                     } catch (e) {
-                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                        if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                             console.error(e);
                                                             errorNetwork = true;
                                                             pageLayer.widgets['blocker'].update();
                                                         }
-                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                            console.error(e);
+                                                            errorAccessDenied = true;
+                                                            pageLayer.widgets['blocker'].update();
+                                                        }
+                                                        else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                             console.error(e);
                                                             errorOutOfSync = true;
                                                             pageLayer.widgets['blocker'].update();
@@ -2571,12 +2636,17 @@ const pages = {
                                                                                     text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                                                 });
                                                                             } catch (e) {
-                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                     console.error(e);
                                                                                     errorNetwork = true;
                                                                                     pageLayer.widgets['blocker'].update();
                                                                                 }
-                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                    console.error(e);
+                                                                                    errorAccessDenied = true;
+                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                }
+                                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                     console.error(e);
                                                                                     errorOutOfSync = true;
                                                                                     pageLayer.widgets['blocker'].update();
@@ -2901,16 +2971,20 @@ const pages = {
                                                                                                                                                     notes: arrayUnion(cid),
                                                                                                                                                 });
                                                                                                                                             } catch (e) {
-                                                                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                                                                if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                                                                     console.error(e);
                                                                                                                                                     errorNetwork = true;
                                                                                                                                                     pageLayer.widgets['blocker'].update();
                                                                                                                                                 }
-                                                                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                                                                else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                                                                                    console.error(e);
+                                                                                                                                                    errorAccessDenied = true;
+                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                }
+                                                                                                                                                else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                                                                     console.error(e);
                                                                                                                                                     errorOutOfSync = true;
                                                                                                                                                     pageLayer.widgets['blocker'].update();
-                                                                                                                                                    i
                                                                                                                                                 }
                                                                                                                                                 else {
                                                                                                                                                     console.error(e);
@@ -2980,12 +3054,17 @@ const pages = {
                                                                                                                         color: color || deleteField(),
                                                                                                                     });
                                                                                                                 } catch (e) {
-                                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                                    if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                                         console.error(e);
                                                                                                                         errorNetwork = true;
                                                                                                                         pageLayer.widgets['blocker'].update();
                                                                                                                     }
-                                                                                                                    else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                                    else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                                                        console.error(e);
+                                                                                                                        errorAccessDenied = true;
+                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                    }
+                                                                                                                    else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                                         console.error(e);
                                                                                                                         errorOutOfSync = true;
                                                                                                                         pageLayer.widgets['blocker'].update();
@@ -3053,12 +3132,17 @@ const pages = {
                                                                                                                 deleteDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id));
                                                                                                             }
                                                                                                         } catch (e) {
-                                                                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'resource-exhausted') {
+                                                                                                            if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                                 console.error(e);
                                                                                                                 errorNetwork = true;
                                                                                                                 pageLayer.widgets['blocker'].update();
                                                                                                             }
-                                                                                                            else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'invalid-argument' || e.code === 'failed-precondition' || e.code === 'out-of-range' || e.code === 'not-found' || e.code === 'already-exists') {
+                                                                                                            else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                                                                                                                console.error(e);
+                                                                                                                errorAccessDenied = true;
+                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                            }
+                                                                                                            else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                                 console.error(e);
                                                                                                                 errorOutOfSync = true;
                                                                                                                 pageLayer.widgets['blocker'].update();
