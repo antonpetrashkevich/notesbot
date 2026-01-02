@@ -291,10 +291,18 @@ function startListenNotebook() {
                     type: 'error_network',
                     error: e,
                 });
-            } else {
+            }
+            else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                 console.error(e);
                 stack.updateAll({
-                    type: 'error',
+                    type: 'error_access_denied',
+                    error: e,
+                });
+            }
+            else {
+                console.error(e);
+                stack.updateAll({
+                    type: 'error_runtime',
                     error: e,
                 });
             }
@@ -337,14 +345,16 @@ const pages = {
                 pageLayer = this;
             },
             update: function (message) {
-                if (errorRuntime || errorNetwork) {
-                }
-                else if (message.type === 'error') {
+                if (message.type === 'error_runtime') {
                     errorRuntime = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_access_denied') {
+                    errorAccessDenied = true;
                     this.widgets['blocker'].update();
                 }
             },
@@ -392,14 +402,16 @@ const pages = {
                 pageLayer = this;
             },
             update: function (message) {
-                if (errorRuntime || errorNetwork) {
-                }
-                else if (message.type === 'error') {
+                if (message.type === 'error_runtime') {
                     errorRuntime = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_access_denied') {
+                    errorAccessDenied = true;
                     this.widgets['blocker'].update();
                 }
             },
@@ -463,14 +475,16 @@ const pages = {
                 pageLayer = this;
             },
             update: function (message) {
-                if (errorRuntime || errorNetwork) {
-                }
-                else if (message.type === 'error') {
+                if (message.type === 'error_runtime') {
                     errorRuntime = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_access_denied') {
+                    errorAccessDenied = true;
                     this.widgets['blocker'].update();
                 }
             },
@@ -548,14 +562,16 @@ const pages = {
                 pageLayer = this;
             },
             update: function (message) {
-                if (errorRuntime || errorNetwork || errorOutOfSync) {
-                }
-                else if (message.type === 'error') {
+                if (message.type === 'error_runtime') {
                     errorRuntime = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_access_denied') {
+                    errorAccessDenied = true;
                     this.widgets['blocker'].update();
                 }
             },
@@ -779,14 +795,16 @@ const pages = {
                 pageLayer = this;
             },
             update: function (message) {
-                if (errorRuntime || errorNetwork) {
-                }
-                else if (message.type === 'error') {
+                if (message.type === 'error_runtime') {
                     errorRuntime = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_access_denied') {
+                    errorAccessDenied = true;
                     this.widgets['blocker'].update();
                 }
             },
@@ -940,14 +958,16 @@ const pages = {
                 pageLayer = this;
             },
             update: function (message) {
-                if (errorRuntime || errorNetwork || errorOutOfSync) {
-                }
-                else if (message.type === 'error') {
+                if (message.type === 'error_runtime') {
                     errorRuntime = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_access_denied') {
+                    errorAccessDenied = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'tree') {
@@ -1980,7 +2000,13 @@ const pages = {
                             console.error(e);
                             errorNetwork = true;
                             pageLayer.widgets['blocker'].update();
-                        } else {
+                        }
+                        else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
+                            console.error(e);
+                            errorAccessDenied = true;
+                            pageLayer.widgets['blocker'].update();
+                        }
+                        else {
                             console.error(e);
                             errorRuntime = true;
                             pageLayer.widgets['blocker'].update();
@@ -1999,14 +2025,16 @@ const pages = {
                 paragraphsListener();
             },
             update: function (message) {
-                if (errorRuntime || errorNetwork || errorOutOfSync) {
-                }
-                else if (message.type === 'error') {
+                if (message.type === 'error_runtime') {
                     errorRuntime = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
+                    this.widgets['blocker'].update();
+                }
+                else if (message.type === 'error_access_denied') {
+                    errorAccessDenied = true;
                     this.widgets['blocker'].update();
                 }
                 else if (message.type === 'tree') {
