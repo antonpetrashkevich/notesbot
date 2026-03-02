@@ -347,15 +347,15 @@ const pages = {
             update: function (message) {
                 if (message.type === 'error_runtime') {
                     errorRuntime = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_access_denied') {
                     errorAccessDenied = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
             },
             config: {
@@ -404,15 +404,15 @@ const pages = {
             update: function (message) {
                 if (message.type === 'error_runtime') {
                     errorRuntime = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_access_denied') {
                     errorAccessDenied = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
             },
             config: {
@@ -477,15 +477,15 @@ const pages = {
             update: function (message) {
                 if (message.type === 'error_runtime') {
                     errorRuntime = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_access_denied') {
                     errorAccessDenied = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
             },
             config: {
@@ -513,12 +513,12 @@ const pages = {
                             onclick: function (event) {
                                 try {
                                     loading = true;
-                                    pageLayer.widgets['blocker'].update();
+                                    pageLayer.widgets.get('blocker').update();
                                     signInWithPopup(firebase.auth, new GoogleAuthProvider());
                                 } catch (e) {
                                     console.error(e);
                                     errorRuntime = true;
-                                    pageLayer.widgets['blocker'].update();
+                                    pageLayer.widgets.get('blocker').update();
                                 }
                             },
                             child: {
@@ -564,15 +564,15 @@ const pages = {
             update: function (message) {
                 if (message.type === 'error_runtime') {
                     errorRuntime = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_access_denied') {
                     errorAccessDenied = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
             },
             config: {
@@ -698,20 +698,20 @@ const pages = {
                                             onclick: async function (event) {
                                                 keyphraseValid = true;
                                                 keyphraseRepeatValid = true;
-                                                if (!this.layer.widgets['keyphrase-input'].domElement.value) {
+                                                if (!this.layer.widgets.get('keyphrase-input').domElement.value) {
                                                     keyphraseValid = false;
                                                 }
-                                                else if (!this.layer.widgets['keyphrase-repeat-input'].domElement.value || this.layer.widgets['keyphrase-input'].domElement.value != this.layer.widgets['keyphrase-repeat-input'].domElement.value) {
+                                                else if (!this.layer.widgets.get('keyphrase-repeat-input').domElement.value || this.layer.widgets.get('keyphrase-input').domElement.value != this.layer.widgets.get('keyphrase-repeat-input').domElement.value) {
                                                     keyphraseRepeatValid = false;
                                                 }
-                                                this.layer.widgets['keyphrase-hint'].update();
-                                                this.layer.widgets['keyphrase-repeat-hint'].update();
+                                                this.layer.widgets.get('keyphrase-hint').update();
+                                                this.layer.widgets.get('keyphrase-repeat-hint').update();
                                                 if (!keyphraseValid || !keyphraseRepeatValid) {
                                                     return;
                                                 }
                                                 const salt = window.crypto.getRandomValues(new Uint8Array(32));
                                                 loading = true;
-                                                pageLayer.widgets['blocker'].update();
+                                                pageLayer.widgets.get('blocker').update();
                                                 const worker = new Argon2Worker();
                                                 worker.onmessage = async (event) => {
                                                     if (event.data.success) {
@@ -724,7 +724,7 @@ const pages = {
                                                                 const notebookDoc = await transaction.get(notebookDocRef);
                                                                 if (notebookDoc.exists()) {
                                                                     errorOutOfSync = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                                 else {
                                                                     transaction.set(notebookDocRef, {
@@ -740,32 +740,32 @@ const pages = {
                                                             if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                 console.error(e);
                                                                 errorNetwork = true;
-                                                                pageLayer.widgets['blocker'].update();
+                                                                pageLayer.widgets.get('blocker').update();
                                                             }
                                                             else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                 console.error(e);
                                                                 errorAccessDenied = true;
-                                                                pageLayer.widgets['blocker'].update();
+                                                                pageLayer.widgets.get('blocker').update();
                                                             }
                                                             else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                 console.error(e);
                                                                 errorOutOfSync = true;
-                                                                pageLayer.widgets['blocker'].update();
+                                                                pageLayer.widgets.get('blocker').update();
                                                             }
                                                             else {
                                                                 console.error(e);
                                                                 errorRuntime = true;
-                                                                pageLayer.widgets['blocker'].update();
+                                                                pageLayer.widgets.get('blocker').update();
                                                             }
                                                         }
                                                     } else {
                                                         console.error(event.data.error);
                                                         errorRuntime = true;
-                                                        pageLayer.widgets['blocker'].update();
+                                                        pageLayer.widgets.get('blocker').update();
                                                     }
                                                 };
                                                 worker.postMessage({
-                                                    password: this.layer.widgets['keyphrase-input'].domElement.value,
+                                                    password: this.layer.widgets.get('keyphrase-input').domElement.value,
                                                     salt: salt,
                                                 });
                                             }
@@ -802,15 +802,15 @@ const pages = {
             update: function (message) {
                 if (message.type === 'error_runtime') {
                     errorRuntime = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_access_denied') {
                     errorAccessDenied = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
             },
             config: {
@@ -885,7 +885,7 @@ const pages = {
                                             text: 'Save',
                                             onclick: async function (event) {
                                                 loading = true;
-                                                pageLayer.widgets['blocker'].update();
+                                                pageLayer.widgets.get('blocker').update();
                                                 const worker = new Argon2Worker();
                                                 worker.onmessage = async (event) => {
                                                     if (event.data.success) {
@@ -909,16 +909,16 @@ const pages = {
                                                         } catch (e) {
                                                             keyphraseValid = false;
                                                             loading = false;
-                                                            pageLayer.widgets['page'].update();
+                                                            pageLayer.widgets.get('page').update();
                                                         }
                                                     } else {
                                                         console.error(event.data.error);
                                                         errorRuntime = true;
-                                                        pageLayer.widgets['blocker'].update();
+                                                        pageLayer.widgets.get('blocker').update();
                                                     }
                                                 };
                                                 worker.postMessage({
-                                                    password: this.layer.widgets['keyphrase-input'].domElement.value,
+                                                    password: this.layer.widgets.get('keyphrase-input').domElement.value,
                                                     salt: notebook.salt.toUint8Array(),
                                                 });
                                             }
@@ -965,25 +965,25 @@ const pages = {
             update: function (message) {
                 if (message.type === 'error_runtime') {
                     errorRuntime = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_access_denied') {
                     errorAccessDenied = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'tree') {
                     if (!treeNodeExists(folderId)) {
                         errorOutOfSync = true;
-                        this.widgets['blocker'].update();
+                        this.widgets.get('blocker').update();
                     } else {
                         updateMetaTags(this.meta());
                         children = Object.keys(tree).filter(id => tree[id].parent === folderId).sort((id1, id2) => tree[id1].order - tree[id2].order);
-                        this.widgets['header'].update();
-                        this.widgets['tree'].update();
+                        this.widgets.get('header').update();
+                        this.widgets.get('tree').update();
                     }
                 }
             },
@@ -1050,7 +1050,7 @@ const pages = {
                                                         onclick: async function (event) {
                                                             await stack.pop();
                                                             loading = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                             const neighborId = children[children.indexOf(cid) - 1];
                                                             try {
                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1065,31 +1065,31 @@ const pages = {
                                                                     }
                                                                     else {
                                                                         errorOutOfSync = true;
-                                                                        pageLayer.widgets['blocker'].update();
+                                                                        pageLayer.widgets.get('blocker').update();
                                                                     }
                                                                 });
                                                                 loading = false;
-                                                                pageLayer.widgets['blocker'].update();
+                                                                pageLayer.widgets.get('blocker').update();
                                                             } catch (e) {
                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                     console.error(e);
                                                                     errorNetwork = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                     console.error(e);
                                                                     errorAccessDenied = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                     console.error(e);
                                                                     errorOutOfSync = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                                 else {
                                                                     console.error(e);
                                                                     errorRuntime = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                             }
                                                         }
@@ -1099,7 +1099,7 @@ const pages = {
                                                         onclick: async function (event) {
                                                             await stack.pop();
                                                             loading = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                             const neighborId = children[children.indexOf(cid) + 1];
                                                             try {
                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
@@ -1114,31 +1114,31 @@ const pages = {
                                                                     }
                                                                     else {
                                                                         errorOutOfSync = true;
-                                                                        pageLayer.widgets['blocker'].update();
+                                                                        pageLayer.widgets.get('blocker').update();
                                                                     }
                                                                 });
                                                                 loading = false;
-                                                                pageLayer.widgets['blocker'].update();
+                                                                pageLayer.widgets.get('blocker').update();
                                                             } catch (e) {
                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                     console.error(e);
                                                                     errorNetwork = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                     console.error(e);
                                                                     errorAccessDenied = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                     console.error(e);
                                                                     errorOutOfSync = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                                 else {
                                                                     console.error(e);
                                                                     errorRuntime = true;
-                                                                    pageLayer.widgets['blocker'].update();
+                                                                    pageLayer.widgets.get('blocker').update();
                                                                 }
                                                             }
                                                         }
@@ -1188,7 +1188,7 @@ const pages = {
                                                                                             }
                                                                                             await stack.pop(steps);
                                                                                             loading = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -1202,31 +1202,31 @@ const pages = {
                                                                                                     }
                                                                                                     else {
                                                                                                         errorOutOfSync = true;
-                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                     }
                                                                                                 });
                                                                                                 loading = false;
-                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                                     console.error(e);
                                                                                                     errorAccessDenied = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                     console.error(e);
                                                                                                     errorOutOfSync = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1299,17 +1299,17 @@ const pages = {
                                                                                         text: 'Rename',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
-                                                                                            if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                                            if (!this.layer.widgets.get('new-folder-name-input').domElement.value?.trim()) {
                                                                                                 nameValid = false;
                                                                                             }
-                                                                                            this.layer.widgets['new-folder-name-hint'].update();
+                                                                                            this.layer.widgets.get('new-folder-name-hint').update();
                                                                                             if (!nameValid) {
                                                                                                 return;
                                                                                             }
-                                                                                            const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
+                                                                                            const name = this.layer.widgets.get('new-folder-name-input').domElement.value.trim();
                                                                                             await stack.pop();
                                                                                             loading = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -1323,31 +1323,31 @@ const pages = {
                                                                                                     }
                                                                                                     else {
                                                                                                         errorOutOfSync = true;
-                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                     }
                                                                                                 });
                                                                                                 loading = false;
-                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                                     console.error(e);
                                                                                                     errorAccessDenied = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                     console.error(e);
                                                                                                     errorOutOfSync = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1378,7 +1378,7 @@ const pages = {
                                                                             onclick: async function (event) {
                                                                                 await stack.pop();
                                                                                 loading = true;
-                                                                                pageLayer.widgets['blocker'].update();
+                                                                                pageLayer.widgets.get('blocker').update();
                                                                                 try {
                                                                                     const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                     await runTransaction(firebase.firestore, async (transaction) => {
@@ -1391,31 +1391,31 @@ const pages = {
                                                                                         }
                                                                                         else {
                                                                                             errorOutOfSync = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                         }
                                                                                     });
                                                                                     loading = false;
-                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                 } catch (e) {
                                                                                     if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                         console.error(e);
                                                                                         errorNetwork = true;
-                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                     }
                                                                                     else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                         console.error(e);
                                                                                         errorAccessDenied = true;
-                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                     }
                                                                                     else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                         console.error(e);
                                                                                         errorOutOfSync = true;
-                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                     }
                                                                                     else {
                                                                                         console.error(e);
                                                                                         errorRuntime = true;
-                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                     }
                                                                                 }
                                                                             }
@@ -1562,7 +1562,7 @@ const pages = {
                                                                                 onclick: async function (event) {
                                                                                     await stack.pop();
                                                                                     loading = true;
-                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                     try {
                                                                                         const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                         await runTransaction(firebase.firestore, async (transaction) => {
@@ -1575,31 +1575,31 @@ const pages = {
                                                                                             }
                                                                                             else {
                                                                                                 errorOutOfSync = true;
-                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                             }
                                                                                         });
                                                                                         loading = false;
-                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                     } catch (e) {
                                                                                         if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                             console.error(e);
                                                                                             errorNetwork = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                         }
                                                                                         else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                             console.error(e);
                                                                                             errorAccessDenied = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                         }
                                                                                         else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                             console.error(e);
                                                                                             errorOutOfSync = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                         }
                                                                                         else {
                                                                                             console.error(e);
                                                                                             errorRuntime = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                         }
                                                                                     }
                                                                                 }
@@ -1682,7 +1682,7 @@ const pages = {
                                                                         },
                                                                         oninput: function (event) {
                                                                             filterTreeQuery = event.target.value;
-                                                                            this.layer.widgets['tree'].update();
+                                                                            this.layer.widgets.get('tree').update();
                                                                         },
                                                                     },
                                                                     components.button({
@@ -1695,8 +1695,8 @@ const pages = {
                                                                         }),
                                                                         onclick: function (event) {
                                                                             filterTreeQuery = undefined;
-                                                                            this.layer.widgets['filter-tree'].update();
-                                                                            this.layer.widgets['tree'].update();
+                                                                            this.layer.widgets.get('filter-tree').update();
+                                                                            this.layer.widgets.get('tree').update();
                                                                         }
                                                                     }),
                                                                 ]
@@ -1807,17 +1807,17 @@ const pages = {
                                                                                         text: 'Create',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
-                                                                                            if (!this.layer.widgets['new-folder-name-input'].domElement.value?.trim()) {
+                                                                                            if (!this.layer.widgets.get('new-folder-name-input').domElement.value?.trim()) {
                                                                                                 nameValid = false;
                                                                                             }
-                                                                                            this.layer.widgets['new-folder-name-hint'].update();
+                                                                                            this.layer.widgets.get('new-folder-name-hint').update();
                                                                                             if (!nameValid) {
                                                                                                 return;
                                                                                             }
-                                                                                            const name = this.layer.widgets['new-folder-name-input'].domElement.value.trim();
+                                                                                            const name = this.layer.widgets.get('new-folder-name-input').domElement.value.trim();
                                                                                             await stack.pop();
                                                                                             loading = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -1831,31 +1831,31 @@ const pages = {
                                                                                                     }
                                                                                                     else {
                                                                                                         errorOutOfSync = true;
-                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                     }
                                                                                                 });
                                                                                                 loading = false;
-                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                                     console.error(e);
                                                                                                     errorAccessDenied = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                     console.error(e);
                                                                                                     errorOutOfSync = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -1915,17 +1915,17 @@ const pages = {
                                                                                         text: 'Create',
                                                                                         onclick: async function (event) {
                                                                                             nameValid = true;
-                                                                                            if (!this.layer.widgets['new-note-name-input'].domElement.value?.trim()) {
+                                                                                            if (!this.layer.widgets.get('new-note-name-input').domElement.value?.trim()) {
                                                                                                 nameValid = false;
                                                                                             }
-                                                                                            this.layer.widgets['new-note-name-hint'].update();
+                                                                                            this.layer.widgets.get('new-note-name-hint').update();
                                                                                             if (!nameValid) {
                                                                                                 return;
                                                                                             }
-                                                                                            const name = this.layer.widgets['new-note-name-input'].domElement.value.trim();
+                                                                                            const name = this.layer.widgets.get('new-note-name-input').domElement.value.trim();
                                                                                             await stack.pop();
                                                                                             loading = true;
-                                                                                            pageLayer.widgets['blocker'].update();
+                                                                                            pageLayer.widgets.get('blocker').update();
                                                                                             try {
                                                                                                 const notebookDocRef = doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid);
                                                                                                 await runTransaction(firebase.firestore, async (transaction) => {
@@ -1939,31 +1939,31 @@ const pages = {
                                                                                                     }
                                                                                                     else {
                                                                                                         errorOutOfSync = true;
-                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                     }
                                                                                                 });
                                                                                                 loading = false;
-                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                             } catch (e) {
                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                     console.error(e);
                                                                                                     errorNetwork = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                                     console.error(e);
                                                                                                     errorAccessDenied = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                     console.error(e);
                                                                                                     errorOutOfSync = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                                 else {
                                                                                                     console.error(e);
                                                                                                     errorRuntime = true;
-                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                 }
                                                                                             }
                                                                                         }
@@ -2038,23 +2038,23 @@ const pages = {
                                 }))) : undefined
                             });
                         }
-                        this.widgets['paragraphs'].update();
+                        this.widgets.get('paragraphs').update();
                     },
                     (e) => {
                         if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                             console.error(e);
                             errorNetwork = true;
-                            pageLayer.widgets['blocker'].update();
+                            pageLayer.widgets.get('blocker').update();
                         }
                         else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                             console.error(e);
                             errorAccessDenied = true;
-                            pageLayer.widgets['blocker'].update();
+                            pageLayer.widgets.get('blocker').update();
                         }
                         else {
                             console.error(e);
                             errorRuntime = true;
-                            pageLayer.widgets['blocker'].update();
+                            pageLayer.widgets.get('blocker').update();
                         }
                     }
                 );
@@ -2072,31 +2072,31 @@ const pages = {
             update: function (message) {
                 if (message.type === 'error_runtime') {
                     errorRuntime = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_network') {
                     errorNetwork = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'error_access_denied') {
                     errorAccessDenied = true;
-                    this.widgets['blocker'].update();
+                    this.widgets.get('blocker').update();
                 }
                 else if (message.type === 'tree') {
                     if (!treeNodeExists(noteId)) {
                         errorOutOfSync = true;
-                        this.widgets['blocker'].update();
+                        this.widgets.get('blocker').update();
                     }
                     else {
                         updateMetaTags(this.meta());
-                        this.widgets['header'].update();
+                        this.widgets.get('header').update();
                     }
                 }
                 else if (message.type === 'upload' && message.noteId === noteId) {
-                    this.widgets['uploads'].update();
+                    this.widgets.get('uploads').update();
                 }
                 else if (message.type === 'download') {
-                    this.widgets[`file-actions-${message.fileId}`]?.update();
+                    this.widgets.get(`file-actions-${message.fileId}`)?.update();
                 }
             },
             config: {
@@ -2204,8 +2204,8 @@ const pages = {
                                                         });
                                                     } else {
                                                         filesAttached = filesSelected;
-                                                        this.layer.widgets['files-attached'].update();
-                                                        this.layer.widgets['attach_button'].update();
+                                                        this.layer.widgets.get('files-attached').update();
+                                                        this.layer.widgets.get('attach_button').update();
                                                     }
                                                 }
                                             }
@@ -2218,10 +2218,10 @@ const pages = {
                                                 onclick: function (event) {
                                                     if (filesAttached) {
                                                         filesAttached = undefined;
-                                                        this.layer.widgets['files-attached'].update();
-                                                        this.layer.widgets['attach_button'].update();
+                                                        this.layer.widgets.get('files-attached').update();
+                                                        this.layer.widgets.get('attach_button').update();
                                                     } else {
-                                                        stack.at(-1).widgets['files-input'].domElement.click();
+                                                        stack.at(-1).widgets.get('files-input').domElement.click();
                                                     }
                                                 }
                                             })
@@ -2231,15 +2231,15 @@ const pages = {
                                             text: 'Add',
                                             onclick: async function (event) {
                                                 addParagraphValid = true;
-                                                if (!this.layer.widgets['add-paragraph-input'].domElement.value.trim()) {
+                                                if (!this.layer.widgets.get('add-paragraph-input').domElement.value.trim()) {
                                                     addParagraphValid = false;
                                                 }
-                                                this.layer.widgets['add-paragraph-hint'].update();
+                                                this.layer.widgets.get('add-paragraph-hint').update();
                                                 if (!addParagraphValid) {
                                                     return;
                                                 }
-                                                const text = this.layer.widgets['add-paragraph-input'].domElement.value;
-                                                this.layer.widgets['add-paragraph-input'].domElement.value = '';
+                                                const text = this.layer.widgets.get('add-paragraph-input').domElement.value;
+                                                this.layer.widgets.get('add-paragraph-input').domElement.value = '';
                                                 if (filesAttached) {
                                                     uploads[noteId] = [];
                                                     for (const file of filesAttached) {
@@ -2250,8 +2250,8 @@ const pages = {
                                                         });
                                                     }
                                                     filesAttached = undefined;
-                                                    this.layer.widgets['files-attached'].update();
-                                                    this.layer.widgets['attach_button'].update();
+                                                    this.layer.widgets.get('files-attached').update();
+                                                    this.layer.widgets.get('attach_button').update();
                                                     stack.updateAll({
                                                         type: 'upload',
                                                         noteId
@@ -2314,7 +2314,7 @@ const pages = {
                                                         if (e.code === 'unavailable' || e.code === 'deadline-exceeded' || e.code === 'storage/retry-limit-exceeded') {
                                                             console.error(e);
                                                             errorNetwork = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                             uploads[noteId] = undefined;
                                                             stack.updateAll({
                                                                 type: 'upload',
@@ -2324,7 +2324,7 @@ const pages = {
                                                         else if (e.code === 'unauthenticated' || e.code === 'permission-denied' || e.code === 'storage/unauthorized' || e.code === 'storage/unauthenticated') {
                                                             console.error(e);
                                                             errorAccessDenied = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                             uploads[noteId] = undefined;
                                                             stack.updateAll({
                                                                 type: 'upload',
@@ -2334,7 +2334,7 @@ const pages = {
                                                         else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                             console.error(e);
                                                             errorOutOfSync = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                             uploads[noteId] = undefined;
                                                             stack.updateAll({
                                                                 type: 'upload',
@@ -2344,7 +2344,7 @@ const pages = {
                                                         else {
                                                             console.error(e);
                                                             errorRuntime = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                             uploads[noteId] = undefined;
                                                             stack.updateAll({
                                                                 type: 'upload',
@@ -2364,22 +2364,22 @@ const pages = {
                                                         if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                             console.error(e);
                                                             errorNetwork = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                         }
                                                         else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                             console.error(e);
                                                             errorAccessDenied = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                         }
                                                         else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                             console.error(e);
                                                             errorOutOfSync = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                         }
                                                         else {
                                                             console.error(e);
                                                             errorRuntime = true;
-                                                            pageLayer.widgets['blocker'].update();
+                                                            pageLayer.widgets.get('blocker').update();
                                                         }
                                                     }
                                                 }
@@ -2439,7 +2439,7 @@ const pages = {
                                                 },
                                                 oninput: function (event) {
                                                     filterParagraphQuery = event.target.value;
-                                                    this.layer.widgets['paragraphs'].update();
+                                                    this.layer.widgets.get('paragraphs').update();
                                                 },
                                             },
                                             components.button({
@@ -2484,8 +2484,8 @@ const pages = {
                                                                             onclick: async function (event) {
                                                                                 stack.pop();
                                                                                 filterParagraphColor = color;
-                                                                                pageLayer.widgets['filter-paragraphs'].update();
-                                                                                pageLayer.widgets['paragraphs'].update();
+                                                                                pageLayer.widgets.get('filter-paragraphs').update();
+                                                                                pageLayer.widgets.get('paragraphs').update();
                                                                             }
                                                                         })
                                                                         )
@@ -2507,8 +2507,8 @@ const pages = {
                                                 onclick: function (event) {
                                                     filterParagraphColor = undefined;
                                                     filterParagraphQuery = undefined;
-                                                    this.layer.widgets['filter-paragraphs'].update();
-                                                    this.layer.widgets['paragraphs'].update();
+                                                    this.layer.widgets.get('filter-paragraphs').update();
+                                                    this.layer.widgets.get('paragraphs').update();
                                                 }
                                             }),
                                         ]
@@ -2612,7 +2612,7 @@ const pages = {
                                                                             editParagraphId = undefined;
                                                                             editParagraphValid = undefined;
                                                                             editParagraphText = undefined;
-                                                                            this.layer.widgets['paragraphs'].update();
+                                                                            this.layer.widgets.get('paragraphs').update();
                                                                         }
                                                                     }),
                                                                     components.buttons.form({
@@ -2621,17 +2621,17 @@ const pages = {
                                                                         onclick: async function (event) {
                                                                             try {
                                                                                 editParagraphValid = true;
-                                                                                if (!this.layer.widgets['edit-paragraph-input'].domElement.value.trim()) {
+                                                                                if (!this.layer.widgets.get('edit-paragraph-input').domElement.value.trim()) {
                                                                                     editParagraphValid = false;
                                                                                 }
-                                                                                this.layer.widgets['edit-paragraph-hint'].update();
+                                                                                this.layer.widgets.get('edit-paragraph-hint').update();
                                                                                 if (!editParagraphValid) {
                                                                                     return;
                                                                                 }
                                                                                 editParagraphId = undefined;
                                                                                 editParagraphValid = undefined;
                                                                                 editParagraphText = undefined;
-                                                                                const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets['edit-paragraph-input'].domElement.value));
+                                                                                const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets.get('edit-paragraph-input').domElement.value));
                                                                                 updateDoc(doc(firebase.firestore, 'notebooks', firebase.auth.currentUser.uid, 'paragraphs', paragraph.id), {
                                                                                     text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
                                                                                 });
@@ -2639,22 +2639,22 @@ const pages = {
                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                     console.error(e);
                                                                                     errorNetwork = true;
-                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                 }
                                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                     console.error(e);
                                                                                     errorAccessDenied = true;
-                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                 }
                                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                     console.error(e);
                                                                                     errorOutOfSync = true;
-                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                 }
                                                                                 else {
                                                                                     console.error(e);
                                                                                     errorRuntime = true;
-                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                 }
                                                                             }
                                                                         }
@@ -2974,22 +2974,22 @@ const pages = {
                                                                                                                                                 if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                                                                     console.error(e);
                                                                                                                                                     errorNetwork = true;
-                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                                                                 }
                                                                                                                                                 else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                                                                                     console.error(e);
                                                                                                                                                     errorAccessDenied = true;
-                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                                                                 }
                                                                                                                                                 else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                                                                     console.error(e);
                                                                                                                                                     errorOutOfSync = true;
-                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                                                                 }
                                                                                                                                                 else {
                                                                                                                                                     console.error(e);
                                                                                                                                                     errorRuntime = true;
-                                                                                                                                                    pageLayer.widgets['blocker'].update();
+                                                                                                                                                    pageLayer.widgets.get('blocker').update();
                                                                                                                                                 }
                                                                                                                                             }
                                                                                                                                         }
@@ -3057,22 +3057,22 @@ const pages = {
                                                                                                                     if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                                         console.error(e);
                                                                                                                         errorNetwork = true;
-                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                                     }
                                                                                                                     else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                                                         console.error(e);
                                                                                                                         errorAccessDenied = true;
-                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                                     }
                                                                                                                     else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                                         console.error(e);
                                                                                                                         errorOutOfSync = true;
-                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                                     }
                                                                                                                     else {
                                                                                                                         console.error(e);
                                                                                                                         errorRuntime = true;
-                                                                                                                        pageLayer.widgets['blocker'].update();
+                                                                                                                        pageLayer.widgets.get('blocker').update();
                                                                                                                     }
                                                                                                                 }
                                                                                                             }
@@ -3096,10 +3096,10 @@ const pages = {
                                                                                 onclick: function (event) {
                                                                                     if (!editParagraphId) {
                                                                                         editParagraphId = paragraph.id;
-                                                                                        editParagraphHeight = this.layer.widgets[`paragraph-${paragraph.id}`].domElement.getBoundingClientRect().height;
+                                                                                        editParagraphHeight = this.layer.widgets.get(`paragraph-${paragraph.id}`).domElement.getBoundingClientRect().height;
                                                                                         editParagraphValid = true;
                                                                                         editParagraphText = paragraph.text;
-                                                                                        this.layer.widgets['paragraphs'].update();
+                                                                                        this.layer.widgets.get('paragraphs').update();
                                                                                     }
                                                                                 }
                                                                             }),
@@ -3135,22 +3135,22 @@ const pages = {
                                                                                                             if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
                                                                                                                 console.error(e);
                                                                                                                 errorNetwork = true;
-                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                                             }
                                                                                                             else if (e.code === 'unauthenticated' || e.code === 'permission-denied') {
                                                                                                                 console.error(e);
                                                                                                                 errorAccessDenied = true;
-                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                                             }
                                                                                                             else if (e.code === 'invalid-argument' || e.code === 'not-found' || e.code === 'already-exists' || e.code === 'out-of-range') {
                                                                                                                 console.error(e);
                                                                                                                 errorOutOfSync = true;
-                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                                             }
                                                                                                             else {
                                                                                                                 console.error(e);
                                                                                                                 errorRuntime = true;
-                                                                                                                pageLayer.widgets['blocker'].update();
+                                                                                                                pageLayer.widgets.get('blocker').update();
                                                                                                             }
                                                                                                         }
                                                                                                     }
@@ -3178,7 +3178,7 @@ const pages = {
                                             color: colors.foreground.secondary(),
                                             onclick: function (event) {
                                                 limitParagraphs = false;
-                                                this.layer.widgets['paragraphs'].update();
+                                                this.layer.widgets.get('paragraphs').update();
                                             },
                                             child: {
                                                 fontWeight: 600,
