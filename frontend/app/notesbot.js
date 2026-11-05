@@ -1,4 +1,5 @@
 import Argon2Worker from "./workers/argon2.js?worker";
+import { marked } from "marked";
 
 import { appName, stack, smallViewport, theme, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from "xpl_kit/core";
 import { palette, colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from "xpl_kit/commons";
@@ -2652,9 +2653,13 @@ const pages = {
 																children: [
 																	paragraph.text
 																		? {
+																				display: "-webkit-box",
 																				width: "100%",
 																				whiteSpace: "pre-wrap",
 																				wordBreak: "break-word",
+																				webkitLineClamp: 8,
+																				webkitBoxOrient: "vertical",
+																				overflow: "hidden",
 																				text: paragraph.text,
 																			}
 																		: null,
