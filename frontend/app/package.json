@@ -1,18 +1,20 @@
 {
-  "name": "notesbot-app",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build --mode production",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "vite": "^6.1.0",
-    "vite-plugin-singlefile": "^2.1.0"
-  },
-  "dependencies": {
-    "firebase": "^11.3.0"
-  }
+	"name": "notesbot-app",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build --mode production",
+		"preview": "vite preview"
+	},
+	"devDependencies": {
+		"vite": "^6.1.0",
+		"vite-plugin-singlefile": "^2.1.0"
+	},
+	"dependencies": {
+		"xpl_kit": "file:/home/n1/projects/xpl_kit",
+		"argon2-browser": "^1.18.0",
+		"firebase": "^11.3.0"
+	}
 }
