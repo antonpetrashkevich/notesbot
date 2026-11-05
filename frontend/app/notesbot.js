@@ -2893,6 +2893,36 @@ const pages = {
 																						child: components.icon({
 																							fontSize: "1.25rem",
 																							color: buttonColor,
+																							ligature: "expand_content",
+																						}),
+																						onclick: function (event) {
+																							function expandParagraphPage(paragraphText) {
+																								return {
+																									path: `#expanded`,
+																									config: () => {
+																										return {
+																											...layouts.base("start", "center"),
+																											children: [
+																												{
+																													width: "min(640px, 100% - 1rem)",
+																													whiteSpace: "pre-wrap",
+																													wordBreak: "break-word",
+																													padding: "0.5rem",
+																													text: paragraphText,
+																												},
+																											],
+																										};
+																									},
+																								};
+																							}
+																							stack.push(expandParagraphPage(paragraph.text));
+																						},
+																					}),
+																					components.button({
+																						backgroundHoverColor: buttonBackgroundHoverColor,
+																						child: components.icon({
+																							fontSize: "1.25rem",
+																							color: buttonColor,
 																							ligature: "content_copy",
 																						}),
 																						onclick: function (event) {
