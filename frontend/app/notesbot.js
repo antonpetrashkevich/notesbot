@@ -2903,13 +2903,13 @@ const pages = {
 																										return {
 																											...layouts.base("start", "center"),
 																											backgroundColor,
+																											color: textColor,
 																											children: [
 																												{
 																													width: "min(640px, 100% - 1rem)",
 																													padding: "0.5rem",
 																													whiteSpace: "pre-wrap",
 																													wordBreak: "break-word",
-																													color: textColor,
 																													text: paragraphText,
 																												},
 																											],
