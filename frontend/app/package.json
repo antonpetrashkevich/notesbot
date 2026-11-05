@@ -13,8 +13,9 @@
 		"vite-plugin-singlefile": "^2.1.0"
 	},
 	"dependencies": {
-		"xpl_kit": "file:/home/n1/projects/xpl_kit",
 		"argon2-browser": "^1.18.0",
-		"firebase": "^11.3.0"
+		"firebase": "^11.3.0",
+		"marked": "^18.1.3",
+		"xpl_kit": "file:/home/n1/projects/xpl_kit"
 	}
 }
