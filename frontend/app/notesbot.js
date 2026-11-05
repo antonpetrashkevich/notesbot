@@ -601,7 +601,7 @@ const pages = {
 											text: "Don't use easy-to-guess combinations like 'password', '12345' and so on.",
 										},
 										{
-											text: "Passwords shorter than 20 characters will be crackable 50 years from now.",
+											text: "Passwords shorter than 20 characters will become crackable 50 years from now.",
 										},
 									],
 								},
