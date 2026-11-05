@@ -1980,7 +1980,7 @@ const pages = {
 		let limitParagraphs = true;
 		let filterParagraphColor;
 		let filterParagraphQuery;
-		let addParagraphValid = true;
+		let addParagraphText;
 		let filesAttached;
 
 		return {
@@ -2112,18 +2112,13 @@ const pages = {
 							...layouts.column("start", "start", "1rem"),
 							children: [
 								{
-									id: "add-paragraph-hint",
-									config: () => ({
-										display: addParagraphValid ? "none" : "block",
-										fontWeight: 500,
-										color: colors.foreground.danger(),
-										text: "Required",
-									}),
-								},
-								{
 									id: "add-paragraph-input",
 									config: components.inputs.textArea({
 										height: "16rem",
+										oninput: function (event) {
+											addParagraphText = event.target.value;
+											pageLayer.widgets.get("add-button").update();
+										},
 									}),
 								},
 								{
@@ -2202,157 +2197,156 @@ const pages = {
 													},
 												}),
 										},
-										components.buttons.form({
-											priority: "primary",
-											text: "Add",
-											onclick: async function (event) {
-												addParagraphValid = true;
-												if (!this.layer.widgets.get("add-paragraph-input").domElement.value.trim()) {
-													addParagraphValid = false;
-												}
-												this.layer.widgets.get("add-paragraph-hint").update();
-												if (!addParagraphValid) {
-													return;
-												}
-												const text = this.layer.widgets.get("add-paragraph-input").domElement.value;
-												this.layer.widgets.get("add-paragraph-input").domElement.value = "";
-												if (filesAttached) {
-													uploads[noteId] = [];
-													for (const file of filesAttached) {
-														uploads[noteId].push({
-															id: crypto.randomUUID(),
-															file,
-															completed: 0,
-														});
-													}
-													filesAttached = undefined;
-													this.layer.widgets.get("files-attached").update();
-													this.layer.widgets.get("attach_button").update();
-													stack.updateAll({
-														type: "upload",
-														noteId,
-													});
-													try {
-														await Promise.all(
-															uploads[noteId].map(async (fu) => {
-																const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
-																return new Promise((resolve, reject) => {
-																	fu.iv = fileEncrypted.iv;
-																	const uploadTask = uploadBytesResumable(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`), fileEncrypted.data, {
-																		cacheControl: "private, max-age=31536000, immutable",
-																	});
-																	uploadTask.on(
-																		"state_changed",
-																		(snapshot) => {
-																			fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-																			stack.updateAll({
-																				type: "upload",
-																				noteId,
-																			});
-																		},
-																		(error) => {
-																			reject(error);
-																		},
-																		() => {
-																			resolve();
-																		},
-																	);
+										{
+											id: "add-button",
+											config: () =>
+												components.buttons.form({
+													priority: "primary",
+													disabled: !addParagraphText?.trim(),
+													text: "Add",
+													onclick: async function (event) {
+														const text = addParagraphText;
+														addParagraphText = undefined;
+														this.update();
+														this.layer.widgets.get("add-paragraph-input").domElement.value = "";
+														if (filesAttached) {
+															uploads[noteId] = [];
+															for (const file of filesAttached) {
+																uploads[noteId].push({
+																	id: crypto.randomUUID(),
+																	file,
+																	completed: 0,
 																});
-															}),
-														);
-														const files = [];
-														for (const fu of uploads[noteId]) {
-															const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
-															files.push({
-																id: fu.id,
-																size: fu.file.size,
-																type: fu.file.type,
-																lastModified: fu.file.lastModified,
-																name: { iv: Bytes.fromUint8Array(fileNameEncrypted.iv), data: Bytes.fromUint8Array(fileNameEncrypted.data) },
-																iv: Bytes.fromUint8Array(fu.iv),
-															});
-														}
-														const textEncrypted = await encrypt(key, textEncoder.encode(text));
-														addDoc(collection(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs"), {
-															timestamp: Math.floor(Date.now() / 1000),
-															notes: [noteId],
-															text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-															files,
-														});
-														uploads[noteId] = undefined;
-														stack.updateAll({
-															type: "upload",
-															noteId,
-														});
-													} catch (e) {
-														if (e.code === "unavailable" || e.code === "deadline-exceeded" || e.code === "storage/retry-limit-exceeded") {
-															console.error(e);
-															errorNetwork = true;
-															pageLayer.widgets.get("blocker").update();
-															uploads[noteId] = undefined;
+															}
+															filesAttached = undefined;
+															this.layer.widgets.get("files-attached").update();
+															this.layer.widgets.get("attach_button").update();
 															stack.updateAll({
 																type: "upload",
 																noteId,
 															});
-														} else if (e.code === "unauthenticated" || e.code === "permission-denied" || e.code === "storage/unauthorized" || e.code === "storage/unauthenticated") {
-															console.error(e);
-															errorAccessDenied = true;
-															pageLayer.widgets.get("blocker").update();
-															uploads[noteId] = undefined;
-															stack.updateAll({
-																type: "upload",
-																noteId,
-															});
-														} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
-															console.error(e);
-															errorOutOfSync = true;
-															pageLayer.widgets.get("blocker").update();
-															uploads[noteId] = undefined;
-															stack.updateAll({
-																type: "upload",
-																noteId,
-															});
+															try {
+																await Promise.all(
+																	uploads[noteId].map(async (fu) => {
+																		const fileEncrypted = await encrypt(key, await fu.file.arrayBuffer());
+																		return new Promise((resolve, reject) => {
+																			fu.iv = fileEncrypted.iv;
+																			const uploadTask = uploadBytesResumable(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${fu.id}.encrypted`), fileEncrypted.data, {
+																				cacheControl: "private, max-age=31536000, immutable",
+																			});
+																			uploadTask.on(
+																				"state_changed",
+																				(snapshot) => {
+																					fu.completed = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+																					stack.updateAll({
+																						type: "upload",
+																						noteId,
+																					});
+																				},
+																				(error) => {
+																					reject(error);
+																				},
+																				() => {
+																					resolve();
+																				},
+																			);
+																		});
+																	}),
+																);
+																const files = [];
+																for (const fu of uploads[noteId]) {
+																	const fileNameEncrypted = await encrypt(key, textEncoder.encode(fu.file.name));
+																	files.push({
+																		id: fu.id,
+																		size: fu.file.size,
+																		type: fu.file.type,
+																		lastModified: fu.file.lastModified,
+																		name: { iv: Bytes.fromUint8Array(fileNameEncrypted.iv), data: Bytes.fromUint8Array(fileNameEncrypted.data) },
+																		iv: Bytes.fromUint8Array(fu.iv),
+																	});
+																}
+																const textEncrypted = await encrypt(key, textEncoder.encode(text));
+																addDoc(collection(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs"), {
+																	timestamp: Math.floor(Date.now() / 1000),
+																	notes: [noteId],
+																	text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+																	files,
+																});
+																uploads[noteId] = undefined;
+																stack.updateAll({
+																	type: "upload",
+																	noteId,
+																});
+															} catch (e) {
+																if (e.code === "unavailable" || e.code === "deadline-exceeded" || e.code === "storage/retry-limit-exceeded") {
+																	console.error(e);
+																	errorNetwork = true;
+																	pageLayer.widgets.get("blocker").update();
+																	uploads[noteId] = undefined;
+																	stack.updateAll({
+																		type: "upload",
+																		noteId,
+																	});
+																} else if (e.code === "unauthenticated" || e.code === "permission-denied" || e.code === "storage/unauthorized" || e.code === "storage/unauthenticated") {
+																	console.error(e);
+																	errorAccessDenied = true;
+																	pageLayer.widgets.get("blocker").update();
+																	uploads[noteId] = undefined;
+																	stack.updateAll({
+																		type: "upload",
+																		noteId,
+																	});
+																} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
+																	console.error(e);
+																	errorOutOfSync = true;
+																	pageLayer.widgets.get("blocker").update();
+																	uploads[noteId] = undefined;
+																	stack.updateAll({
+																		type: "upload",
+																		noteId,
+																	});
+																} else {
+																	console.error(e);
+																	errorRuntime = true;
+																	pageLayer.widgets.get("blocker").update();
+																	uploads[noteId] = undefined;
+																	stack.updateAll({
+																		type: "upload",
+																		noteId,
+																	});
+																}
+															}
 														} else {
-															console.error(e);
-															errorRuntime = true;
-															pageLayer.widgets.get("blocker").update();
-															uploads[noteId] = undefined;
-															stack.updateAll({
-																type: "upload",
-																noteId,
-															});
+															try {
+																const textEncrypted = await encrypt(key, textEncoder.encode(text));
+																addDoc(collection(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs"), {
+																	timestamp: Math.floor(Date.now() / 1000),
+																	notes: [noteId],
+																	text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+																});
+															} catch (e) {
+																if (e.code === "unavailable" || e.code === "deadline-exceeded") {
+																	console.error(e);
+																	errorNetwork = true;
+																	pageLayer.widgets.get("blocker").update();
+																} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
+																	console.error(e);
+																	errorAccessDenied = true;
+																	pageLayer.widgets.get("blocker").update();
+																} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
+																	console.error(e);
+																	errorOutOfSync = true;
+																	pageLayer.widgets.get("blocker").update();
+																} else {
+																	console.error(e);
+																	errorRuntime = true;
+																	pageLayer.widgets.get("blocker").update();
+																}
+															}
 														}
-													}
-												} else {
-													try {
-														const textEncrypted = await encrypt(key, textEncoder.encode(text));
-														addDoc(collection(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs"), {
-															timestamp: Math.floor(Date.now() / 1000),
-															notes: [noteId],
-															text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-														});
-													} catch (e) {
-														if (e.code === "unavailable" || e.code === "deadline-exceeded") {
-															console.error(e);
-															errorNetwork = true;
-															pageLayer.widgets.get("blocker").update();
-														} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
-															console.error(e);
-															errorAccessDenied = true;
-															pageLayer.widgets.get("blocker").update();
-														} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
-															console.error(e);
-															errorOutOfSync = true;
-															pageLayer.widgets.get("blocker").update();
-														} else {
-															console.error(e);
-															errorRuntime = true;
-															pageLayer.widgets.get("blocker").update();
-														}
-													}
-												}
-											},
-										}),
+													},
+												}),
+										},
 									],
 								},
 								{
