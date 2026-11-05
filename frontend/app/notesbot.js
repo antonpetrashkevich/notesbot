@@ -1982,10 +1982,6 @@ const pages = {
 		let filterParagraphQuery;
 		let addParagraphValid = true;
 		let filesAttached;
-		let editParagraphId;
-		let editParagraphHeight;
-		let editParagraphValid;
-		let editParagraphText;
 
 		return {
 			path,
@@ -2500,9 +2496,6 @@ const pages = {
 													if (!filterParagraphColor && !filterParagraphQuery) {
 														return true;
 													}
-													if (p.id === editParagraphId) {
-														return true;
-													}
 													if (filterParagraphColor && filterParagraphColor !== p.color) {
 														return false;
 													}
@@ -2550,656 +2543,637 @@ const pages = {
 														fileButtonColor = colors.foreground.secondary();
 														fileButtonBackgroundHoverColor = colors[theme][palette.base](4);
 													}
-													if (paragraph.id === editParagraphId) {
-														return {
-															id: "edit-paragraph",
-															config: {
-																width: "100%",
-																...layouts.column("start", "start", "1rem"),
-																children: [
-																	{
-																		id: "edit-paragraph-hint",
-																		config: () => ({
-																			display: editParagraphValid ? "none" : "block",
-																			fontWeight: 500,
-																			color: colors.foreground.danger(),
-																			text: "Required",
-																		}),
-																	},
-																	{
-																		id: "edit-paragraph-input",
-																		config: components.inputs.textArea({
+													return {
+														id: `paragraph-${paragraph.id}`,
+														config: {
+															width: "100%",
+															padding: "0.5rem",
+															border: `1px solid ${borderColor}`,
+															borderRadius: "0.5rem",
+															backgroundColor,
+															color: textColor,
+															...layouts.column("start", "start", "1rem"),
+															children: [
+																paragraph.text
+																	? {
+																			display: "-webkit-box",
 																			width: "100%",
-																			height: `max(${editParagraphHeight}px, 16rem)`,
-																			border: `1px solid ${borderColor}`,
-																			backgroundColor,
-																			color: textColor,
-																			text: editParagraphText,
-																			oninput: function (event) {
-																				editParagraphText = event.target.value;
-																			},
-																		}),
-																	},
-																	{
-																		width: "100%",
-																		...layouts.row("end", "center", "1rem"),
-																		children: [
-																			components.buttons.form({
-																				text: "Cancel",
-																				onclick: function (event) {
-																					editParagraphId = undefined;
-																					editParagraphValid = undefined;
-																					editParagraphText = undefined;
-																					this.layer.widgets.get("paragraphs").update();
-																				},
-																			}),
-																			components.buttons.form({
-																				priority: "primary",
-																				text: "Save",
-																				onclick: async function (event) {
-																					try {
-																						editParagraphValid = true;
-																						if (!this.layer.widgets.get("edit-paragraph-input").domElement.value.trim()) {
-																							editParagraphValid = false;
-																						}
-																						this.layer.widgets.get("edit-paragraph-hint").update();
-																						if (!editParagraphValid) {
-																							return;
-																						}
-																						editParagraphId = undefined;
-																						editParagraphValid = undefined;
-																						editParagraphText = undefined;
-																						const textEncrypted = await encrypt(key, textEncoder.encode(this.layer.widgets.get("edit-paragraph-input").domElement.value));
-																						updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
-																							text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
-																						});
-																					} catch (e) {
-																						if (e.code === "unavailable" || e.code === "deadline-exceeded") {
-																							console.error(e);
-																							errorNetwork = true;
-																							pageLayer.widgets.get("blocker").update();
-																						} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
-																							console.error(e);
-																							errorAccessDenied = true;
-																							pageLayer.widgets.get("blocker").update();
-																						} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
-																							console.error(e);
-																							errorOutOfSync = true;
-																							pageLayer.widgets.get("blocker").update();
-																						} else {
-																							console.error(e);
-																							errorRuntime = true;
-																							pageLayer.widgets.get("blocker").update();
-																						}
-																					}
-																				},
-																			}),
-																		],
-																	},
-																],
-															},
-														};
-													} else {
-														return {
-															id: `paragraph-${paragraph.id}`,
-															config: {
-																width: "100%",
-																padding: "0.5rem",
-																border: `1px solid ${borderColor}`,
-																borderRadius: "0.5rem",
-																backgroundColor,
-																color: textColor,
-																...layouts.column("start", "start", "1rem"),
-																children: [
-																	paragraph.text
-																		? {
-																				display: "-webkit-box",
+																			whiteSpace: "pre-wrap",
+																			wordBreak: "break-word",
+																			webkitLineClamp: 8,
+																			webkitBoxOrient: "vertical",
+																			overflow: "hidden",
+																			text: paragraph.text,
+																		}
+																	: null,
+																paragraph.files
+																	? {
+																			width: "100%",
+																			...layouts.column("start", "start", "0.5rem"),
+																			children: paragraph.files.map((f) => ({
 																				width: "100%",
-																				whiteSpace: "pre-wrap",
-																				wordBreak: "break-word",
-																				webkitLineClamp: 8,
-																				webkitBoxOrient: "vertical",
-																				overflow: "hidden",
-																				text: paragraph.text,
-																			}
-																		: null,
-																	paragraph.files
-																		? {
-																				width: "100%",
-																				...layouts.column("start", "start", "0.5rem"),
-																				children: paragraph.files.map((f) => ({
-																					width: "100%",
-																					padding: "0.25rem 0.25rem 0.25rem 0.5rem",
-																					borderRadius: "0.5rem",
-																					backgroundColor: fileBackgroundColor,
-																					...layouts.row("space-between", "center"),
-																					children: [
-																						{
-																							minWidth: 0,
-																							fontWeight: 600,
-																							color: fileTextColor,
-																							...styles.unselectable(),
-																							whiteSpace: "nowrap",
-																							overflow: "hidden",
-																							textOverflow: "ellipsis",
-																							text: f.name,
-																						},
-																						{
-																							id: `file-actions-${f.id}`,
-																							config: () => ({
-																								...layouts.row("start", "center"),
-																								children: [
-																									!downloads[f.id]
-																										? components.button({
-																												backgroundHoverColor: fileButtonBackgroundHoverColor,
-																												child: components.icon({
-																													fontSize: "1.25rem",
-																													color: fileButtonColor,
-																													ligature: "cloud_download",
-																												}),
-																												onclick: async function (event) {
+																				padding: "0.25rem 0.25rem 0.25rem 0.5rem",
+																				borderRadius: "0.5rem",
+																				backgroundColor: fileBackgroundColor,
+																				...layouts.row("space-between", "center"),
+																				children: [
+																					{
+																						minWidth: 0,
+																						fontWeight: 600,
+																						color: fileTextColor,
+																						...styles.unselectable(),
+																						whiteSpace: "nowrap",
+																						overflow: "hidden",
+																						textOverflow: "ellipsis",
+																						text: f.name,
+																					},
+																					{
+																						id: `file-actions-${f.id}`,
+																						config: () => ({
+																							...layouts.row("start", "center"),
+																							children: [
+																								!downloads[f.id]
+																									? components.button({
+																											backgroundHoverColor: fileButtonBackgroundHoverColor,
+																											child: components.icon({
+																												fontSize: "1.25rem",
+																												color: fileButtonColor,
+																												ligature: "cloud_download",
+																											}),
+																											onclick: async function (event) {
+																												downloads[f.id] = {
+																													status: "downloading",
+																												};
+																												stack.updateAll({
+																													type: "download",
+																													fileId: f.id,
+																												});
+																												try {
+																													const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
+																													const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
 																													downloads[f.id] = {
-																														status: "downloading",
+																														status: "ready",
+																														file: new File([fileDecrypted], f.name, {
+																															type: f.type,
+																															lastModified: f.lastModified,
+																														}),
 																													};
 																													stack.updateAll({
 																														type: "download",
 																														fileId: f.id,
 																													});
-																													try {
-																														const fileEncrypted = await getBytes(ref(firebase.storage, `users/${firebase.auth.currentUser.uid}/files/${f.id}.encrypted`));
-																														const fileDecrypted = await decrypt(key, f.iv, fileEncrypted);
-																														downloads[f.id] = {
-																															status: "ready",
-																															file: new File([fileDecrypted], f.name, {
-																																type: f.type,
-																																lastModified: f.lastModified,
-																															}),
-																														};
-																														stack.updateAll({
-																															type: "download",
-																															fileId: f.id,
-																														});
-																													} catch (e) {
-																														console.error(e);
-																														downloads[f.id] = undefined;
-																														stack.updateAll({
-																															type: "download",
-																															fileId: f.id,
-																														});
-																													}
-																												},
-																											})
-																										: null,
-																									downloads[f.id]?.status === "downloading"
-																										? components.animations.spinner({
-																												width: "2.25rem",
-																												height: "2.25rem",
-																												padding: "0.5rem",
+																												} catch (e) {
+																													console.error(e);
+																													downloads[f.id] = undefined;
+																													stack.updateAll({
+																														type: "download",
+																														fileId: f.id,
+																													});
+																												}
+																											},
+																										})
+																									: null,
+																								downloads[f.id]?.status === "downloading"
+																									? components.animations.spinner({
+																											width: "2.25rem",
+																											height: "2.25rem",
+																											padding: "0.5rem",
+																											color: fileButtonColor,
+																										})
+																									: null,
+																								downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("image")
+																									? components.button({
+																											backgroundHoverColor: fileButtonBackgroundHoverColor,
+																											child: components.icon({
+																												fontSize: "1.25rem",
 																												color: fileButtonColor,
-																											})
-																										: null,
-																									downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("image")
-																										? components.button({
-																												backgroundHoverColor: fileButtonBackgroundHoverColor,
-																												child: components.icon({
-																													fontSize: "1.25rem",
-																													color: fileButtonColor,
-																													ligature: "image",
-																												}),
-																												onclick: function (event) {
-																													const url = URL.createObjectURL(downloads[f.id].file);
-																													stack.push({
-																														path: "#image",
-																														onPop: function () {
-																															URL.revokeObjectURL(url);
-																														},
-																														config: {
-																															tag: "img",
-																															width: "100%",
-																															height: "100%",
-																															objectFit: "contain",
-																															objectPosition: "center",
-																															src: url,
-																														},
-																													});
-																												},
-																											})
-																										: null,
-																									downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("audio")
-																										? components.button({
-																												backgroundHoverColor: fileButtonBackgroundHoverColor,
-																												child: components.icon({
-																													fontSize: "1.25rem",
-																													color: fileButtonColor,
-																													ligature: "play_circle",
-																												}),
-																												onclick: function (event) {
-																													const url = URL.createObjectURL(downloads[f.id].file);
-																													stack.push({
-																														path: "#audio",
-																														onPop: function () {
-																															URL.revokeObjectURL(url);
-																														},
-																														config: {
-																															width: "100%",
-																															height: "100%",
-																															...layouts.row("center", "center"),
-																															children: [
-																																{
-																																	tag: "audio",
-																																	width: "100%",
-																																	controls: true,
-																																	src: url,
-																																},
-																															],
-																														},
-																													});
-																												},
-																											})
-																										: null,
-																									downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("video")
-																										? components.button({
-																												backgroundHoverColor: fileButtonBackgroundHoverColor,
-																												child: components.icon({
-																													fontSize: "1.25rem",
-																													color: fileButtonColor,
-																													ligature: "play_circle",
-																												}),
-																												onclick: function (event) {
-																													const url = URL.createObjectURL(downloads[f.id].file);
-																													stack.push({
-																														path: "#video",
-																														onPop: function () {
-																															URL.revokeObjectURL(url);
-																														},
-																														config: {
-																															width: "100%",
-																															height: "100%",
-																															...layouts.row("center", "center"),
-																															children: [
-																																{
-																																	tag: "video",
-																																	width: "100%",
-																																	height: "100%",
-																																	objectFit: "contain",
-																																	objectPosition: "center",
-																																	controls: true,
-																																	src: url,
-																																},
-																															],
-																														},
-																													});
-																												},
-																											})
-																										: null,
-																									downloads[f.id]?.status === "ready"
-																										? components.button({
-																												backgroundHoverColor: fileButtonBackgroundHoverColor,
-																												child: components.icon({
-																													fontSize: "1.25rem",
-																													color: fileButtonColor,
-																													ligature: "download",
-																												}),
-																												onclick: function (event) {
-																													const url = URL.createObjectURL(downloads[f.id].file);
-																													const a = document.createElement("a");
-																													a.href = url;
-																													a.download = downloads[f.id].file.name;
-																													a.click();
-																													requestAnimationFrame(() => URL.revokeObjectURL(url));
-																												},
-																											})
-																										: null,
-																								],
-																							}),
-																						},
-																					],
-																				})),
-																			}
-																		: null,
-																	paragraph.notes.filter((nid) => tree[nid].parent !== "deleted").length > 1
-																		? {
-																				width: "100%",
-																				...layouts.column("start", "start", "0.5rem"),
-																				children: paragraph.notes
-																					.filter((nid) => tree[nid].parent !== "deleted" && nid !== noteId)
-																					.map((nid) =>
-																						components.textLink({
-																							color: colors.foreground.textLink(),
-																							href: `/note/${nid}`,
-																							text: tree[nid].name,
-																							onclick: function (event) {
-																								stack.push(pages.note(`/note/${nid}`, nid));
-																							},
+																												ligature: "image",
+																											}),
+																											onclick: function (event) {
+																												const url = URL.createObjectURL(downloads[f.id].file);
+																												stack.push({
+																													path: "#image",
+																													onPop: function () {
+																														URL.revokeObjectURL(url);
+																													},
+																													config: {
+																														tag: "img",
+																														width: "100%",
+																														height: "100%",
+																														objectFit: "contain",
+																														objectPosition: "center",
+																														src: url,
+																													},
+																												});
+																											},
+																										})
+																									: null,
+																								downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("audio")
+																									? components.button({
+																											backgroundHoverColor: fileButtonBackgroundHoverColor,
+																											child: components.icon({
+																												fontSize: "1.25rem",
+																												color: fileButtonColor,
+																												ligature: "play_circle",
+																											}),
+																											onclick: function (event) {
+																												const url = URL.createObjectURL(downloads[f.id].file);
+																												stack.push({
+																													path: "#audio",
+																													onPop: function () {
+																														URL.revokeObjectURL(url);
+																													},
+																													config: {
+																														width: "100%",
+																														height: "100%",
+																														...layouts.row("center", "center"),
+																														children: [
+																															{
+																																tag: "audio",
+																																width: "100%",
+																																controls: true,
+																																src: url,
+																															},
+																														],
+																													},
+																												});
+																											},
+																										})
+																									: null,
+																								downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("video")
+																									? components.button({
+																											backgroundHoverColor: fileButtonBackgroundHoverColor,
+																											child: components.icon({
+																												fontSize: "1.25rem",
+																												color: fileButtonColor,
+																												ligature: "play_circle",
+																											}),
+																											onclick: function (event) {
+																												const url = URL.createObjectURL(downloads[f.id].file);
+																												stack.push({
+																													path: "#video",
+																													onPop: function () {
+																														URL.revokeObjectURL(url);
+																													},
+																													config: {
+																														width: "100%",
+																														height: "100%",
+																														...layouts.row("center", "center"),
+																														children: [
+																															{
+																																tag: "video",
+																																width: "100%",
+																																height: "100%",
+																																objectFit: "contain",
+																																objectPosition: "center",
+																																controls: true,
+																																src: url,
+																															},
+																														],
+																													},
+																												});
+																											},
+																										})
+																									: null,
+																								downloads[f.id]?.status === "ready"
+																									? components.button({
+																											backgroundHoverColor: fileButtonBackgroundHoverColor,
+																											child: components.icon({
+																												fontSize: "1.25rem",
+																												color: fileButtonColor,
+																												ligature: "download",
+																											}),
+																											onclick: function (event) {
+																												const url = URL.createObjectURL(downloads[f.id].file);
+																												const a = document.createElement("a");
+																												a.href = url;
+																												a.download = downloads[f.id].file.name;
+																												a.click();
+																												requestAnimationFrame(() => URL.revokeObjectURL(url));
+																											},
+																										})
+																									: null,
+																							],
 																						}),
-																					),
-																			}
-																		: null,
-																	{
-																		width: "100%",
-																		...layouts.row("space-between", "center", "1rem"),
-																		children: [
-																			{
-																				fontSize: "0.875rem",
-																				color: dateColor,
-																				...styles.unselectable(),
-																				text: new Date(paragraph.timestamp * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }),
-																			},
-																			{
-																				...layouts.row(),
-																				children: [
-																					components.button({
-																						backgroundHoverColor: buttonBackgroundHoverColor,
-																						child: components.icon({
-																							fontSize: "1.25rem",
-																							color: buttonColor,
-																							ligature: "expand_content",
-																						}),
+																					},
+																				],
+																			})),
+																		}
+																	: null,
+																paragraph.notes.filter((nid) => tree[nid].parent !== "deleted").length > 1
+																	? {
+																			width: "100%",
+																			...layouts.column("start", "start", "0.5rem"),
+																			children: paragraph.notes
+																				.filter((nid) => tree[nid].parent !== "deleted" && nid !== noteId)
+																				.map((nid) =>
+																					components.textLink({
+																						color: colors.foreground.textLink(),
+																						href: `/note/${nid}`,
+																						text: tree[nid].name,
 																						onclick: function (event) {
-																							function expandParagraphPage(paragraphText) {
-																								return {
-																									path: `#expanded`,
-																									config: () => {
-																										return {
-																											...layouts.base("start", "center"),
-																											backgroundColor,
-																											color: textColor,
-																											children: [
-																												{
-																													width: "min(640px, 100% - 1rem)",
-																													padding: "0.5rem",
-																													whiteSpace: "pre-wrap",
-																													wordBreak: "break-word",
-																													text: paragraphText,
-																												},
-																											],
-																										};
-																									},
-																								};
-																							}
-																							stack.push(expandParagraphPage(paragraph.text));
+																							stack.push(pages.note(`/note/${nid}`, nid));
 																						},
 																					}),
-																					components.button({
-																						backgroundHoverColor: buttonBackgroundHoverColor,
-																						child: components.icon({
-																							fontSize: "1.25rem",
-																							color: buttonColor,
-																							ligature: "content_copy",
-																						}),
-																						onclick: function (event) {
-																							navigator.clipboard.writeText(paragraph.text);
-																						},
+																				),
+																		}
+																	: null,
+																{
+																	width: "100%",
+																	...layouts.row("space-between", "center", "1rem"),
+																	children: [
+																		{
+																			fontSize: "0.875rem",
+																			color: dateColor,
+																			...styles.unselectable(),
+																			text: new Date(paragraph.timestamp * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }),
+																		},
+																		{
+																			...layouts.row(),
+																			children: [
+																				components.button({
+																					backgroundHoverColor: buttonBackgroundHoverColor,
+																					child: components.icon({
+																						fontSize: "1.25rem",
+																						color: buttonColor,
+																						ligature: "expand_content",
 																					}),
-																					components.button({
-																						backgroundHoverColor: buttonBackgroundHoverColor,
-																						child: components.icon({
-																							fontSize: "1.25rem",
-																							color: buttonColor,
-																							ligature: "link",
-																						}),
-																						onclick: function (event) {
-																							function linkNotePage(targetFolderId) {
-																								return {
-																									path: `#link-${targetFolderId}`,
-																									config: () => {
-																										const children = Object.keys(tree)
-																											.filter((id) => !paragraph.notes.includes(id) && tree[id].parent === targetFolderId)
-																											.sort((id1, id2) => tree[id1].order - tree[id2].order);
-																										return {
-																											...layouts.base("start", "center"),
-																											children: [
-																												components.header({
-																													leading: components.button({
-																														backgroundHoverColor: colors[theme][palette.base](3),
-																														color: colors.foreground.secondary(),
-																														child: components.icon({
-																															fontSize: "1.25rem",
-																															ligature: "close",
-																														}),
-																														onclick: async function (event) {
-																															let steps = 0;
-																															for (let i = stack.length - 1; i > 0; i--) {
-																																if (stack.at(i) === pageLayer) {
-																																	break;
-																																}
-																																steps += 1;
+																					onclick: function (event) {
+																						function expandParagraphPage() {
+																							return {
+																								path: `#expanded`,
+																								config: () => {
+																									return {
+																										...layouts.base("start", "center"),
+																										backgroundColor,
+																										color: textColor,
+																										children: [
+																											{
+																												width: "min(640px, 100%)",
+																												padding: "0.5rem",
+																												whiteSpace: "pre-wrap",
+																												wordBreak: "break-word",
+																												text: paragraph.text,
+																											},
+																										],
+																									};
+																								},
+																							};
+																						}
+																						stack.push(expandParagraphPage());
+																					},
+																				}),
+																				components.button({
+																					backgroundHoverColor: buttonBackgroundHoverColor,
+																					child: components.icon({
+																						fontSize: "1.25rem",
+																						color: buttonColor,
+																						ligature: "content_copy",
+																					}),
+																					onclick: function (event) {
+																						navigator.clipboard.writeText(paragraph.text);
+																					},
+																				}),
+																				components.button({
+																					backgroundHoverColor: buttonBackgroundHoverColor,
+																					child: components.icon({
+																						fontSize: "1.25rem",
+																						color: buttonColor,
+																						ligature: "link",
+																					}),
+																					onclick: function (event) {
+																						function linkNotePage(targetFolderId) {
+																							return {
+																								path: `#link-${targetFolderId}`,
+																								config: () => {
+																									const children = Object.keys(tree)
+																										.filter((id) => !paragraph.notes.includes(id) && tree[id].parent === targetFolderId)
+																										.sort((id1, id2) => tree[id1].order - tree[id2].order);
+																									return {
+																										...layouts.base("start", "center"),
+																										children: [
+																											components.header({
+																												leading: components.button({
+																													backgroundHoverColor: colors[theme][palette.base](3),
+																													color: colors.foreground.secondary(),
+																													child: components.icon({
+																														fontSize: "1.25rem",
+																														ligature: "close",
+																													}),
+																													onclick: async function (event) {
+																														let steps = 0;
+																														for (let i = stack.length - 1; i > 0; i--) {
+																															if (stack.at(i) === pageLayer) {
+																																break;
 																															}
-																															await stack.pop(steps);
+																															steps += 1;
+																														}
+																														await stack.pop(steps);
+																													},
+																												}),
+																												title: "Link note",
+																											}),
+																											{
+																												flexGrow: 1,
+																												width: "min(640px, 100% - 1rem)",
+																												padding: "1rem 0",
+																												...layouts.column("center", "center", "1rem"),
+																												children: children.map((cid) =>
+																													components.buttons.menu({
+																														size: "l",
+																														text: tree[cid]["name"],
+																														onclick: function (event) {
+																															if (tree[cid].type === "folder") {
+																																stack.push(linkNotePage(cid));
+																															} else if (tree[cid].type === "note") {
+																																stack.push({
+																																	path: "#confirm",
+																																	hidePrior: false,
+																																	config: () =>
+																																		components.modals.prompt({
+																																			title: "Link Note",
+																																			description: "Are you sure?",
+																																			buttons: [
+																																				components.buttons.form({
+																																					priority: "primary",
+																																					text: "Link",
+																																					onclick: async function (event) {
+																																						let steps = 0;
+																																						for (let i = stack.length - 1; i > 0; i--) {
+																																							if (stack.at(i) === pageLayer) {
+																																								break;
+																																							}
+																																							steps += 1;
+																																						}
+																																						await stack.pop(steps);
+																																						try {
+																																							updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
+																																								notes: arrayUnion(cid),
+																																							});
+																																						} catch (e) {
+																																							if (e.code === "unavailable" || e.code === "deadline-exceeded") {
+																																								console.error(e);
+																																								errorNetwork = true;
+																																								pageLayer.widgets.get("blocker").update();
+																																							} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
+																																								console.error(e);
+																																								errorAccessDenied = true;
+																																								pageLayer.widgets.get("blocker").update();
+																																							} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
+																																								console.error(e);
+																																								errorOutOfSync = true;
+																																								pageLayer.widgets.get("blocker").update();
+																																							} else {
+																																								console.error(e);
+																																								errorRuntime = true;
+																																								pageLayer.widgets.get("blocker").update();
+																																							}
+																																						}
+																																					},
+																																				}),
+																																			],
+																																		}),
+																																});
+																															}
 																														},
 																													}),
-																													title: "Link note",
-																												}),
-																												{
-																													flexGrow: 1,
-																													width: "min(640px, 100% - 1rem)",
-																													padding: "1rem 0",
-																													...layouts.column("center", "center", "1rem"),
-																													children: children.map((cid) =>
-																														components.buttons.menu({
-																															size: "l",
-																															text: tree[cid]["name"],
-																															onclick: function (event) {
-																																if (tree[cid].type === "folder") {
-																																	stack.push(linkNotePage(cid));
-																																} else if (tree[cid].type === "note") {
-																																	stack.push({
-																																		path: "#confirm",
-																																		hidePrior: false,
-																																		config: () =>
-																																			components.modals.prompt({
-																																				title: "Link Note",
-																																				description: "Are you sure?",
-																																				buttons: [
-																																					components.buttons.form({
-																																						priority: "primary",
-																																						text: "Link",
-																																						onclick: async function (event) {
-																																							let steps = 0;
-																																							for (let i = stack.length - 1; i > 0; i--) {
-																																								if (stack.at(i) === pageLayer) {
-																																									break;
-																																								}
-																																								steps += 1;
-																																							}
-																																							await stack.pop(steps);
-																																							try {
-																																								updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
-																																									notes: arrayUnion(cid),
-																																								});
-																																							} catch (e) {
-																																								if (e.code === "unavailable" || e.code === "deadline-exceeded") {
-																																									console.error(e);
-																																									errorNetwork = true;
-																																									pageLayer.widgets.get("blocker").update();
-																																								} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
-																																									console.error(e);
-																																									errorAccessDenied = true;
-																																									pageLayer.widgets.get("blocker").update();
-																																								} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
-																																									console.error(e);
-																																									errorOutOfSync = true;
-																																									pageLayer.widgets.get("blocker").update();
-																																								} else {
-																																									console.error(e);
-																																									errorRuntime = true;
-																																									pageLayer.widgets.get("blocker").update();
-																																								}
-																																							}
-																																						},
-																																					}),
-																																				],
-																																			}),
-																																	});
-																																}
-																															},
-																														}),
-																													),
-																												},
-																											],
-																										};
-																									},
-																								};
-																							}
-																							stack.push(linkNotePage("root"));
-																						},
-																					}),
-																					components.button({
-																						backgroundHoverColor: buttonBackgroundHoverColor,
-																						child: components.icon({
-																							fontSize: "1.25rem",
-																							color: buttonColor,
-																							ligature: "palette",
-																						}),
-																						onclick: function (event) {
-																							stack.push({
-																								path: "#color",
-																								hidePrior: false,
-																								config: () =>
-																									components.modalCloseBackground({
-																										...styles.modalCloseBackground(),
-																										child: {
-																											...styles.modal(),
-																											...layouts.column("start", "start", "1rem"),
-																											children: [
-																												{
-																													fontWeight: 600,
-																													text: "Color",
-																												},
-																												{
-																													...layouts.grid(),
-																													width: "100%",
-																													alignSelf: "center",
-																													gridTemplateColumns: "repeat(auto-fill, 3rem)",
-																													justifyContent: "center",
-																													gap: "1rem",
-																													children: [undefined, "brown", "red", "orange", "yellow", "green", "cyan", "blue", "indigo", "purple"].map((color) =>
-																														components.button({
-																															padding: "0.25rem",
-																															borderRadius: "2rem",
-																															backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
-																															backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
-																															child: components.icon({
-																																fontSize: "2.5rem",
-																																color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
-																																ligature: "circle",
-																															}),
-																															onclick: async function (event) {
-																																stack.pop();
-																																try {
-																																	updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
-																																		color: color || deleteField(),
-																																	});
-																																} catch (e) {
-																																	if (e.code === "unavailable" || e.code === "deadline-exceeded") {
-																																		console.error(e);
-																																		errorNetwork = true;
-																																		pageLayer.widgets.get("blocker").update();
-																																	} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
-																																		console.error(e);
-																																		errorAccessDenied = true;
-																																		pageLayer.widgets.get("blocker").update();
-																																	} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
-																																		console.error(e);
-																																		errorOutOfSync = true;
-																																		pageLayer.widgets.get("blocker").update();
-																																	} else {
-																																		console.error(e);
-																																		errorRuntime = true;
-																																		pageLayer.widgets.get("blocker").update();
-																																	}
-																																}
-																															},
-																														}),
-																													),
-																												},
-																											],
-																										},
-																									}),
-																							});
-																						},
-																					}),
-																					components.button({
-																						backgroundHoverColor: buttonBackgroundHoverColor,
-																						child: components.icon({
-																							fontSize: "1.25rem",
-																							color: buttonColor,
-																							ligature: "edit",
-																						}),
-																						disabled: editParagraphId,
-																						onclick: function (event) {
-																							if (!editParagraphId) {
-																								editParagraphId = paragraph.id;
-																								editParagraphHeight = this.layer.widgets.get(`paragraph-${paragraph.id}`).domElement.getBoundingClientRect().height;
-																								editParagraphValid = true;
-																								editParagraphText = paragraph.text;
-																								this.layer.widgets.get("paragraphs").update();
-																							}
-																						},
-																					}),
-																					components.button({
-																						backgroundHoverColor: buttonBackgroundHoverColor,
-																						child: components.icon({
-																							fontSize: "1.25rem",
-																							color: buttonColor,
-																							ligature: "delete",
-																						}),
-																						onclick: function (event) {
-																							stack.push({
-																								path: "#delete",
-																								hidePrior: false,
-																								config: () =>
-																									components.modals.prompt({
-																										title: "Delete",
-																										description: paragraph.notes.length > 1 ? "Linked copies will not be affected." : "You won't be able to restore it.",
-																										buttons: [
-																											components.buttons.form({
-																												priority: "danger",
-																												text: "Delete",
-																												onclick: function (event) {
-																													stack.pop();
-																													try {
-																														if (paragraph.notes.length > 1) {
-																															updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
-																																notes: arrayRemove(noteId),
-																															});
-																														} else {
-																															deleteDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id));
-																														}
-																													} catch (e) {
-																														if (e.code === "unavailable" || e.code === "deadline-exceeded") {
-																															console.error(e);
-																															errorNetwork = true;
-																															pageLayer.widgets.get("blocker").update();
-																														} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
-																															console.error(e);
-																															errorAccessDenied = true;
-																															pageLayer.widgets.get("blocker").update();
-																														} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
-																															console.error(e);
-																															errorOutOfSync = true;
-																															pageLayer.widgets.get("blocker").update();
-																														} else {
-																															console.error(e);
-																															errorRuntime = true;
-																															pageLayer.widgets.get("blocker").update();
-																														}
-																													}
-																												},
-																											}),
+																												),
+																											},
 																										],
-																									}),
-																							});
-																						},
+																									};
+																								},
+																							};
+																						}
+																						stack.push(linkNotePage("root"));
+																					},
+																				}),
+																				components.button({
+																					backgroundHoverColor: buttonBackgroundHoverColor,
+																					child: components.icon({
+																						fontSize: "1.25rem",
+																						color: buttonColor,
+																						ligature: "palette",
 																					}),
-																				],
-																			},
-																		],
-																	},
-																],
-															},
-														};
-													}
+																					onclick: function (event) {
+																						stack.push({
+																							path: "#color",
+																							hidePrior: false,
+																							config: () =>
+																								components.modalCloseBackground({
+																									...styles.modalCloseBackground(),
+																									child: {
+																										...styles.modal(),
+																										...layouts.column("start", "start", "1rem"),
+																										children: [
+																											{
+																												fontWeight: 600,
+																												text: "Color",
+																											},
+																											{
+																												...layouts.grid(),
+																												width: "100%",
+																												alignSelf: "center",
+																												gridTemplateColumns: "repeat(auto-fill, 3rem)",
+																												justifyContent: "center",
+																												gap: "1rem",
+																												children: [undefined, "brown", "red", "orange", "yellow", "green", "cyan", "blue", "indigo", "purple"].map((color) =>
+																													components.button({
+																														padding: "0.25rem",
+																														borderRadius: "2rem",
+																														backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
+																														backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
+																														child: components.icon({
+																															fontSize: "2.5rem",
+																															color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
+																															ligature: "circle",
+																														}),
+																														onclick: async function (event) {
+																															stack.pop();
+																															try {
+																																updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
+																																	color: color || deleteField(),
+																																});
+																															} catch (e) {
+																																if (e.code === "unavailable" || e.code === "deadline-exceeded") {
+																																	console.error(e);
+																																	errorNetwork = true;
+																																	pageLayer.widgets.get("blocker").update();
+																																} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
+																																	console.error(e);
+																																	errorAccessDenied = true;
+																																	pageLayer.widgets.get("blocker").update();
+																																} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
+																																	console.error(e);
+																																	errorOutOfSync = true;
+																																	pageLayer.widgets.get("blocker").update();
+																																} else {
+																																	console.error(e);
+																																	errorRuntime = true;
+																																	pageLayer.widgets.get("blocker").update();
+																																}
+																															}
+																														},
+																													}),
+																												),
+																											},
+																										],
+																									},
+																								}),
+																						});
+																					},
+																				}),
+																				components.button({
+																					backgroundHoverColor: buttonBackgroundHoverColor,
+																					child: components.icon({
+																						fontSize: "1.25rem",
+																						color: buttonColor,
+																						ligature: "edit",
+																					}),
+																					onclick: function (event) {
+																						function editParagraphPage() {
+																							let textEdited = paragraph.text;
+																							return {
+																								path: `#edit`,
+																								config: () => {
+																									return {
+																										...layouts.base("start", "center"),
+																										children: [
+																											{
+																												width: "min(640px, 100%)",
+																												height: "100%",
+																												...layouts.column("start", "start", "1rem"),
+																												children: [
+																													components.inputs.textArea({
+																														width: "100%",
+																														flexGrow: 1,
+																														border: "none",
+																														text: paragraph.text,
+																														oninput: function (event) {
+																															textEdited = event.target.value;
+																															this.layer.widgets.get("save-button").update();
+																														},
+																													}),
+																													{
+																														width: "100%",
+																														padding: "0 0.5rem 0.5rem 0.5rem",
+																														...layouts.row("end", "center", "1rem"),
+																														children: [
+																															components.buttons.form({
+																																text: "Cancel",
+																																onclick: function (event) {
+																																	stack.pop();
+																																},
+																															}),
+																															{
+																																id: "save-button",
+																																config: () =>
+																																	components.buttons.form({
+																																		priority: "primary",
+																																		disabled: !textEdited.trim(),
+																																		text: "Save",
+																																		onclick: async function (event) {
+																																			try {
+																																				stack.pop();
+																																				const textEncrypted = await encrypt(key, textEncoder.encode(textEdited));
+																																				updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
+																																					text: { iv: Bytes.fromUint8Array(textEncrypted.iv), data: Bytes.fromUint8Array(textEncrypted.data) },
+																																				});
+																																			} catch (e) {
+																																				if (e.code === "unavailable" || e.code === "deadline-exceeded") {
+																																					console.error(e);
+																																					errorNetwork = true;
+																																					pageLayer.widgets.get("blocker").update();
+																																				} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
+																																					console.error(e);
+																																					errorAccessDenied = true;
+																																					pageLayer.widgets.get("blocker").update();
+																																				} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
+																																					console.error(e);
+																																					errorOutOfSync = true;
+																																					pageLayer.widgets.get("blocker").update();
+																																				} else {
+																																					console.error(e);
+																																					errorRuntime = true;
+																																					pageLayer.widgets.get("blocker").update();
+																																				}
+																																			}
+																																		},
+																																	}),
+																															},
+																														],
+																													},
+																												],
+																											},
+																										],
+																									};
+																								},
+																							};
+																						}
+																						stack.push(editParagraphPage());
+																					},
+																				}),
+																				components.button({
+																					backgroundHoverColor: buttonBackgroundHoverColor,
+																					child: components.icon({
+																						fontSize: "1.25rem",
+																						color: buttonColor,
+																						ligature: "delete",
+																					}),
+																					onclick: function (event) {
+																						stack.push({
+																							path: "#delete",
+																							hidePrior: false,
+																							config: () =>
+																								components.modals.prompt({
+																									title: "Delete",
+																									description: paragraph.notes.length > 1 ? "Linked copies will not be affected." : "You won't be able to restore it.",
+																									buttons: [
+																										components.buttons.form({
+																											priority: "danger",
+																											text: "Delete",
+																											onclick: function (event) {
+																												stack.pop();
+																												try {
+																													if (paragraph.notes.length > 1) {
+																														updateDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id), {
+																															notes: arrayRemove(noteId),
+																														});
+																													} else {
+																														deleteDoc(doc(firebase.firestore, "notebooks", firebase.auth.currentUser.uid, "paragraphs", paragraph.id));
+																													}
+																												} catch (e) {
+																													if (e.code === "unavailable" || e.code === "deadline-exceeded") {
+																														console.error(e);
+																														errorNetwork = true;
+																														pageLayer.widgets.get("blocker").update();
+																													} else if (e.code === "unauthenticated" || e.code === "permission-denied") {
+																														console.error(e);
+																														errorAccessDenied = true;
+																														pageLayer.widgets.get("blocker").update();
+																													} else if (e.code === "invalid-argument" || e.code === "not-found" || e.code === "already-exists" || e.code === "out-of-range") {
+																														console.error(e);
+																														errorOutOfSync = true;
+																														pageLayer.widgets.get("blocker").update();
+																													} else {
+																														console.error(e);
+																														errorRuntime = true;
+																														pageLayer.widgets.get("blocker").update();
+																													}
+																												}
+																											},
+																										}),
+																									],
+																								}),
+																						});
+																					},
+																				}),
+																			],
+																		},
+																	],
+																},
+															],
+														},
+													};
 												}),
 											!filterParagraphColor && !filterParagraphQuery && limitParagraphs && paragraphs.length > 32
 												? components.button({
