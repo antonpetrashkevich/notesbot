@@ -2902,12 +2902,14 @@ const pages = {
 																									config: () => {
 																										return {
 																											...layouts.base("start", "center"),
+																											backgroundColor,
 																											children: [
 																												{
 																													width: "min(640px, 100% - 1rem)",
+																													padding: "0.5rem",
 																													whiteSpace: "pre-wrap",
 																													wordBreak: "break-word",
-																													padding: "0.5rem",
+																													color: textColor,
 																													text: paragraphText,
 																												},
 																											],
