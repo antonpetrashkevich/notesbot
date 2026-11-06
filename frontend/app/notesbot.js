@@ -3040,12 +3040,10 @@ const pages = {
 																												height: "100%",
 																												padding: "0.5rem",
 																												...layouts.column("start", "start", "1rem"),
-																												flexDirection: smallViewport ? "column-reverse" : "column",
 																												children: [
 																													components.inputs.textArea({
 																														width: "100%",
 																														flexGrow: 1,
-																														border: "none",
 																														resize: "none",
 																														text: paragraph.text,
 																														oninput: function (event) {
