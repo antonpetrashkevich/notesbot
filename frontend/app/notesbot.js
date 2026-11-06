@@ -561,7 +561,7 @@ const pages = {
 			config: {
 				id: "page",
 				config: () => ({
-					padding: "0.5rem 0",
+					padding: "0.5rem",
 					...layouts.base("center", "center"),
 					children: [
 						{
@@ -578,7 +578,7 @@ const pages = {
 								}),
 						},
 						{
-							width: "min(640px, 100% - 1rem)",
+							width: "min(640px, 100%)",
 							padding: "0.75rem",
 							border: `1px solid ${colors.border.normal()}`,
 							borderRadius: "0.5rem",
@@ -793,7 +793,7 @@ const pages = {
 			config: {
 				id: "page",
 				config: () => ({
-					padding: "0.5rem 0",
+					padding: "0.5rem",
 					...layouts.base("center", "center"),
 					children: [
 						{
@@ -810,7 +810,7 @@ const pages = {
 								}),
 						},
 						{
-							width: "min(640px, 100% - 1rem)",
+							width: "min(640px, 100%)",
 							padding: "0.75rem",
 							border: `1px solid ${colors.border.normal()}`,
 							borderRadius: "0.5rem",
@@ -1009,8 +1009,8 @@ const pages = {
 							id: "tree",
 							config: () => ({
 								flexGrow: 1,
-								width: "min(640px, 100% - 1rem)",
-								padding: "1rem 0",
+								width: "min(640px, 100%)",
+								padding: "0.5rem",
 								...layouts.column("center", "center", "1rem"),
 								children: children.map((cid) =>
 									components.buttons.menu({
@@ -1214,8 +1214,8 @@ const pages = {
 																						}),
 																						{
 																							flexGrow: 1,
-																							width: "min(640px, 100% - 1rem)",
-																							padding: "1rem 0",
+																							width: "min(640px, 100%)",
+																							padding: "0.5rem",
 																							...layouts.column("center", "center", "1rem"),
 																							children: children.map((cid) =>
 																								components.buttons.menu({
@@ -1709,8 +1709,8 @@ const pages = {
 															}
 															return {
 																flexGrow: 1,
-																width: "min(640px, 100% - 1rem)",
-																padding: "1rem 0",
+																width: "min(640px, 100%)",
+																padding: "0.5rem",
 																...layouts.column(filterTreeQuery ? "start" : "center", "center", "1rem"),
 																children: nodesFiltered.map((nid) =>
 																	components.buttons.menu({
@@ -2107,8 +2107,8 @@ const pages = {
 								}),
 						},
 						{
-							width: "min(640px, 100% - 1rem)",
-							padding: "1rem 0",
+							width: "min(640px, 100%)",
+							padding: "0.5rem",
 							...layouts.column("start", "start", "1rem"),
 							children: [
 								{
@@ -2869,8 +2869,8 @@ const pages = {
 																											}),
 																											{
 																												flexGrow: 1,
-																												width: "min(640px, 100% - 1rem)",
-																												padding: "1rem 0",
+																												width: "min(640px, 100%)",
+																												padding: "0.5rem",
 																												...layouts.column("center", "center", "1rem"),
 																												children: children.map((cid) =>
 																													components.buttons.menu({
@@ -3041,6 +3041,7 @@ const pages = {
 																														width: "100%",
 																														flexGrow: 1,
 																														border: "none",
+																														resize: "none",
 																														text: paragraph.text,
 																														oninput: function (event) {
 																															textEdited = event.target.value;
