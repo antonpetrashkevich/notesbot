@@ -1,5 +1,6 @@
 import Argon2Worker from "./workers/argon2.js?worker";
 import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 import { appName, stack, smallViewport, theme, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from "xpl_kit/core";
 import { palette, colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from "xpl_kit/commons";
@@ -2805,9 +2806,11 @@ const pages = {
 																											{
 																												width: "min(640px, 100%)",
 																												padding: "0.5rem",
-																												whiteSpace: "pre-wrap",
-																												wordBreak: "break-word",
-																												text: paragraph.text,
+																												children: [
+																													{
+																														html: DOMPurify.sanitize(`<div>${marked.parse(paragraph.text)}</div>`),
+																													},
+																												],
 																											},
 																										],
 																									};
