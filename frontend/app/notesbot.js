@@ -3044,6 +3044,9 @@ const pages = {
 																													components.inputs.textArea({
 																														width: "100%",
 																														flexGrow: 1,
+																														border: `1px solid ${borderColor}`,
+																														backgroundColor,
+																														color: textColor,
 																														resize: "none",
 																														text: paragraph.text,
 																														oninput: function (event) {
