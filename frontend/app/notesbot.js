@@ -3038,7 +3038,9 @@ const pages = {
 																											{
 																												width: "min(640px, 100%)",
 																												height: "100%",
+																												padding: "0.5rem",
 																												...layouts.column("start", "start", "1rem"),
+																												flexDirection: smallViewport ? "column-reverse" : "column",
 																												children: [
 																													components.inputs.textArea({
 																														width: "100%",
@@ -3053,7 +3055,6 @@ const pages = {
 																													}),
 																													{
 																														width: "100%",
-																														padding: "0 0.5rem 0.5rem 0.5rem",
 																														...layouts.row("end", "center", "1rem"),
 																														children: [
 																															components.buttons.form({
