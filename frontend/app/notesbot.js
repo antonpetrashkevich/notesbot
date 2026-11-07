@@ -2555,7 +2555,7 @@ const pages = {
 																			width: "100%",
 																			whiteSpace: "pre-wrap",
 																			wordBreak: "break-word",
-																			webkitLineClamp: 8,
+																			webkitLineClamp: 16,
 																			webkitBoxOrient: "vertical",
 																			overflow: "hidden",
 																			text: paragraph.text,
@@ -2781,7 +2781,7 @@ const pages = {
 																			fontSize: "0.875rem",
 																			color: dateColor,
 																			...styles.unselectable(),
-																			text: new Date(paragraph.timestamp * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }),
+																			text: new Date(paragraph.timestamp * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
 																		},
 																		{
 																			...layouts.row(),
