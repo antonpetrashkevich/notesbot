@@ -1353,7 +1353,7 @@ const pages = {
 																			components.modals.prompt({
 																				title: tree[cid].type === "note" ? "Delete note" : "Delete folder",
 																				description: "You won't be able to restore it.",
-																				note: "Consider moving it to an 'Archive' folder instead — create one if you don’t have it yet.",
+																				note: "Consider moving it to 'Archive' folder instead — create one if you don’t have it yet.",
 																				buttons: [
 																					components.buttons.form({
 																						priority: "danger",
