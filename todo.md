@@ -33,3 +33,6 @@
 33. remove blocker.loading and blocker.error. leave only common
 34. редактировать сообщения заметки всегда в новом полном окне. а показывать сокращённое
 35. aes gcm tag - mandatory field
+
+
+- обрабаывать catch signInWithPopup также как в gist. + перейти на capactior-friendly-решение.
