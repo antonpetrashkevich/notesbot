@@ -327,7 +327,7 @@ const pages = {
 		let errorAccessDenied = false;
 		let errorNotFound = false;
 		let errorOutOfSync = false;
-		let loading = false;
+		let loading = true;
 
 		return {
 			path,
