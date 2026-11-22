@@ -3,7 +3,7 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 
 import { appName, stack, smallViewport, theme, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from "xpl_kit/core";
-import { palette, colors as baseColors, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from "xpl_kit/commons";
+import { palette, colors as baseColors, fonts as baseFonts, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from "xpl_kit/commons";
 
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
@@ -198,7 +198,7 @@ export async function init() {
 		"theme-color": colors.background.accent(),
 	});
 	updateBodyStyle({
-		fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+		fontFamily: fonts.base().fontFamily,
 		backgroundColor: colors.background.base(),
 		color: colors.foreground.primary(),
 	});
@@ -301,6 +301,10 @@ function startListenNotebook() {
 
 const colors = {
 	...baseColors,
+};
+
+const fonts = {
+	...baseFonts,
 };
 
 const styles = {
