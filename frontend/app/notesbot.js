@@ -581,7 +581,7 @@ const pages = {
 						{
 							width: "min(640px, 100%)",
 							padding: "0.75rem",
-							border: `1px solid ${colors.border.normal()}`,
+							border: `1px solid ${colors[theme][palette.base](7)}`,
 							borderRadius: "0.5rem",
 							...layouts.column("center", "start", "2rem"),
 							children: [
@@ -631,7 +631,7 @@ const pages = {
 												{
 													id: "keyphrase-input",
 													config: components.inputs.text({
-														border: `1px solid ${colors.border.normal()}`,
+														border: `1px solid ${colors[theme][palette.base](7)}`,
 														password: true,
 														maxlength: 64,
 													}),
@@ -658,7 +658,7 @@ const pages = {
 												{
 													id: "keyphrase-repeat-input",
 													config: components.inputs.text({
-														border: `1px solid ${colors.border.normal()}`,
+														border: `1px solid ${colors[theme][palette.base](7)}`,
 														password: true,
 														maxlength: 64,
 													}),
@@ -813,7 +813,7 @@ const pages = {
 						{
 							width: "min(640px, 100%)",
 							padding: "0.75rem",
-							border: `1px solid ${colors.border.normal()}`,
+							border: `1px solid ${colors[theme][palette.base](7)}`,
 							borderRadius: "0.5rem",
 							...layouts.column("center", "start", "2rem"),
 							children: [
@@ -842,7 +842,7 @@ const pages = {
 										{
 											id: "keyphrase-input",
 											config: components.inputs.text({
-												border: `1px solid ${colors.border.normal()}`,
+												border: `1px solid ${colors[theme][palette.base](7)}`,
 												password: true,
 												maxlength: 64,
 											}),
@@ -2527,7 +2527,7 @@ const pages = {
 														fileButtonColor = colors[theme][paragraph.color](11);
 														fileButtonBackgroundHoverColor = colors[theme][paragraph.color](6);
 													} else {
-														borderColor = colors.border.normal();
+														borderColor = colors[theme][palette.base](7);
 														backgroundColor = undefined;
 														textColor = undefined;
 														dateColor = colors.foreground.secondary();
