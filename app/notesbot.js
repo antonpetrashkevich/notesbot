@@ -1,19 +1,18 @@
-import Argon2Worker from "./workers/argon2.js?worker";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
-
-import { appName, stack, smallViewport, theme, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from "xpl_kit/core";
-import { palette, colors as baseColors, fonts as baseFonts, styles as baseStyles, handlers as baseHandlers, layouts as baseLayouts, components as baseComponents } from "xpl_kit/commons";
-
+import { appName, stack, store, smallViewport, theme, utils, updateMetaTags, updateBodyStyle, startApp, startViewportSizeController, startThemeController } from "xpl_kit";
 import { initializeApp as initializeFirebase } from "firebase/app";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { addDoc, arrayRemove, arrayUnion, Bytes, CACHE_SIZE_UNLIMITED, collection, deleteDoc, deleteField, doc, increment, initializeFirestore, onSnapshot, orderBy, persistentLocalCache, persistentMultipleTabManager, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { getBytes, getStorage, ref, uploadBytesResumable } from "firebase/storage";
 // import { getAnalytics } from "firebase/analytics";
-
-// https://developers.google.com/fonts/docs/material_symbols
-// https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined
-import materialFontUrl from "./material_symbols_outlined_default.woff2";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
+import { colors } from "./ui/colors/colors.js";
+import { palette } from "./ui/colors/palette.js";
+import { styles } from "./ui/styles/styles.js";
+import { layouts } from "./ui/layouts/layouts.js";
+import { handlers } from "./ui/handlers/handlers.js";
+import { components } from "./ui/components/components.js";
+import Argon2Worker from "./workers/argon2.js?worker";
 
 const firebaseConfig = {
 	apiKey: "AIzaSyCpE4ytbA0WGmVV2gcun98F1FRHjtW-qtI",
@@ -184,7 +183,6 @@ export async function init() {
 
 	startApp("XPL");
 	startViewportSizeController();
-	palette.base = "mauve";
 	startThemeController(function () {
 		updateMetaTags({
 			"theme-color": colors[theme][palette.base](1),
@@ -198,17 +196,9 @@ export async function init() {
 		"theme-color": colors[theme][palette.base](1),
 	});
 	updateBodyStyle({
-		fontFamily: fonts.base().fontFamily,
+		fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
 		backgroundColor: colors.background.base(),
 		color: colors.foreground.primary(),
-	});
-	await utils.loadFont({
-		fontFamily: "material",
-		url: materialFontUrl,
-		format: "woff2",
-		params: {
-			fontWeight: 400,
-		},
 	});
 
 	stack.push(pages.init());
@@ -298,30 +288,6 @@ function startListenNotebook() {
 		},
 	);
 }
-
-const colors = {
-	...baseColors,
-};
-
-const fonts = {
-	...baseFonts,
-};
-
-const styles = {
-	...baseStyles,
-};
-
-const handlers = {
-	...baseHandlers,
-};
-
-const layouts = {
-	...baseLayouts,
-};
-
-const components = {
-	...baseComponents,
-};
 
 const pages = {
 	init(path = "") {
@@ -991,7 +957,7 @@ const pages = {
 						{
 							id: "header",
 							config: () =>
-								components.header({
+								components.shell.header({
 									leading:
 										folderId === "root"
 											? null
@@ -999,7 +965,7 @@ const pages = {
 													backgroundHoverColor: colors[theme][palette.base](3),
 													color: colors.foreground.secondary(),
 													href: "/",
-													child: components.icon({
+													child: components.glyphs.icon({
 														fontSize: "1.25rem",
 														ligature: "home",
 													}),
@@ -1143,11 +1109,11 @@ const pages = {
 																				return {
 																					...layouts.base("start", "center"),
 																					children: [
-																						components.header({
+																						components.shell.header({
 																							leading: components.button({
 																								backgroundHoverColor: colors[theme][palette.base](3),
 																								color: colors.foreground.secondary(),
-																								child: components.icon({
+																								child: components.glyphs.icon({
 																									fontSize: "1.25rem",
 																									ligature: "close",
 																								}),
@@ -1454,12 +1420,12 @@ const pages = {
 																						id: "theme-system",
 																						config: components.inputs.toggle({
 																							value: window.localStorage.getItem("theme") === "auto",
-																							iconFalse: components.icon({
+																							iconFalse: components.glyphs.icon({
 																								fontSize: "1.25rem",
 																								color: colors.foreground.secondary(),
 																								ligature: "radio_button_unchecked",
 																							}),
-																							iconTrue: components.icon({
+																							iconTrue: components.glyphs.icon({
 																								fontSize: "1.25rem",
 																								color: colors[theme][palette.primary](9),
 																								ligature: "radio_button_checked",
@@ -1480,12 +1446,12 @@ const pages = {
 																						id: "theme-light",
 																						config: components.inputs.toggle({
 																							value: window.localStorage.getItem("theme") === "light",
-																							iconFalse: components.icon({
+																							iconFalse: components.glyphs.icon({
 																								fontSize: "1.25rem",
 																								color: colors.foreground.secondary(),
 																								ligature: "radio_button_unchecked",
 																							}),
-																							iconTrue: components.icon({
+																							iconTrue: components.glyphs.icon({
 																								fontSize: "1.25rem",
 																								color: colors[theme][palette.primary](9),
 																								ligature: "radio_button_checked",
@@ -1506,12 +1472,12 @@ const pages = {
 																						id: "theme-dark",
 																						config: components.inputs.toggle({
 																							value: window.localStorage.getItem("theme") === "dark",
-																							iconFalse: components.icon({
+																							iconFalse: components.glyphs.icon({
 																								fontSize: "1.25rem",
 																								color: colors.foreground.secondary(),
 																								ligature: "radio_button_unchecked",
 																							}),
-																							iconTrue: components.icon({
+																							iconTrue: components.glyphs.icon({
 																								fontSize: "1.25rem",
 																								color: colors[theme][palette.primary](9),
 																								ligature: "radio_button_checked",
@@ -1625,12 +1591,12 @@ const pages = {
 											config: () => ({
 												...layouts.base("start", "center"),
 												children: [
-													components.header({
+													components.shell.header({
 														gapTrailing: "0.5rem",
 														leading: components.button({
 															backgroundHoverColor: colors[theme][palette.base](3),
 															color: colors.foreground.secondary(),
-															child: components.icon({
+															child: components.glyphs.icon({
 																fontSize: "1.25rem",
 																ligature: "close",
 															}),
@@ -1673,7 +1639,7 @@ const pages = {
 																	components.button({
 																		backgroundHoverColor: colors[theme][palette.base](5),
 																		padding: "0.25rem",
-																		child: components.icon({
+																		child: components.glyphs.icon({
 																			fontSize: "1.25rem",
 																			color: colors.foreground.secondary(),
 																			ligature: "cancel",
@@ -2094,12 +2060,12 @@ const pages = {
 						{
 							id: "header",
 							config: () =>
-								components.header({
+								components.shell.header({
 									leading: components.button({
 										backgroundHoverColor: colors[theme][palette.base](3),
 										color: colors.foreground.secondary(),
 										href: "/",
-										child: components.icon({
+										child: components.glyphs.icon({
 											fontSize: "1.25rem",
 											ligature: "home",
 										}),
@@ -2411,7 +2377,7 @@ const pages = {
 											components.button({
 												backgroundHoverColor: colors[theme][filterParagraphColor || palette.base](3),
 												padding: "0.25rem",
-												child: components.icon({
+												child: components.glyphs.icon({
 													fontSize: "1.25rem",
 													color: filterParagraphColor ? colors[theme][filterParagraphColor](9) : colors.foreground.secondary(),
 													ligature: "palette",
@@ -2444,7 +2410,7 @@ const pages = {
 																					borderRadius: "2rem",
 																					backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
 																					backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
-																					child: components.icon({
+																					child: components.glyphs.icon({
 																						fontSize: "2.5rem",
 																						color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
 																						ligature: "circle",
@@ -2467,7 +2433,7 @@ const pages = {
 											components.button({
 												backgroundHoverColor: colors[theme][palette.base](3),
 												padding: "0.25rem",
-												child: components.icon({
+												child: components.glyphs.icon({
 													fontSize: "1.25rem",
 													color: colors.foreground.secondary(),
 													ligature: "cancel",
@@ -2593,7 +2559,7 @@ const pages = {
 																								!downloads[f.id]
 																									? components.button({
 																											backgroundHoverColor: fileButtonBackgroundHoverColor,
-																											child: components.icon({
+																											child: components.glyphs.icon({
 																												fontSize: "1.25rem",
 																												color: fileButtonColor,
 																												ligature: "cloud_download",
@@ -2632,7 +2598,7 @@ const pages = {
 																										})
 																									: null,
 																								downloads[f.id]?.status === "downloading"
-																									? components.animations.spinner({
+																									? components.glyphs.spinner({
 																											width: "2.25rem",
 																											height: "2.25rem",
 																											padding: "0.5rem",
@@ -2642,7 +2608,7 @@ const pages = {
 																								downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("image")
 																									? components.button({
 																											backgroundHoverColor: fileButtonBackgroundHoverColor,
-																											child: components.icon({
+																											child: components.glyphs.icon({
 																												fontSize: "1.25rem",
 																												color: fileButtonColor,
 																												ligature: "image",
@@ -2669,7 +2635,7 @@ const pages = {
 																								downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("audio")
 																									? components.button({
 																											backgroundHoverColor: fileButtonBackgroundHoverColor,
-																											child: components.icon({
+																											child: components.glyphs.icon({
 																												fontSize: "1.25rem",
 																												color: fileButtonColor,
 																												ligature: "play_circle",
@@ -2701,7 +2667,7 @@ const pages = {
 																								downloads[f.id]?.status === "ready" && downloads[f.id].file.type.startsWith("video")
 																									? components.button({
 																											backgroundHoverColor: fileButtonBackgroundHoverColor,
-																											child: components.icon({
+																											child: components.glyphs.icon({
 																												fontSize: "1.25rem",
 																												color: fileButtonColor,
 																												ligature: "play_circle",
@@ -2736,7 +2702,7 @@ const pages = {
 																								downloads[f.id]?.status === "ready"
 																									? components.button({
 																											backgroundHoverColor: fileButtonBackgroundHoverColor,
-																											child: components.icon({
+																											child: components.glyphs.icon({
 																												fontSize: "1.25rem",
 																												color: fileButtonColor,
 																												ligature: "download",
@@ -2791,7 +2757,7 @@ const pages = {
 																			children: [
 																				components.button({
 																					backgroundHoverColor: buttonBackgroundHoverColor,
-																					child: components.icon({
+																					child: components.glyphs.icon({
 																						fontSize: "1.25rem",
 																						color: buttonColor,
 																						ligature: "expand_content",
@@ -2825,7 +2791,7 @@ const pages = {
 																				}),
 																				components.button({
 																					backgroundHoverColor: buttonBackgroundHoverColor,
-																					child: components.icon({
+																					child: components.glyphs.icon({
 																						fontSize: "1.25rem",
 																						color: buttonColor,
 																						ligature: "content_copy",
@@ -2836,7 +2802,7 @@ const pages = {
 																				}),
 																				components.button({
 																					backgroundHoverColor: buttonBackgroundHoverColor,
-																					child: components.icon({
+																					child: components.glyphs.icon({
 																						fontSize: "1.25rem",
 																						color: buttonColor,
 																						ligature: "link",
@@ -2852,11 +2818,11 @@ const pages = {
 																									return {
 																										...layouts.base("start", "center"),
 																										children: [
-																											components.header({
+																											components.shell.header({
 																												leading: components.button({
 																													backgroundHoverColor: colors[theme][palette.base](3),
 																													color: colors.foreground.secondary(),
-																													child: components.icon({
+																													child: components.glyphs.icon({
 																														fontSize: "1.25rem",
 																														ligature: "close",
 																													}),
@@ -2949,7 +2915,7 @@ const pages = {
 																				}),
 																				components.button({
 																					backgroundHoverColor: buttonBackgroundHoverColor,
-																					child: components.icon({
+																					child: components.glyphs.icon({
 																						fontSize: "1.25rem",
 																						color: buttonColor,
 																						ligature: "palette",
@@ -2982,7 +2948,7 @@ const pages = {
 																														borderRadius: "2rem",
 																														backgroundColor: color === undefined ? colors.background.base() : colors[theme][color](4),
 																														backgroundHoverColor: color === undefined ? colors[theme][palette.base](2) : colors[theme][color](5),
-																														child: components.icon({
+																														child: components.glyphs.icon({
 																															fontSize: "2.5rem",
 																															color: color === undefined ? colors[theme][palette.base](11) : colors[theme][color](11),
 																															ligature: "circle",
@@ -3024,7 +2990,7 @@ const pages = {
 																				}),
 																				components.button({
 																					backgroundHoverColor: buttonBackgroundHoverColor,
-																					child: components.icon({
+																					child: components.glyphs.icon({
 																						fontSize: "1.25rem",
 																						color: buttonColor,
 																						ligature: "edit",
@@ -3117,7 +3083,7 @@ const pages = {
 																				}),
 																				components.button({
 																					backgroundHoverColor: buttonBackgroundHoverColor,
-																					child: components.icon({
+																					child: components.glyphs.icon({
 																						fontSize: "1.25rem",
 																						color: buttonColor,
 																						ligature: "delete",
