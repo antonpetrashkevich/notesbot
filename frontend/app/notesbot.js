@@ -187,7 +187,7 @@ export async function init() {
 	palette.base = "mauve";
 	startThemeController(function () {
 		updateMetaTags({
-			"theme-color": colors.background.accent(),
+			"theme-color": colors[theme][palette.base](1),
 		});
 		updateBodyStyle({
 			backgroundColor: colors.background.base(),
@@ -195,7 +195,7 @@ export async function init() {
 		});
 	});
 	updateMetaTags({
-		"theme-color": colors.background.accent(),
+		"theme-color": colors[theme][palette.base](1),
 	});
 	updateBodyStyle({
 		fontFamily: fonts.base().fontFamily,
@@ -1626,7 +1626,6 @@ const pages = {
 												...layouts.base("start", "center"),
 												children: [
 													components.header({
-														backgroundColor: colors.background.accent(),
 														gapTrailing: "0.5rem",
 														leading: components.button({
 															backgroundHoverColor: colors[theme][palette.base](3),
