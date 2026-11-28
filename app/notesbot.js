@@ -6,12 +6,12 @@ import { getBytes, getStorage, ref, uploadBytesResumable } from "firebase/storag
 // import { getAnalytics } from "firebase/analytics";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { colors } from "./ui/colors/colors.js";
-import { palette } from "./ui/colors/palette.js";
-import { styles } from "./ui/styles/styles.js";
-import { layouts } from "./ui/layouts/layouts.js";
-import { handlers } from "./ui/handlers/handlers.js";
-import { components } from "./ui/components/components.js";
+import { palette } from "alba";
+import { colors } from "./ui/colors/index.js";
+import { styles } from "./ui/styles/index.js";
+import { layouts } from "./ui/layouts/index.js";
+import { handlers } from "./ui/handlers/index.js";
+import { components } from "./ui/components/index.js";
 import Argon2Worker from "./workers/argon2.js?worker";
 
 const firebaseConfig = {
@@ -182,6 +182,7 @@ export async function init() {
 	// firebase.analytics = getAnalytics(firebase.app);
 
 	startApp("XPL");
+	palette.base = "mauve";
 	startViewportSizeController();
 	startThemeController(function () {
 		updateMetaTags({
